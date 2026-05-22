@@ -1,5 +1,14 @@
 package com.comercialcloud.interfaces.exception;
 
 import java.time.Instant;
+import java.util.List;
 
-public record ErrorResponse(String code, String message, String correlationId, Instant timestamp) {}
+public record ErrorResponse(
+        Instant timestamp,
+        int status,
+        String error,
+        String message,
+        String path,
+        String correlationId,
+        List<String> details,
+        String code) {}

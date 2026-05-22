@@ -35,6 +35,40 @@ export interface ApiError {
   path?: string;
   correlationId?: string;
   details?: string[];
+  code?: string;
+}
+
+export type UsuarioRole = "ADMIN" | "GERENTE" | "CAIXA";
+
+export interface Usuario {
+  id: string;
+  tenantId?: string;
+  nome: string;
+  email: string;
+  role: UsuarioRole;
+  ativo: boolean;
+  createdAt?: string;
+}
+
+export interface UsuarioRequest {
+  nome: string;
+  email: string;
+  role: UsuarioRole;
+}
+
+export interface Configuracao {
+  id?: string;
+  tenantId?: string;
+  lojaId?: string;
+  chave: string;
+  valor: string;
+  updatedAt?: string;
+}
+
+export interface ConfiguracaoRequest {
+  lojaId?: string;
+  chave: string;
+  valor: string;
 }
 
 export interface Produto {

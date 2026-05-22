@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-@Path("/api/dashboard")
+@Path("/api/v1/dashboard")
 @Produces(MediaType.APPLICATION_JSON)
 @Tag(name = "Dashboard")
 public class DashboardResource {
@@ -45,7 +45,7 @@ public class DashboardResource {
         payload.put("vendasDoDia", result.vendasDoDia());
         payload.put("faturamentoDoDia", result.faturamentoDoDia());
         payload.put("ticketMedio", result.ticketMedio());
-        payload.put("estoquesBaixo", estoqueBaixo);
+        payload.put("produtosEstoqueBaixo", estoqueBaixo);
         payload.put("ultimasVendas", ultimas);
         payload.put("vendasPorFormaPagamento", result.vendasPorFormaPagamento());
         return payload;
@@ -58,6 +58,7 @@ public class DashboardResource {
         map.put("lojaId", estoque.lojaId());
         map.put("produtoId", estoque.produtoId());
         map.put("quantidadeAtual", estoque.quantidade());
+        map.put("quantidadeMinima", 10);
         Produto produto = produtosPorId.get(estoque.produtoId());
         if (produto != null) {
             map.put("produtoNome", produto.nome());

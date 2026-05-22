@@ -1,12 +1,14 @@
 "use client";
 
 import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState, ErrorMessage, LoadingSpinner, PageHeader } from "@/components/ui/Common";
 import { formatCurrency, formatDate } from "@/lib/format";
-import { listContasReceber } from "@/lib/api/financeiro";
+import { listContasReceber, marcarContaPago } from "@/lib/api/financeiro";
 import { STATUS_CONTA_LABELS } from "@/types";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { CheckCircle } from "lucide-react";
 
 function statusVariant(status: string) {
   switch (status) {
@@ -20,9 +22,18 @@ function statusVariant(status: string) {
 }
 
 export default function FinanceiroPage() {
+  const queryClient = useQueryClient();
+
   const { data, isLoading, error } = useQuery({
     queryKey: ["contas-receber"],
     queryFn: () => listContasReceber(),
+  });
+
+  const pagarMutation = useMutation({
+    mutationFn: marcarContaPago,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["contas-receber"] });
+    },
   });
 
   const totalAberto = data
@@ -57,6 +68,11 @@ export default function FinanceiroPage() {
 
       {isLoading && <LoadingSpinner />}
       {error && <ErrorMessage message={(error as Error).message} />}
+      {pagarMutation.error && (
+        <div className="mb-4">
+          <ErrorMessage message={(pagarMutation.error as Error).message} />
+        </div>
+      )}
 
       {!isLoading && !error && (
         <>
@@ -70,6 +86,7 @@ export default function FinanceiroPage() {
                       <th className="px-6 py-3 font-medium">Valor</th>
                       <th className="px-6 py-3 font-medium">Vencimento</th>
                       <th className="px-6 py-3 font-medium">Status</th>
+                      <th className="px-6 py-3 font-medium">Ações</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -84,6 +101,19 @@ export default function FinanceiroPage() {
                           <Badge variant={statusVariant(conta.status)}>
                             {STATUS_CONTA_LABELS[conta.status]}
                           </Badge>
+                        </td>
+                        <td className="px-6 py-4">
+                          {conta.status === "ABERTO" && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              loading={pagarMutation.isPending}
+                              onClick={() => pagarMutation.mutate(conta.id)}
+                            >
+                              <CheckCircle className="h-4 w-4" />
+                              Marcar pago
+                            </Button>
+                          )}
                         </td>
                       </tr>
                     ))}

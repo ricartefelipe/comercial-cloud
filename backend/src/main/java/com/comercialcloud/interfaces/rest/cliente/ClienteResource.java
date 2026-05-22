@@ -2,6 +2,7 @@ package com.comercialcloud.interfaces.rest.cliente;
 
 import com.comercialcloud.application.cliente.ClienteService;
 import com.comercialcloud.domain.model.Cliente;
+import com.comercialcloud.domain.shared.PageResult;
 import jakarta.inject.Inject;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.ws.rs.Consumes;
@@ -19,11 +20,10 @@ import jakarta.ws.rs.core.Response;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-@Path("/api/clientes")
+@Path("/api/v1/clientes")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @Tag(name = "Clientes")
@@ -46,10 +46,17 @@ public class ClienteResource {
     }
 
     @GET
-    public List<Map<String, Object>> listar(
+    public Map<String, Object> listar(
             @QueryParam("page") @DefaultValue("0") int page,
             @QueryParam("size") @DefaultValue("20") int size) {
-        return clienteService.listar(page, size).stream().map(c -> toMap(c)).toList();
+        PageResult<Cliente> result = clienteService.listar(page, size);
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("content", result.content().stream().map(c -> toMap(c)).toList());
+        response.put("totalElements", result.totalElements());
+        response.put("totalPages", result.totalPages());
+        response.put("size", result.size());
+        response.put("number", result.number());
+        return response;
     }
 
     @PUT

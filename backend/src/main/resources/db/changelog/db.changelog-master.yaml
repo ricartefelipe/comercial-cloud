@@ -27,3 +27,5 @@ databaseChangeLog:
       file: db/changelog/013-auditoria.yaml
   - include:
       file: db/changelog/014-seed-demo.yaml
+  - include:
+      file: db/changelog/015-configuracao.yaml

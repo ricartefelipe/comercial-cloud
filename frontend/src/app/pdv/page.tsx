@@ -15,7 +15,7 @@ import {
   finalizarVenda,
   removeItemVenda,
 } from "@/lib/api/vendas";
-import { LOJA_ID } from "@/lib/constants";
+import { LOJA_ID, USER_ID } from "@/lib/constants";
 import { formatCurrency } from "@/lib/format";
 import type { FormaPagamento, ItemVenda, Produto, Venda } from "@/types";
 import { FORMA_PAGAMENTO_LABELS } from "@/types";
@@ -306,6 +306,8 @@ export default function PdvPage() {
           </div>
         </div>
         <div className="text-right">
+          <p className="text-xs text-slate-400">Operador caixa</p>
+          <p className="text-xs text-slate-500">{USER_ID.slice(0, 8)}...</p>
           <p className="text-xs text-slate-400">Total</p>
           <p className="text-2xl font-bold text-brand-400">
             {formatCurrency(totalVenda)}

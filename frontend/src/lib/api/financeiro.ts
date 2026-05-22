@@ -8,3 +8,10 @@ export async function listContasReceber(lojaId = LOJA_ID): Promise<ContaReceber[
     { includeUserId: false },
   );
 }
+
+export async function marcarContaPago(id: string): Promise<ContaReceber> {
+  return apiClient<ContaReceber>(`/api/v1/financeiro/contas-receber/${id}/pagar`, {
+    method: "PATCH",
+    includeUserId: false,
+  });
+}

@@ -10,7 +10,8 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
 import java.time.Instant;
-import java.util.List;
+import com.comercialcloud.domain.shared.PageResult;
+
 import java.util.UUID;
 
 @ApplicationScoped
@@ -53,7 +54,7 @@ public class ClienteService {
         return obter(id);
     }
 
-    public List<Cliente> listar(int page, int size) {
+    public PageResult<Cliente> listar(int page, int size) {
         return clienteRepository.list(tenantContext.getTenantId(), page, size);
     }
 

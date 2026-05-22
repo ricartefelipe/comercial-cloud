@@ -6,8 +6,8 @@ Plataforma SaaS multitenant para **PDV (ponto de venda)** e **retaguarda web**, 
 
 - Vendas no balcão via PDV web (busca rápida, carrinho, pagamentos, comprovante)
 - Retaguarda administrativa (produtos, estoque, clientes, vendas, caixa, financeiro, dashboard)
-- Isolamento lógico por tenant (`X-Tenant-Id`)
-- Preparado para evoluir para JWT/OIDC (Keycloak)
+- Isolamento lógico por tenant (`X-Tenant-Id` ou claim JWT `tenant_id`)
+- Autenticação via Keycloak (OIDC/JWT) ou modo demo local para desenvolvimento
 
 ## Stack
 
@@ -32,8 +32,9 @@ backend/src/main/java/com/comercialcloud/
 
 **Decisões:**
 - Multitenancy por coluna `tenant_id` + filtro HTTP (`TenantContext`, `TenantRequestFilter`)
-- Serviços usam entidades Panache diretamente (sem camada repository na v1)
-- Totais de venda calculados no backend; preço capturado no momento da venda
+- API versionada em `/api/v1/*`
+- RBAC por role (`ADMIN`, `GERENTE`, `CAIXA`) resolvida a partir do usuário autenticado
+- Onboarding de tenant via `POST /api/v1/public/onboarding`
 - Liquibase controla schema; Hibernate `database.generation=none` em produção
 
 ## Executar localmente
@@ -69,19 +70,44 @@ Migrations Liquibase rodam automaticamente na subida (`migrate-at-start: true`).
 
 ```bash
 cd frontend
+cp .env.example .env.local
 npm install
 npm run dev
 ```
 
 Acesse:
-- Retaguarda: `http://localhost:3000`
+- Login: `http://localhost:3000/login` (Keycloak ou **modo demo**)
+- Retaguarda: `http://localhost:3000/dashboard`
 - PDV: `http://localhost:3000/pdv`
 
-### 4. Testes backend
+### 4. Keycloak (opcional)
+
+```bash
+docker compose --profile keycloak up -d
+```
+
+Realm `comercialcloud` importado de `infra/keycloak/realm-comercialcloud.json`.
+
+Usuários demo:
+| E-mail | Senha | Role |
+|--------|-------|------|
+| admin@demo.com | admin123 | ADMIN |
+| caixa@demo.com | caixa123 | CAIXA |
+
+Backend com JWT: `./mvnw quarkus:dev -Dquarkus.profile=auth`
+
+### 5. Testes backend
 
 ```bash
 cd backend
 ./mvnw clean -Dtest=ComercialCloudIT test
+```
+
+### 6. Testes E2E (Playwright)
+
+```bash
+cd frontend && npm run build && npm start &
+cd e2e && npm install && npx playwright install chromium && npm test
 ```
 
 ## Swagger / OpenAPI
@@ -143,9 +169,11 @@ comercial-cloud/
 
 ## Observabilidade
 
+- Health: `GET /health`
+- Métricas Prometheus: `GET /metrics`
 - `X-Correlation-Id` por requisição (aceito e retornado)
 - Logs com tenant e correlation id
-- Erros padronizados: `timestamp`, `status`, `error`, `message`, `path`, `correlationId`, `details`
+- Erros padronizados: `timestamp`, `status`, `error`, `message`, `path`, `correlationId`, `code`, `details`
 
 ## Fluxo de branches (GitFlow)
 

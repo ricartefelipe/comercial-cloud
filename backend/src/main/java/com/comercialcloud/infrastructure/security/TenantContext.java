@@ -10,6 +10,7 @@ public class TenantContext {
 
     private UUID tenantId;
     private UUID userId;
+    private String role;
 
     public UUID getTenantId() {
         return tenantId;
@@ -25,5 +26,17 @@ public class TenantContext {
 
     public void setUserId(UUID userId) {
         this.userId = userId;
+    }
+
+    public Optional<String> getRole() {
+        return Optional.ofNullable(role);
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+    public boolean isAdmin() {
+        return "ADMIN".equalsIgnoreCase(role);
     }
 }

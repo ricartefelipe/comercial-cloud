@@ -1,88 +1,141 @@
 "use client";
 
-import { Card } from "@/components/ui/Card";
-import { PageHeader } from "@/components/ui/Common";
+import { Button } from "@/components/ui/Button";
+import { Card, CardHeader } from "@/components/ui/Card";
+import { ErrorMessage, LoadingSpinner, PageHeader } from "@/components/ui/Common";
+import { Input } from "@/components/ui/Input";
+import { listConfiguracoes, upsertConfiguracoes } from "@/lib/api/configuracoes";
 import { LOJA_ID, TENANT_ID } from "@/lib/constants";
-import { Bell, Building2, CreditCard, Printer, Settings, Store } from "lucide-react";
+import type { ConfiguracaoRequest } from "@/types";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Save } from "lucide-react";
+import { FormEvent, useEffect, useState } from "react";
 
-const sections = [
-  {
-    icon: Building2,
-    title: "Empresa",
-    description: "Dados cadastrais e informações fiscais",
-    items: ["Razão social", "CNPJ", "Inscrição estadual"],
-  },
-  {
-    icon: Store,
-    title: "Loja",
-    description: "Configurações da loja principal",
-    items: ["Nome da loja", "Endereço", "Horário de funcionamento"],
-  },
-  {
-    icon: CreditCard,
-    title: "Pagamentos",
-    description: "Formas de pagamento aceitas",
-    items: ["Dinheiro", "PIX", "Cartão débito/crédito"],
-  },
-  {
-    icon: Printer,
-    title: "Impressão",
-    description: "Configurações de impressora e comprovantes",
-    items: ["Impressora térmica", "Layout do cupom"],
-  },
-  {
-    icon: Bell,
-    title: "Notificações",
-    description: "Alertas de estoque e vendas",
-    items: ["Estoque baixo", "Fechamento de caixa"],
-  },
-];
+const CONFIG_KEYS = {
+  empresa: [
+    { key: "empresa.razao_social", label: "Razão social" },
+    { key: "empresa.cnpj", label: "CNPJ" },
+    { key: "empresa.inscricao_estadual", label: "Inscrição estadual" },
+  ],
+  loja: [
+    { key: "loja.nome", label: "Nome da loja" },
+    { key: "loja.endereco", label: "Endereço" },
+    { key: "loja.horario", label: "Horário de funcionamento" },
+  ],
+  pagamentos: [
+    { key: "pagamentos.dinheiro", label: "Aceita dinheiro (true/false)" },
+    { key: "pagamentos.pix", label: "Aceita PIX (true/false)" },
+    { key: "pagamentos.cartao", label: "Aceita cartão (true/false)" },
+  ],
+} as const;
+
+type ConfigSection = keyof typeof CONFIG_KEYS;
+
+function buildInitialValues(): Record<string, string> {
+  const values: Record<string, string> = {};
+  for (const section of Object.keys(CONFIG_KEYS) as ConfigSection[]) {
+    for (const field of CONFIG_KEYS[section]) {
+      values[field.key] = "";
+    }
+  }
+  return values;
+}
 
 export default function ConfiguracoesPage() {
+  const [values, setValues] = useState<Record<string, string>>(buildInitialValues);
+  const [saved, setSaved] = useState(false);
+  const queryClient = useQueryClient();
+
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["configuracoes", LOJA_ID],
+    queryFn: () => listConfiguracoes(LOJA_ID),
+  });
+
+  useEffect(() => {
+    if (!data?.length) return;
+    setValues((prev) => {
+      const next = { ...prev };
+      for (const config of data) {
+        next[config.chave] = config.valor;
+      }
+      return next;
+    });
+  }, [data]);
+
+  const saveMutation = useMutation({
+    mutationFn: (items: ConfiguracaoRequest[]) => upsertConfiguracoes(items),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["configuracoes", LOJA_ID] });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    },
+  });
+
+  const handleChange = (key: string, value: string) => {
+    setValues((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleSave = async (e: FormEvent) => {
+    e.preventDefault();
+    const items: ConfiguracaoRequest[] = Object.entries(values)
+      .filter(([, valor]) => valor.trim() !== "")
+      .map(([chave, valor]) => ({ lojaId: LOJA_ID, chave, valor }));
+    await saveMutation.mutateAsync(items);
+  };
+
+  const sections: { id: ConfigSection; title: string }[] = [
+    { id: "empresa", title: "Empresa" },
+    { id: "loja", title: "Loja" },
+    { id: "pagamentos", title: "Pagamentos" },
+  ];
+
   return (
     <div>
       <PageHeader
         title="Configurações"
         description="Preferências do sistema"
+        action={
+          <Button onClick={handleSave} loading={saveMutation.isPending}>
+            <Save className="h-4 w-4" />
+            {saved ? "Salvo!" : "Salvar alterações"}
+          </Button>
+        }
       />
 
       <Card className="mb-6">
-        <div className="flex items-center gap-3">
-          <Settings className="h-5 w-5 text-brand-600" />
-          <div>
-            <p className="text-sm font-medium text-slate-900">Ambiente atual</p>
-            <p className="text-xs text-slate-500">
-              Tenant: {TENANT_ID.slice(0, 8)}... | Loja: {LOJA_ID.slice(0, 8)}...
-            </p>
-          </div>
-        </div>
+        <p className="text-sm font-medium text-slate-900">Ambiente atual</p>
+        <p className="text-xs text-slate-500">
+          Tenant: {TENANT_ID.slice(0, 8)}... | Loja: {LOJA_ID.slice(0, 8)}...
+        </p>
       </Card>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {sections.map((section) => {
-          const Icon = section.icon;
-          return (
-            <Card key={section.title} className="hover:border-brand-200 transition-colors cursor-pointer">
-              <div className="flex items-start gap-3">
-                <div className="rounded-lg bg-brand-50 p-2">
-                  <Icon className="h-5 w-5 text-brand-600" />
+      {isLoading && <LoadingSpinner />}
+      {error && <ErrorMessage message={(error as Error).message} />}
+      {saveMutation.error && (
+        <div className="mb-4">
+          <ErrorMessage message={(saveMutation.error as Error).message} />
+        </div>
+      )}
+
+      {!isLoading && (
+        <form onSubmit={handleSave} className="space-y-6">
+          {sections.map((section) => (
+              <Card key={section.id}>
+                <CardHeader title={section.title} />
+                <div className="space-y-4">
+                  {CONFIG_KEYS[section.id].map((field) => (
+                    <Input
+                      key={field.key}
+                      label={field.label}
+                      value={values[field.key] ?? ""}
+                      onChange={(e) => handleChange(field.key, e.target.value)}
+                    />
+                  ))}
                 </div>
-                <div>
-                  <h3 className="font-semibold text-slate-900">{section.title}</h3>
-                  <p className="mt-1 text-sm text-slate-500">{section.description}</p>
-                  <ul className="mt-3 space-y-1">
-                    {section.items.map((item) => (
-                      <li key={item} className="text-xs text-slate-400">
-                        • {item}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </Card>
-          );
-        })}
-      </div>
+              </Card>
+          ))}
+        </form>
+      )}
     </div>
   );
 }

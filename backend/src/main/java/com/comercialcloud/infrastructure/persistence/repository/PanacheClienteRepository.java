@@ -1,6 +1,7 @@
 package com.comercialcloud.infrastructure.persistence.repository;
 
 import com.comercialcloud.domain.model.Cliente;
+import com.comercialcloud.domain.shared.PageResult;
 import com.comercialcloud.domain.repository.ClienteRepository;
 import com.comercialcloud.infrastructure.persistence.entity.ClienteEntity;
 import com.comercialcloud.infrastructure.persistence.mapper.EntityMapper;
@@ -46,13 +47,19 @@ public class PanacheClienteRepository implements ClienteRepository {
     }
 
     @Override
-    public List<Cliente> list(UUID tenantId, int page, int size) {
-        return ClienteEntity.<ClienteEntity>find("tenantId = ?1", Sort.by("nome"), tenantId)
-                .page(Page.of(page, Math.max(size, 1)))
-                .list()
-                .stream()
-                .map(mapper::toDomain)
-                .toList();
+    public PageResult<Cliente> list(UUID tenantId, int page, int size) {
+        int pageSize = Math.max(size, 1);
+        var query = ClienteEntity.find("tenantId = ?1", Sort.by("nome"), tenantId);
+        long total = query.count();
+        int totalPages = pageSize == 0 ? 0 : (int) Math.ceil((double) total / pageSize);
+        List<Cliente> content =
+                ClienteEntity.<ClienteEntity>find("tenantId = ?1", Sort.by("nome"), tenantId)
+                        .page(Page.of(page, pageSize))
+                        .list()
+                        .stream()
+                        .map(mapper::toDomain)
+                        .toList();
+        return new PageResult<>(content, total, totalPages, pageSize, page);
     }
 
     @Override

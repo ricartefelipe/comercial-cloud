@@ -36,3 +36,22 @@ quarkus:
         level: INFO
   smallrye-jwt:
     enabled: false
+  smallrye-health:
+    root-path: /health
+  micrometer:
+    export:
+      prometheus:
+        path: /metrics
+
+"%auth":
+  quarkus:
+    oidc:
+      auth-server-url: http://localhost:8180/realms/comercialcloud
+      client-id: comercial-cloud-api
+    smallrye-jwt:
+      enabled: true
+  mp:
+    jwt:
+      verify:
+        publickey:
+          location: META-INF/resources/publicKey.pem

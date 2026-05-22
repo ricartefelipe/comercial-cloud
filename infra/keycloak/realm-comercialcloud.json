@@ -1,0 +1,67 @@
+{
+  "realm": "comercialcloud",
+  "enabled": true,
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "roles": {
+    "realm": [
+      { "name": "ADMIN", "description": "Administrador do tenant" },
+      { "name": "GERENTE", "description": "Gerente de loja" },
+      { "name": "CAIXA", "description": "Operador de caixa" }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "comercial-cloud-api",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "comercial-cloud-api-secret",
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": true,
+      "standardFlowEnabled": true,
+      "redirectUris": ["http://localhost:3000/*"],
+      "webOrigins": ["http://localhost:3000"]
+    },
+    {
+      "clientId": "comercial-cloud-web",
+      "enabled": true,
+      "publicClient": true,
+      "directAccessGrantsEnabled": true,
+      "standardFlowEnabled": true,
+      "redirectUris": ["http://localhost:3000/*"],
+      "webOrigins": ["http://localhost:3000"]
+    }
+  ],
+  "users": [
+    {
+      "username": "admin@demo.com",
+      "email": "admin@demo.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Admin",
+      "lastName": "Demo",
+      "credentials": [{ "type": "password", "value": "admin123", "temporary": false }],
+      "realmRoles": ["ADMIN"],
+      "attributes": {
+        "tenant_id": ["11111111-1111-1111-1111-111111111111"],
+        "app_user_id": ["33333333-3333-3333-3333-333333333333"]
+      }
+    },
+    {
+      "username": "caixa@demo.com",
+      "email": "caixa@demo.com",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Operador",
+      "lastName": "Caixa",
+      "credentials": [{ "type": "password", "value": "caixa123", "temporary": false }],
+      "realmRoles": ["CAIXA"],
+      "attributes": {
+        "tenant_id": ["11111111-1111-1111-1111-111111111111"],
+        "app_user_id": ["44444444-4444-4444-4444-444444444444"]
+      }
+    }
+  ]
+}

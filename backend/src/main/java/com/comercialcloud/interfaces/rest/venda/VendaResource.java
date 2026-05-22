@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-@Path("/api/vendas")
+@Path("/api/v1/vendas")
 @Produces(MediaType.APPLICATION_JSON)
 @Tag(name = "Vendas")
 public class VendaResource {

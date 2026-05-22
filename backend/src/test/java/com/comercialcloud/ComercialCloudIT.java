@@ -40,7 +40,7 @@ class ComercialCloudIT {
                         "descricao", "Descricao teste",
                         "preco", 15.99
                 ))
-                .when().post("/api/produtos")
+                .when().post("/api/v1/produtos")
                 .then()
                 .statusCode(201)
                 .body("sku", equalTo("TEST-SKU-001"))
@@ -59,7 +59,7 @@ class ComercialCloudIT {
                         "nome", "Outro Produto",
                         "preco", 10.00
                 ))
-                .when().post("/api/produtos")
+                .when().post("/api/v1/produtos")
                 .then()
                 .statusCode(409)
                 .body("code", equalTo("SKU_DUPLICADO"));
@@ -77,7 +77,7 @@ class ComercialCloudIT {
                         "nome", "Produto Tenant 2",
                         "preco", 10.00
                 ))
-                .when().post("/api/produtos")
+                .when().post("/api/v1/produtos")
                 .then()
                 .statusCode(201)
                 .body("sku", equalTo("TEST-SKU-001"));
@@ -98,7 +98,7 @@ class ComercialCloudIT {
         given()
                 .header("X-Tenant-Id", TENANT_DEMO)
                 .header("X-User-Id", USER_CAIXA)
-                .when().post("/api/vendas/" + vendaId + "/finalizar")
+                .when().post("/api/v1/vendas/" + vendaId + "/finalizar")
                 .then()
                 .statusCode(200)
                 .body("status", equalTo("FINALIZADA"));
@@ -118,7 +118,7 @@ class ComercialCloudIT {
                 .header("X-User-Id", USER_CAIXA)
                 .contentType(ContentType.JSON)
                 .body(Map.of("lojaId", LOJA_DEMO))
-                .when().post("/api/vendas")
+                .when().post("/api/v1/vendas")
                 .then()
                 .statusCode(400)
                 .body("code", equalTo("CAIXA_FECHADO"));
@@ -140,7 +140,7 @@ class ComercialCloudIT {
                         "produtoId", PRODUTO_INATIVO,
                         "quantidade", 1
                 ))
-                .when().post("/api/vendas/" + vendaId + "/itens")
+                .when().post("/api/v1/vendas/" + vendaId + "/itens")
                 .then()
                 .statusCode(400)
                 .body("code", equalTo("PRODUTO_INATIVO"));
@@ -159,7 +159,7 @@ class ComercialCloudIT {
         given()
                 .header("X-Tenant-Id", TENANT_DEMO)
                 .header("X-User-Id", USER_CAIXA)
-                .when().post("/api/vendas/" + vendaId + "/finalizar")
+                .when().post("/api/v1/vendas/" + vendaId + "/finalizar")
                 .then()
                 .statusCode(400)
                 .body("code", equalTo("ESTOQUE_INSUFICIENTE"));
@@ -180,14 +180,14 @@ class ComercialCloudIT {
         given()
                 .header("X-Tenant-Id", TENANT_DEMO)
                 .header("X-User-Id", USER_CAIXA)
-                .when().post("/api/vendas/" + vendaId + "/finalizar")
+                .when().post("/api/v1/vendas/" + vendaId + "/finalizar")
                 .then()
                 .statusCode(200);
 
         given()
                 .header("X-Tenant-Id", TENANT_DEMO)
                 .header("X-User-Id", USER_CAIXA)
-                .when().post("/api/vendas/" + vendaId + "/cancelar")
+                .when().post("/api/v1/vendas/" + vendaId + "/cancelar")
                 .then()
                 .statusCode(200)
                 .body("status", equalTo("CANCELADA"));
@@ -210,7 +210,7 @@ class ComercialCloudIT {
         given()
                 .header("X-Tenant-Id", TENANT_DEMO)
                 .header("X-User-Id", USER_CAIXA)
-                .when().post("/api/vendas/" + vendaId + "/finalizar")
+                .when().post("/api/v1/vendas/" + vendaId + "/finalizar")
                 .then()
                 .statusCode(200);
 
@@ -219,14 +219,14 @@ class ComercialCloudIT {
                 .header("X-User-Id", USER_CAIXA)
                 .contentType(ContentType.JSON)
                 .body(Map.of("valorFechamentoInformado", 110.00))
-                .when().post("/api/caixas/" + novoCaixaId + "/fechar")
+                .when().post("/api/v1/caixas/" + novoCaixaId + "/fechar")
                 .then()
                 .statusCode(200)
                 .body("status", equalTo("FECHADO"));
 
         given()
                 .header("X-Tenant-Id", TENANT_DEMO)
-                .when().get("/api/caixas/" + novoCaixaId + "/resumo")
+                .when().get("/api/v1/caixas/" + novoCaixaId + "/resumo")
                 .then()
                 .statusCode(200)
                 .body("totalVendas", equalTo(10.0f))
@@ -243,7 +243,7 @@ class ComercialCloudIT {
                                 "lojaId", LOJA_DEMO,
                                 "valorAbertura", 100.00
                         ))
-                        .when().post("/api/caixas/abrir")
+                        .when().post("/api/v1/caixas/abrir")
                         .then()
                         .statusCode(201)
                         .extract().path("id")
@@ -256,7 +256,7 @@ class ComercialCloudIT {
                 .header("X-Tenant-Id", TENANT_DEMO)
                 .queryParam("lojaId", LOJA_DEMO)
                 .queryParam("operadorId", USER_CAIXA)
-                .when().get("/api/caixas/aberto")
+                .when().get("/api/v1/caixas/aberto")
                 .then()
                 .extract().statusCode();
 
@@ -271,7 +271,7 @@ class ComercialCloudIT {
                 .header("X-User-Id", USER_CAIXA)
                 .contentType(ContentType.JSON)
                 .body(Map.of("lojaId", LOJA_DEMO))
-                .when().post("/api/vendas")
+                .when().post("/api/v1/vendas")
                 .then()
                 .statusCode(201)
                 .extract().path("id");
@@ -286,7 +286,7 @@ class ComercialCloudIT {
                         "produtoId", produtoId,
                         "quantidade", quantidade
                 ))
-                .when().post("/api/vendas/" + vendaId + "/itens")
+                .when().post("/api/v1/vendas/" + vendaId + "/itens")
                 .then()
                 .statusCode(200);
     }
@@ -300,7 +300,7 @@ class ComercialCloudIT {
                         "formaPagamento", "DINHEIRO",
                         "valor", valor
                 ))
-                .when().post("/api/vendas/" + vendaId + "/pagamentos")
+                .when().post("/api/v1/vendas/" + vendaId + "/pagamentos")
                 .then()
                 .statusCode(200);
     }
@@ -309,7 +309,7 @@ class ComercialCloudIT {
         List<Map<String, Object>> estoques = given()
                 .header("X-Tenant-Id", TENANT_DEMO)
                 .queryParam("lojaId", LOJA_DEMO)
-                .when().get("/api/estoques")
+                .when().get("/api/v1/estoques")
                 .then()
                 .statusCode(200)
                 .extract().jsonPath().getList("$");
@@ -326,7 +326,7 @@ class ComercialCloudIT {
                 .header("X-Tenant-Id", TENANT_DEMO)
                 .queryParam("lojaId", LOJA_DEMO)
                 .queryParam("operadorId", USER_CAIXA)
-                .when().get("/api/caixas/aberto");
+                .when().get("/api/v1/caixas/aberto");
 
         if (response.statusCode() == 200) {
             String id = response.then().extract().path("id");
@@ -335,7 +335,7 @@ class ComercialCloudIT {
                     .header("X-User-Id", USER_CAIXA)
                     .contentType(ContentType.JSON)
                     .body(Map.of("valorFechamentoInformado", 100.00))
-                    .when().post("/api/caixas/" + id + "/fechar")
+                    .when().post("/api/v1/caixas/" + id + "/fechar")
                     .then()
                     .statusCode(200);
         }
