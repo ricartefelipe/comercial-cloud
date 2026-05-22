@@ -1,0 +1,111 @@
+@baseUrl = http://localhost:8080
+@tenantId = 11111111-1111-1111-1111-111111111111
+@lojaId = 22222222-2222-2222-2222-222222222222
+@userId = 44444444-4444-4444-4444-444444444444
+
+### Health
+GET {{baseUrl}}/health
+
+### Dashboard resumo
+GET {{baseUrl}}/api/v1/dashboard/resumo?lojaId={{lojaId}}
+X-Tenant-Id: {{tenantId}}
+X-User-Id: {{userId}}
+
+### Listar produtos
+GET {{baseUrl}}/api/v1/produtos?page=0&size=20
+X-Tenant-Id: {{tenantId}}
+
+### Buscar produtos
+GET {{baseUrl}}/api/v1/produtos/busca?termo=coca
+X-Tenant-Id: {{tenantId}}
+
+### Criar produto
+POST {{baseUrl}}/api/v1/produtos
+X-Tenant-Id: {{tenantId}}
+Content-Type: application/json
+
+{
+  "sku": "PROD-001",
+  "codigoBarras": "7891000100103",
+  "nome": "Refrigerante 2L",
+  "descricao": "Refrigerante cola 2 litros",
+  "categoria": "Bebidas",
+  "unidadeMedida": "UN",
+  "precoVenda": 9.90,
+  "precoCusto": 5.50,
+  "controlaEstoque": true
+}
+
+### Ajuste de estoque
+POST {{baseUrl}}/api/v1/estoques/ajustes
+X-Tenant-Id: {{tenantId}}
+X-User-Id: {{userId}}
+Content-Type: application/json
+
+{
+  "lojaId": "{{lojaId}}",
+  "produtoId": "PREENCHER_PRODUTO_ID",
+  "quantidade": 50,
+  "motivo": "Estoque inicial"
+}
+
+### Abrir caixa
+POST {{baseUrl}}/api/v1/caixas/abrir
+X-Tenant-Id: {{tenantId}}
+X-User-Id: {{userId}}
+Content-Type: application/json
+
+{
+  "lojaId": "{{lojaId}}",
+  "valorAbertura": 100.00
+}
+
+### Caixa aberto
+GET {{baseUrl}}/api/v1/caixas/aberto?lojaId={{lojaId}}&operadorId={{userId}}
+X-Tenant-Id: {{tenantId}}
+
+### Criar venda
+POST {{baseUrl}}/api/v1/vendas
+X-Tenant-Id: {{tenantId}}
+X-User-Id: {{userId}}
+Content-Type: application/json
+
+{
+  "lojaId": "{{lojaId}}"
+}
+
+### Adicionar item
+POST {{baseUrl}}/api/v1/vendas/{{vendaId}}/itens
+X-Tenant-Id: {{tenantId}}
+Content-Type: application/json
+
+{
+  "produtoId": "PREENCHER_PRODUTO_ID",
+  "quantidade": 2,
+  "desconto": 0
+}
+
+### Adicionar pagamento
+POST {{baseUrl}}/api/v1/vendas/{{vendaId}}/pagamentos
+X-Tenant-Id: {{tenantId}}
+Content-Type: application/json
+
+{
+  "formaPagamento": "DINHEIRO",
+  "valor": 19.80
+}
+
+### Finalizar venda
+POST {{baseUrl}}/api/v1/vendas/{{vendaId}}/finalizar
+X-Tenant-Id: {{tenantId}}
+X-User-Id: {{userId}}
+
+### Fechar caixa
+POST {{baseUrl}}/api/v1/caixas/{{caixaId}}/fechar
+X-Tenant-Id: {{tenantId}}
+X-User-Id: {{userId}}
+Content-Type: application/json
+
+{
+  "valorFechamentoInformado": 119.80
+}

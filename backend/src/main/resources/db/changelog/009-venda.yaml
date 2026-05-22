@@ -1,0 +1,110 @@
+databaseChangeLog:
+  - changeSet:
+      id: 009-venda
+      author: comercialcloud
+      changes:
+        - createTable:
+            tableName: venda
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: tenant_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_venda_tenant
+                    references: tenant(id)
+              - column:
+                  name: loja_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_venda_loja
+                    references: loja(id)
+              - column:
+                  name: cliente_id
+                  type: UUID
+                  constraints:
+                    foreignKeyName: fk_venda_cliente
+                    references: cliente(id)
+              - column:
+                  name: usuario_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_venda_usuario
+                    references: usuario(id)
+              - column:
+                  name: caixa_id
+                  type: UUID
+                  constraints:
+                    foreignKeyName: fk_venda_caixa
+                    references: caixa(id)
+              - column:
+                  name: status
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: subtotal
+                  type: DECIMAL(15,2)
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: desconto
+                  type: DECIMAL(15,2)
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: total
+                  type: DECIMAL(15,2)
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: finalized_at
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  name: canceled_at
+                  type: TIMESTAMP WITH TIME ZONE
+        - createIndex:
+            indexName: idx_venda_tenant_id
+            tableName: venda
+            columns:
+              - column:
+                  name: tenant_id
+        - createIndex:
+            indexName: idx_venda_loja_id
+            tableName: venda
+            columns:
+              - column:
+                  name: loja_id
+        - createIndex:
+            indexName: idx_venda_status
+            tableName: venda
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: status
+        - createIndex:
+            indexName: idx_venda_created_at
+            tableName: venda
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: created_at

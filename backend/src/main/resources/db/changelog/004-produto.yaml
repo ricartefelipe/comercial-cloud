@@ -1,0 +1,86 @@
+databaseChangeLog:
+  - changeSet:
+      id: 004-produto
+      author: comercialcloud
+      changes:
+        - createTable:
+            tableName: produto
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: tenant_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_produto_tenant
+                    references: tenant(id)
+              - column:
+                  name: sku
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: codigo_barras
+                  type: VARCHAR(100)
+              - column:
+                  name: nome
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: descricao
+                  type: TEXT
+              - column:
+                  name: preco
+                  type: DECIMAL(15,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: ativo
+                  type: BOOLEAN
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+        - createIndex:
+            indexName: idx_produto_tenant_id
+            tableName: produto
+            columns:
+              - column:
+                  name: tenant_id
+        - createIndex:
+            indexName: idx_produto_sku
+            tableName: produto
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: sku
+        - createIndex:
+            indexName: idx_produto_codigo_barras
+            tableName: produto
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: codigo_barras
+        - addUniqueConstraint:
+            tableName: produto
+            columnNames: tenant_id, sku
+            constraintName: uk_produto_tenant_sku

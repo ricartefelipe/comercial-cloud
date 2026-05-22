@@ -1,0 +1,38 @@
+quarkus:
+  application:
+    name: comercial-cloud
+  http:
+    port: 8080
+    cors:
+      origins: "http://localhost:3000"
+      methods: GET,POST,PUT,PATCH,DELETE,OPTIONS
+      headers: accept,authorization,content-type,x-tenant-id,x-user-id,x-correlation-id
+      exposed-headers: x-correlation-id
+  datasource:
+    db-kind: postgresql
+    username: comercialcloud
+    password: comercialcloud
+    jdbc:
+      url: jdbc:postgresql://localhost:5432/comercialcloud
+  hibernate-orm:
+    database:
+      generation: none
+    physical-naming-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
+  liquibase:
+    migrate-at-start: true
+    change-log: db/changelog/db.changelog-master.yaml
+  smallrye-openapi:
+    info-title: ComercialCloud API
+    info-version: 1.0.0
+    info-description: API SaaS multitenant para PDV e retaguarda comercial
+  swagger-ui:
+    always-include: true
+    path: /q/swagger-ui
+  log:
+    console:
+      json: false
+    category:
+      "com.comercialcloud":
+        level: INFO
+  smallrye-jwt:
+    enabled: false

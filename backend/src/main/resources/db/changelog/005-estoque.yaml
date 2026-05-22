@@ -1,0 +1,69 @@
+databaseChangeLog:
+  - changeSet:
+      id: 005-estoque
+      author: comercialcloud
+      changes:
+        - createTable:
+            tableName: estoque
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: tenant_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_estoque_tenant
+                    references: tenant(id)
+              - column:
+                  name: loja_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_estoque_loja
+                    references: loja(id)
+              - column:
+                  name: produto_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_estoque_produto
+                    references: produto(id)
+              - column:
+                  name: quantidade
+                  type: DECIMAL(15,3)
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+        - createIndex:
+            indexName: idx_estoque_tenant_id
+            tableName: estoque
+            columns:
+              - column:
+                  name: tenant_id
+        - createIndex:
+            indexName: idx_estoque_loja_id
+            tableName: estoque
+            columns:
+              - column:
+                  name: loja_id
+        - createIndex:
+            indexName: idx_estoque_produto_id
+            tableName: estoque
+            columns:
+              - column:
+                  name: produto_id
+        - addUniqueConstraint:
+            tableName: estoque
+            columnNames: tenant_id, loja_id, produto_id
+            constraintName: uk_estoque_tenant_loja_produto

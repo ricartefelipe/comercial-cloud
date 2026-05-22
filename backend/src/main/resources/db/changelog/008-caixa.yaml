@@ -1,0 +1,85 @@
+databaseChangeLog:
+  - changeSet:
+      id: 008-caixa
+      author: comercialcloud
+      changes:
+        - createTable:
+            tableName: caixa
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: tenant_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_caixa_tenant
+                    references: tenant(id)
+              - column:
+                  name: loja_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_caixa_loja
+                    references: loja(id)
+              - column:
+                  name: usuario_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_caixa_usuario
+                    references: usuario(id)
+              - column:
+                  name: status
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: valor_abertura
+                  type: DECIMAL(15,2)
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: valor_fechamento
+                  type: DECIMAL(15,2)
+              - column:
+                  name: total_vendas
+                  type: DECIMAL(15,2)
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: aberto_em
+                  type: TIMESTAMP WITH TIME ZONE
+                  constraints:
+                    nullable: false
+              - column:
+                  name: fechado_em
+                  type: TIMESTAMP WITH TIME ZONE
+        - createIndex:
+            indexName: idx_caixa_tenant_id
+            tableName: caixa
+            columns:
+              - column:
+                  name: tenant_id
+        - createIndex:
+            indexName: idx_caixa_loja_id
+            tableName: caixa
+            columns:
+              - column:
+                  name: loja_id
+        - createIndex:
+            indexName: idx_caixa_status
+            tableName: caixa
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: loja_id
+              - column:
+                  name: status

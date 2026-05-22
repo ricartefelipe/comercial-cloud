@@ -1,0 +1,85 @@
+databaseChangeLog:
+  - changeSet:
+      id: 006-movimentacao-estoque
+      author: comercialcloud
+      changes:
+        - createTable:
+            tableName: movimentacao_estoque
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: tenant_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_mov_estoque_tenant
+                    references: tenant(id)
+              - column:
+                  name: loja_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_mov_estoque_loja
+                    references: loja(id)
+              - column:
+                  name: produto_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_mov_estoque_produto
+                    references: produto(id)
+              - column:
+                  name: tipo
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: quantidade
+                  type: DECIMAL(15,3)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: saldo_anterior
+                  type: DECIMAL(15,3)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: saldo_posterior
+                  type: DECIMAL(15,3)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: motivo
+                  type: VARCHAR(255)
+              - column:
+                  name: referencia_id
+                  type: UUID
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+        - createIndex:
+            indexName: idx_mov_estoque_tenant_id
+            tableName: movimentacao_estoque
+            columns:
+              - column:
+                  name: tenant_id
+        - createIndex:
+            indexName: idx_mov_estoque_loja_id
+            tableName: movimentacao_estoque
+            columns:
+              - column:
+                  name: loja_id
+        - createIndex:
+            indexName: idx_mov_estoque_produto_id
+            tableName: movimentacao_estoque
+            columns:
+              - column:
+                  name: produto_id

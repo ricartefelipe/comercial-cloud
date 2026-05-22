@@ -1,0 +1,218 @@
+databaseChangeLog:
+  - changeSet:
+      id: 014-seed-demo
+      author: comercialcloud
+      changes:
+        - insert:
+            tableName: tenant
+            columns:
+              - column:
+                  name: id
+                  value: 11111111-1111-1111-1111-111111111111
+              - column:
+                  name: nome
+                  value: Demo Tenant
+              - column:
+                  name: ativo
+                  valueBoolean: true
+        - insert:
+            tableName: tenant
+            columns:
+              - column:
+                  name: id
+                  value: aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa
+              - column:
+                  name: nome
+                  value: Tenant Secundario
+              - column:
+                  name: ativo
+                  valueBoolean: true
+        - insert:
+            tableName: loja
+            columns:
+              - column:
+                  name: id
+                  value: 22222222-2222-2222-2222-222222222222
+              - column:
+                  name: tenant_id
+                  value: 11111111-1111-1111-1111-111111111111
+              - column:
+                  name: nome
+                  value: Loja Demo
+              - column:
+                  name: ativa
+                  valueBoolean: true
+        - insert:
+            tableName: usuario
+            columns:
+              - column:
+                  name: id
+                  value: 33333333-3333-3333-3333-333333333333
+              - column:
+                  name: tenant_id
+                  value: 11111111-1111-1111-1111-111111111111
+              - column:
+                  name: nome
+                  value: Admin Demo
+              - column:
+                  name: email
+                  value: admin@demo.com
+              - column:
+                  name: role
+                  value: ADMIN
+              - column:
+                  name: ativo
+                  valueBoolean: true
+        - insert:
+            tableName: usuario
+            columns:
+              - column:
+                  name: id
+                  value: 44444444-4444-4444-4444-444444444444
+              - column:
+                  name: tenant_id
+                  value: 11111111-1111-1111-1111-111111111111
+              - column:
+                  name: nome
+                  value: Operador Caixa
+              - column:
+                  name: email
+                  value: caixa@demo.com
+              - column:
+                  name: role
+                  value: CAIXA
+              - column:
+                  name: ativo
+                  valueBoolean: true
+        - insert:
+            tableName: produto
+            columns:
+              - column:
+                  name: id
+                  value: 55555555-5555-5555-5555-555555555551
+              - column:
+                  name: tenant_id
+                  value: 11111111-1111-1111-1111-111111111111
+              - column:
+                  name: sku
+                  value: PROD-001
+              - column:
+                  name: codigo_barras
+                  value: 7891000100101
+              - column:
+                  name: nome
+                  value: Produto Demo 1
+              - column:
+                  name: descricao
+                  value: Produto de demonstracao 1
+              - column:
+                  name: preco
+                  valueNumeric: 10.00
+              - column:
+                  name: ativo
+                  valueBoolean: true
+        - insert:
+            tableName: produto
+            columns:
+              - column:
+                  name: id
+                  value: 55555555-5555-5555-5555-555555555552
+              - column:
+                  name: tenant_id
+                  value: 11111111-1111-1111-1111-111111111111
+              - column:
+                  name: sku
+                  value: PROD-002
+              - column:
+                  name: codigo_barras
+                  value: 7891000100102
+              - column:
+                  name: nome
+                  value: Produto Demo 2
+              - column:
+                  name: descricao
+                  value: Produto de demonstracao 2
+              - column:
+                  name: preco
+                  valueNumeric: 25.50
+              - column:
+                  name: ativo
+                  valueBoolean: true
+        - insert:
+            tableName: produto
+            columns:
+              - column:
+                  name: id
+                  value: 55555555-5555-5555-5555-555555555553
+              - column:
+                  name: tenant_id
+                  value: 11111111-1111-1111-1111-111111111111
+              - column:
+                  name: sku
+                  value: PROD-INATIVO
+              - column:
+                  name: codigo_barras
+                  value: 7891000100103
+              - column:
+                  name: nome
+                  value: Produto Inativo
+              - column:
+                  name: preco
+                  valueNumeric: 5.00
+              - column:
+                  name: ativo
+                  valueBoolean: false
+        - insert:
+            tableName: estoque
+            columns:
+              - column:
+                  name: id
+                  value: 66666666-6666-6666-6666-666666666661
+              - column:
+                  name: tenant_id
+                  value: 11111111-1111-1111-1111-111111111111
+              - column:
+                  name: loja_id
+                  value: 22222222-2222-2222-2222-222222222222
+              - column:
+                  name: produto_id
+                  value: 55555555-5555-5555-5555-555555555551
+              - column:
+                  name: quantidade
+                  valueNumeric: 100
+        - insert:
+            tableName: estoque
+            columns:
+              - column:
+                  name: id
+                  value: 66666666-6666-6666-6666-666666666662
+              - column:
+                  name: tenant_id
+                  value: 11111111-1111-1111-1111-111111111111
+              - column:
+                  name: loja_id
+                  value: 22222222-2222-2222-2222-222222222222
+              - column:
+                  name: produto_id
+                  value: 55555555-5555-5555-5555-555555555552
+              - column:
+                  name: quantidade
+                  valueNumeric: 50
+        - insert:
+            tableName: estoque
+            columns:
+              - column:
+                  name: id
+                  value: 66666666-6666-6666-6666-666666666663
+              - column:
+                  name: tenant_id
+                  value: 11111111-1111-1111-1111-111111111111
+              - column:
+                  name: loja_id
+                  value: 22222222-2222-2222-2222-222222222222
+              - column:
+                  name: produto_id
+                  value: 55555555-5555-5555-5555-555555555553
+              - column:
+                  name: quantidade
+                  valueNumeric: 10

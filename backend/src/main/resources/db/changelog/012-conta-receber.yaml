@@ -1,0 +1,60 @@
+databaseChangeLog:
+  - changeSet:
+      id: 012-conta-receber
+      author: comercialcloud
+      changes:
+        - createTable:
+            tableName: conta_receber
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: tenant_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_conta_receber_tenant
+                    references: tenant(id)
+              - column:
+                  name: venda_id
+                  type: UUID
+                  constraints:
+                    foreignKeyName: fk_conta_receber_venda
+                    references: venda(id)
+              - column:
+                  name: cliente_id
+                  type: UUID
+                  constraints:
+                    foreignKeyName: fk_conta_receber_cliente
+                    references: cliente(id)
+              - column:
+                  name: valor
+                  type: DECIMAL(15,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: vencimento
+                  type: DATE
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+        - createIndex:
+            indexName: idx_conta_receber_tenant_id
+            tableName: conta_receber
+            columns:
+              - column:
+                  name: tenant_id

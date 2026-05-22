@@ -1,0 +1,68 @@
+databaseChangeLog:
+  - changeSet:
+      id: 010-item-venda
+      author: comercialcloud
+      changes:
+        - createTable:
+            tableName: item_venda
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: tenant_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_item_venda_tenant
+                    references: tenant(id)
+              - column:
+                  name: venda_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_item_venda_venda
+                    references: venda(id)
+              - column:
+                  name: produto_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_item_venda_produto
+                    references: produto(id)
+              - column:
+                  name: quantidade
+                  type: DECIMAL(15,3)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: preco_unitario
+                  type: DECIMAL(15,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: subtotal
+                  type: DECIMAL(15,2)
+                  constraints:
+                    nullable: false
+        - createIndex:
+            indexName: idx_item_venda_tenant_id
+            tableName: item_venda
+            columns:
+              - column:
+                  name: tenant_id
+        - createIndex:
+            indexName: idx_item_venda_venda_id
+            tableName: item_venda
+            columns:
+              - column:
+                  name: venda_id
+        - createIndex:
+            indexName: idx_item_venda_produto_id
+            tableName: item_venda
+            columns:
+              - column:
+                  name: produto_id
