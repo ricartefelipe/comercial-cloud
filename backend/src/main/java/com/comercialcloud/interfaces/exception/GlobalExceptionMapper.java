@@ -3,6 +3,7 @@ package com.comercialcloud.interfaces.exception;
 import com.comercialcloud.domain.exception.BusinessException;
 import com.comercialcloud.domain.exception.ConflictException;
 import com.comercialcloud.domain.exception.NotFoundException;
+import com.comercialcloud.domain.exception.PaymentRequiredException;
 import com.comercialcloud.infrastructure.observability.CorrelationId;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
@@ -38,6 +39,10 @@ public class GlobalExceptionMapper implements ExceptionMapper<Exception> {
         }
         if (exception instanceof ConflictException ce) {
             return json(Response.Status.CONFLICT, ce.getCode(), ce.getMessage(), corr, ts, path);
+        }
+        if (exception instanceof PaymentRequiredException pre) {
+            return json(
+                    Response.Status.PAYMENT_REQUIRED, pre.getCode(), pre.getMessage(), corr, ts, path);
         }
         if (exception instanceof BusinessException bre) {
             return json(Response.Status.BAD_REQUEST, bre.getCode(), bre.getMessage(), corr, ts, path);

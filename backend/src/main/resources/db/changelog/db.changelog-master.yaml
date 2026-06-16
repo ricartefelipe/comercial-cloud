@@ -29,3 +29,13 @@ databaseChangeLog:
       file: db/changelog/014-seed-demo.yaml
   - include:
       file: db/changelog/015-configuracao.yaml
+  - include:
+      file: db/changelog/016-configuracao-fiscal.yaml
+  - include:
+      file: db/changelog/017-documento-fiscal.yaml
+  - include:
+      file: db/changelog/018-plano-assinatura.yaml
+  - include:
+      file: db/changelog/019-assinatura-tenant.yaml
+  - include:
+      file: db/changelog/020-fatura-assinatura.yaml

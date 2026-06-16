@@ -1,7 +1,9 @@
 package com.comercialcloud.infrastructure.security;
 
 import com.comercialcloud.domain.exception.BusinessException;
+import com.comercialcloud.domain.exception.PaymentRequiredException;
 import com.comercialcloud.domain.repository.UsuarioRepository;
+import com.comercialcloud.infrastructure.persistence.entity.TenantEntity;
 import jakarta.annotation.Priority;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Priorities;
@@ -19,6 +21,12 @@ public class TenantRequestFilter implements ContainerRequestFilter {
 
     private static final Set<String> PUBLIC_PREFIXES = Set.of("health", "q/", "api/v1/public/");
 
+    /**
+     * Prefixos isentos da verificação de tenant suspenso, para que um tenant
+     * inadimplente ainda consiga regularizar o pagamento (ver/pagar faturas).
+     */
+    private static final Set<String> BILLING_PREFIXES = Set.of("api/v1/billing");
+
     public static final String TENANT_HEADER = "X-Tenant-Id";
     public static final String USER_HEADER = "X-User-Id";
 
@@ -34,12 +42,26 @@ public class TenantRequestFilter implements ContainerRequestFilter {
     @Override
     public void filter(ContainerRequestContext ctx) {
         String path = ctx.getUriInfo().getPath();
-        if (PUBLIC_PREFIXES.stream().anyMatch(path::startsWith)) {
+        if (path != null && path.startsWith("/")) {
+            path = path.substring(1);
+        }
+        final String normalizedPath = path == null ? "" : path;
+        if (PUBLIC_PREFIXES.stream().anyMatch(normalizedPath::startsWith)) {
             return;
         }
 
         UUID tenantId = resolveTenantId(ctx);
         tenantContext.setTenantId(tenantId);
+
+        boolean isentoSuspensao = BILLING_PREFIXES.stream().anyMatch(normalizedPath::startsWith);
+        if (!isentoSuspensao) {
+            TenantEntity tenant = TenantEntity.findById(tenantId);
+            if (tenant != null && !tenant.ativo) {
+                throw new PaymentRequiredException(
+                        "TENANT_SUSPENSO",
+                        "Assinatura suspensa por inadimplência. Regularize o pagamento em /api/v1/billing.");
+            }
+        }
 
         UUID userId = resolveUserId(ctx);
         if (userId != null) {

@@ -1,0 +1,91 @@
+databaseChangeLog:
+  - changeSet:
+      id: 018-plano-assinatura
+      author: comercialcloud
+      changes:
+        - createTable:
+            tableName: plano_assinatura
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: codigo
+                  type: VARCHAR(30)
+                  constraints:
+                    nullable: false
+                    unique: true
+                    uniqueConstraintName: uk_plano_assinatura_codigo
+              - column:
+                  name: nome
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: preco_mensal
+                  type: DECIMAL(15,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: ativo
+                  type: BOOLEAN
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+        - insert:
+            tableName: plano_assinatura
+            columns:
+              - column:
+                  name: id
+                  value: "a1000000-0000-0000-0000-000000000001"
+              - column:
+                  name: codigo
+                  value: ESSENCIAL
+              - column:
+                  name: nome
+                  value: Essencial
+              - column:
+                  name: preco_mensal
+                  valueNumeric: 99.00
+              - column:
+                  name: ativo
+                  valueBoolean: true
+        - insert:
+            tableName: plano_assinatura
+            columns:
+              - column:
+                  name: id
+                  value: "a1000000-0000-0000-0000-000000000002"
+              - column:
+                  name: codigo
+                  value: PRO
+              - column:
+                  name: nome
+                  value: Pro
+              - column:
+                  name: preco_mensal
+                  valueNumeric: 199.00
+              - column:
+                  name: ativo
+                  valueBoolean: true
+        - insert:
+            tableName: plano_assinatura
+            columns:
+              - column:
+                  name: id
+                  value: "a1000000-0000-0000-0000-000000000003"
+              - column:
+                  name: codigo
+                  value: PREMIUM
+              - column:
+                  name: nome
+                  value: Premium
+              - column:
+                  name: preco_mensal
+                  valueNumeric: 349.00
+              - column:
+                  name: ativo
+                  valueBoolean: true

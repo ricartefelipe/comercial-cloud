@@ -43,6 +43,26 @@ quarkus:
       prometheus:
         path: /metrics
 
+comercial-cloud:
+  fiscal:
+    enabled: true
+    provider: sandbox
+    modelo-padrao: NFCE
+    max-tentativas: 5
+    scheduler:
+      every: 10s
+  billing:
+    enabled: true
+    gateway: sandbox
+    sandbox-comportamento: APROVAR_SEMPRE
+    plano-padrao: ESSENCIAL
+    trial-dias: 14
+    max-tentativas: 3
+    vencimento-dias: 5
+    scheduler:
+      faturamento-every: 1h
+      cobranca-every: 30m
+
 "%auth":
   quarkus:
     oidc:

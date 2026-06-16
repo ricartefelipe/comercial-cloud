@@ -1,0 +1,96 @@
+databaseChangeLog:
+  - changeSet:
+      id: 016-configuracao-fiscal
+      author: comercialcloud
+      changes:
+        - createTable:
+            tableName: configuracao_fiscal
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: tenant_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_configuracao_fiscal_tenant
+                    references: tenant(id)
+              - column:
+                  name: loja_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_configuracao_fiscal_loja
+                    references: loja(id)
+              - column:
+                  name: cnpj
+                  type: VARCHAR(14)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: inscricao_estadual
+                  type: VARCHAR(20)
+              - column:
+                  name: razao_social
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: regime_tributario
+                  type: VARCHAR(30)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: ambiente
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: uf
+                  type: VARCHAR(2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: csc_id
+                  type: VARCHAR(10)
+              - column:
+                  name: csc
+                  type: VARCHAR(100)
+              - column:
+                  name: serie_nfce
+                  type: INT
+                  defaultValueNumeric: 1
+                  constraints:
+                    nullable: false
+              - column:
+                  name: proximo_numero_nfce
+                  type: BIGINT
+                  defaultValueNumeric: 1
+                  constraints:
+                    nullable: false
+              - column:
+                  name: habilitado
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            constraintName: uk_configuracao_fiscal_loja
+            tableName: configuracao_fiscal
+            columnNames: tenant_id, loja_id
