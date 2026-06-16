@@ -3,6 +3,7 @@ package com.comercialcloud.application.venda;
 import com.comercialcloud.application.caixa.CaixaService;
 import com.comercialcloud.application.estoque.EstoqueService;
 import com.comercialcloud.application.financeiro.FinanceiroService;
+import com.comercialcloud.application.fiscal.FiscalService;
 import com.comercialcloud.domain.exception.BusinessException;
 import com.comercialcloud.domain.exception.NotFoundException;
 import com.comercialcloud.domain.model.Caixa;
@@ -10,6 +11,7 @@ import com.comercialcloud.domain.model.FormaPagamento;
 import com.comercialcloud.domain.model.ItemVenda;
 import com.comercialcloud.domain.model.PagamentoVenda;
 import com.comercialcloud.domain.model.Produto;
+import com.comercialcloud.domain.model.ModeloDocumentoFiscal;
 import com.comercialcloud.domain.model.StatusVenda;
 import com.comercialcloud.domain.model.Venda;
 import com.comercialcloud.domain.repository.ClienteRepository;
@@ -21,6 +23,7 @@ import com.comercialcloud.infrastructure.security.TenantContext;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -36,12 +39,17 @@ public class VendaService {
     @Inject CaixaService caixaService;
     @Inject EstoqueService estoqueService;
     @Inject FinanceiroService financeiroService;
+    @Inject FiscalService fiscalService;
     @Inject TenantContext tenantContext;
     @Inject AuditService auditService;
     @Inject VendaRepository vendaRepository;
     @Inject ProdutoRepository produtoRepository;
     @Inject ClienteRepository clienteRepository;
     @Inject LojaRepository lojaRepository;
+
+    @Inject
+    @ConfigProperty(name = "comercial-cloud.fiscal.modelo-padrao", defaultValue = "NFCE")
+    ModeloDocumentoFiscal modeloFiscalPadrao;
 
     @Transactional
     public Venda criar(UUID lojaId, UUID clienteId) {
@@ -195,6 +203,8 @@ public class VendaService {
         }
 
         Venda salva = vendaRepository.save(finalizada);
+        fiscalService.registrarEmissaoPendente(
+                tenantId, salva.lojaId(), salva.id(), modeloFiscalPadrao);
         auditService.registrar("Venda", vendaId, "FINALIZAR", "Total: " + salva.total());
         return salva;
     }

@@ -26,16 +26,24 @@ public class OnboardingResource {
     @POST
     public Response onboard(OnboardingBody request) {
         var result = tenantOnboardingService.onboard(
-                request.nomeFantasia(),
-                request.razaoSocial(),
-                request.cnpj(),
-                request.adminNome(),
-                request.adminEmail());
+                new TenantOnboardingService.OnboardRequest(
+                        request.nomeFantasia(),
+                        request.razaoSocial(),
+                        request.cnpj(),
+                        request.adminNome(),
+                        request.adminEmail(),
+                        request.planoCodigo(),
+                        request.comTrial(),
+                        request.seedDemo()));
 
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("tenantId", result.tenantId());
         body.put("lojaId", result.lojaId());
         body.put("adminUserId", result.adminUserId());
+        body.put("planoCodigo", result.planoCodigo());
+        body.put("assinaturaStatus", result.assinaturaStatus());
+        body.put("trialFim", result.trialFim());
+        body.put("produtosDemo", result.produtosDemo());
         return Response.status(Response.Status.CREATED).entity(body).build();
     }
 
@@ -44,5 +52,8 @@ public class OnboardingResource {
             @NotBlank String razaoSocial,
             @NotBlank String cnpj,
             @NotBlank String adminNome,
-            @NotBlank String adminEmail) {}
+            @NotBlank String adminEmail,
+            String planoCodigo,
+            Boolean comTrial,
+            Boolean seedDemo) {}
 }

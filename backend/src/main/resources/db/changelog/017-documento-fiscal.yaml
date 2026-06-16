@@ -1,0 +1,94 @@
+databaseChangeLog:
+  - changeSet:
+      id: 017-documento-fiscal
+      author: comercialcloud
+      changes:
+        - createTable:
+            tableName: documento_fiscal
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: tenant_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_documento_fiscal_tenant
+                    references: tenant(id)
+              - column:
+                  name: loja_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_documento_fiscal_loja
+                    references: loja(id)
+              - column:
+                  name: venda_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_documento_fiscal_venda
+                    references: venda(id)
+              - column:
+                  name: modelo
+                  type: VARCHAR(10)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: numero
+                  type: INT
+              - column:
+                  name: serie
+                  type: INT
+              - column:
+                  name: chave_acesso
+                  type: VARCHAR(44)
+              - column:
+                  name: protocolo
+                  type: VARCHAR(60)
+              - column:
+                  name: motivo_rejeicao
+                  type: VARCHAR(500)
+              - column:
+                  name: url_danfe
+                  type: VARCHAR(500)
+              - column:
+                  name: provider_ref
+                  type: VARCHAR(100)
+              - column:
+                  name: tentativas
+                  type: INT
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            constraintName: uk_documento_fiscal_venda_modelo
+            tableName: documento_fiscal
+            columnNames: tenant_id, venda_id, modelo
+        - createIndex:
+            indexName: idx_documento_fiscal_status
+            tableName: documento_fiscal
+            columns:
+              - column:
+                  name: status
