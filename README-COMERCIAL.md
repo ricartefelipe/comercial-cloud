@@ -85,7 +85,7 @@ Estes pontos estão **mapeados e com interface pronta**, mas usam adapters sandb
 | Gap | Adapter atual | Substituir por |
 |-----|---------------|----------------|
 | Pagamentos | `SandboxGatewayPagamento` | **Asaas** (`billing.gateway=asaas`) ou Iugu, Stripe, Pagar.me |
-| NFC-e / SEFAZ | `SandboxFiscalProvider` | PlugNotas, Focus NFe, NFe.io |
+| NFC-e / SEFAZ | `SandboxFiscalProvider` | **Focus NFe** (`fiscal.provider=focusnfe`) ou PlugNotas/NFe.io |
 | Login pós-onboarding | Modo demo + headers | Keycloak com protocol mappers (`tenant_id`, `app_user_id`) |
 | E-mails transacionais | — | SMTP / SendGrid / SES |
 | Backup / HTTPS / domínio | — | Infra de produção |
@@ -116,6 +116,21 @@ comercial-cloud:
 ```
 
 Importe o realm em `infra/keycloak/realm-comercialcloud.json` (protocol mappers `tenant_id`, `app_user_id`, `loja_id` incluídos).
+
+### Ativar Focus NFe (NFC-e real)
+
+```yaml
+comercial-cloud:
+  fiscal:
+    provider: focusnfe
+    focusnfe:
+      enabled: true
+      token: ${FOCUSNFE_TOKEN}
+```
+
+Homologação usa `https://homologacao.focusnfe.com.br` automaticamente quando `ambiente=HOMOLOGACAO` na configuração fiscal da loja. Produção usa `https://api.focusnfe.com.br`.
+
+Cadastre a empresa emitente no painel Focus NFe e informe CSC/série na tela `/fiscal` do ComercialCloud.
 
 ---
 

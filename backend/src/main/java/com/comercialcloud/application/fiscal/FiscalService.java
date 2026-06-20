@@ -238,7 +238,8 @@ public class FiscalService {
                                         doc.chaveAcesso,
                                         doc.protocolo,
                                         justificativa,
-                                        AmbienteFiscal.valueOf(config.ambiente)));
+                                        AmbienteFiscal.valueOf(config.ambiente),
+                                        doc.providerRef != null ? doc.providerRef : doc.vendaId.toString()));
         if (!resultado.sucesso()) {
             throw new BusinessException("CANCELAMENTO_REJEITADO", resultado.motivo());
         }

@@ -47,6 +47,11 @@ comercial-cloud:
   fiscal:
     enabled: true
     provider: sandbox
+    focusnfe:
+      enabled: false
+      token: ${FOCUSNFE_TOKEN:}
+      base-url-homologacao: https://homologacao.focusnfe.com.br
+      base-url-producao: https://api.focusnfe.com.br
     modelo-padrao: NFCE
     max-tentativas: 5
     scheduler:
