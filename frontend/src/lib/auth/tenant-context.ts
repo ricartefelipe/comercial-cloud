@@ -41,6 +41,10 @@ export function getLojaId(): string {
   return readStorage(LOJA_KEY) ?? DEMO_LOJA_ID;
 }
 
+export function setLojaId(lojaId: string): void {
+  writeStorage(LOJA_KEY, lojaId);
+}
+
 export function setWorkspaceContext(ctx: WorkspaceContext): void {
   writeStorage(TENANT_KEY, ctx.tenantId);
   writeStorage(USER_KEY, ctx.userId);

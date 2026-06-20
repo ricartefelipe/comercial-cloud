@@ -18,6 +18,7 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useBranding } from "@/components/branding/BrandingProvider";
 
 const menuItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -28,6 +29,7 @@ const menuItems = [
   { href: "/caixa", label: "Caixa", icon: Wallet },
   { href: "/financeiro", label: "Financeiro", icon: CreditCard },
   { href: "/fiscal", label: "Fiscal", icon: FileText },
+  { href: "/lojas", label: "Lojas", icon: Store },
   { href: "/assinatura", label: "Assinatura", icon: Receipt },
   { href: "/usuarios", label: "Usuários", icon: Users },
   { href: "/configuracoes", label: "Configurações", icon: Settings },
@@ -40,6 +42,7 @@ interface SidebarProps {
 
 export function Sidebar({ open, onClose }: SidebarProps) {
   const pathname = usePathname();
+  const branding = useBranding();
 
   return (
     <>
@@ -57,9 +60,14 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         )}
       >
         <div className="flex h-16 items-center justify-between border-b border-slate-700 px-4">
-          <div className="flex items-center gap-2">
-            <Store className="h-6 w-6 text-brand-400" />
-            <span className="text-lg font-bold">ComercialCloud</span>
+          <div className="flex items-center gap-2 min-w-0">
+            {branding.logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={branding.logoUrl} alt="" className="h-6 w-6 rounded object-contain" />
+            ) : (
+              <Store className="h-6 w-6 shrink-0 text-brand-400" />
+            )}
+            <span className="truncate text-lg font-bold">{branding.nomeExibicao}</span>
           </div>
           <button onClick={onClose} className="rounded-lg p-1 hover:bg-slate-800 lg:hidden">
             <X className="h-5 w-5" />

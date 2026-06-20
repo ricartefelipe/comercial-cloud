@@ -1,0 +1,35 @@
+databaseChangeLog:
+  - changeSet:
+      id: 022-plano-max-lojas
+      author: comercialcloud
+      changes:
+        - addColumn:
+            tableName: plano_assinatura
+            columns:
+              - column:
+                  name: max_lojas
+                  type: INT
+                  defaultValueNumeric: 1
+                  constraints:
+                    nullable: false
+        - update:
+            tableName: plano_assinatura
+            columns:
+              - column:
+                  name: max_lojas
+                  valueNumeric: 1
+            where: codigo = 'ESSENCIAL'
+        - update:
+            tableName: plano_assinatura
+            columns:
+              - column:
+                  name: max_lojas
+                  valueNumeric: 3
+            where: codigo = 'PRO'
+        - update:
+            tableName: plano_assinatura
+            columns:
+              - column:
+                  name: max_lojas
+                  valueNumeric: 10
+            where: codigo = 'PREMIUM'

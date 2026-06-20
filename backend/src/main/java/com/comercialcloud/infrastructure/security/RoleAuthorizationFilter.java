@@ -17,6 +17,8 @@ public class RoleAuthorizationFilter implements ContainerRequestFilter {
     private static final Set<String> PROTECTED_PREFIXES = Set.of(
             "api/v1/usuarios",
             "api/v1/configuracoes",
+            "api/v1/lojas",
+            "api/v1/branding",
             "api/v1/billing/faturar",
             "api/v1/billing/cobrar",
             "api/v1/fiscal/processar");
@@ -53,6 +55,10 @@ public class RoleAuthorizationFilter implements ContainerRequestFilter {
 
         if (path.startsWith("api/v1/usuarios") && "POST".equalsIgnoreCase(method) && !tenantContext.isAdmin()) {
             throw new ForbiddenException("Apenas ADMIN pode criar usuários");
+        }
+
+        if (path.startsWith("api/v1/lojas") && isWriteMethod(method) && !tenantContext.isAdmin()) {
+            throw new ForbiddenException("Apenas ADMIN pode gerenciar lojas");
         }
     }
 

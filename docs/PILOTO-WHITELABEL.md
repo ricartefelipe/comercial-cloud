@@ -90,4 +90,4 @@ SaaS direto ao lojista: adiar até 1 piloto white-label estável.
 
 - Coletar feedback (PDV, fiscal, billing)
 - Definir canal de suporte (e-mail/Slack)
-- Roadmap v1.2 (multi-loja Premium, relatórios) só após receita do piloto
+- Roadmap v1.3 (relatórios avançados, app mobile) só após receita do piloto

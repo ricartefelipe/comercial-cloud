@@ -32,6 +32,7 @@ public class PlanosPublicosResource {
                     map.put("codigo", p.codigo);
                     map.put("nome", p.nome);
                     map.put("precoMensal", p.precoMensal);
+                    map.put("maxLojas", p.maxLojas);
                     return map;
                 })
                 .toList();

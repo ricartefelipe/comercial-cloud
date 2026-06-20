@@ -413,4 +413,12 @@ public class BillingService {
         throw new BusinessException(
                 "GATEWAY_INDISPONIVEL", "Nenhum gateway de pagamento configurado para '" + gatewayNome + "'");
     }
+
+    public int limiteLojas(UUID tenantId) {
+        return assinaturaDoTenant(tenantId)
+                .map(a -> PlanoAssinaturaEntity.findById(a.planoId))
+                .filter(p -> p != null)
+                .map(p -> ((PlanoAssinaturaEntity) p).maxLojas)
+                .orElse(1);
+    }
 }
