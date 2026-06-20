@@ -79,8 +79,8 @@ SaaS direto ao lojista: adiar até 1 piloto white-label estável.
 
 - `./scripts/backup-postgres.sh` agendado (cron diário)
 - HTTPS em api + app + auth
-- `config.js` landing com URL trial real
-- Termos/privacidade publicados
+- `/cadastro` acessível no domínio do operador SaaS (`APP_URL`)
+- Termos/privacidade no domínio do app (`NEXT_PUBLIC_TERMS_URL` / `NEXT_PUBLIC_PRIVACY_URL`)
 - 1 NFC-e autorizada em homologação
 - 1 pagamento Asaas sandbox confirmado via webhook
 

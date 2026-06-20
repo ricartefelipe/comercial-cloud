@@ -226,30 +226,22 @@ server {
 
 ---
 
-## 8. Landing + trial
+## 8. Frontend SaaS (cadastro / trial)
 
-No repositório `comercial-cloud-landing`, configure antes de divulgar:
+O **app** (`frontend`) é onde mora o trial (`/cadastro`). Isso é independente da landing de venda do boilerplate (`comercial-cloud-landing`, repositório separado — Kiwify/ads).
 
-```javascript
-window.COMERCIALCLOUD_CONFIG = {
-  trialUrl: 'https://app.seudominio.com.br/cadastro',
-  contactEmail: 'contato@seudominio.com.br'
-};
+```bash
+NEXT_PUBLIC_API_URL=https://api.seudominio.com.br
+APP_URL=https://app.seudominio.com.br
+NEXT_PUBLIC_TERMS_URL=https://app.seudominio.com.br/termos
+NEXT_PUBLIC_PRIVACY_URL=https://app.seudominio.com.br/privacidade
 ```
 
----
-
-## 9. Piloto white-label (roteiro sugerido)
-
-1. Entregar zip comercial (`scripts/package-dist.sh`) + este guia
-2. Homologação conjunta (checklist §5) com o parceiro
-3. Branding do parceiro (logo/cores) — documentar no contrato
-4. Go-live produção Asaas + Focus + Keycloak
-5. Suporte 1º nível pelo parceiro; 2º nível sua equipe
+Termos e privacidade: publique no **domínio do operador SaaS** (você ou o parceiro white-label), não na landing de venda do código.
 
 ---
 
-## 8. E-mail transacional
+## 9. E-mail transacional
 
 Ative SMTP para boas-vindas, fatura, suspensão e confirmação de pagamento:
 
@@ -276,7 +268,7 @@ docker compose -f docker-compose.yml -f docker-compose.homolog.yml up -d
 
 ---
 
-## 9. Backup
+## 10. Backup
 
 ```bash
 ./scripts/backup-postgres.sh
@@ -285,7 +277,7 @@ docker compose -f docker-compose.yml -f docker-compose.homolog.yml up -d
 
 ---
 
-## 10. Verificação rápida
+## 11. Verificação rápida
 
 ```bash
 ./scripts/verify-homologacao.sh
@@ -293,9 +285,15 @@ docker compose -f docker-compose.yml -f docker-compose.homolog.yml up -d
 
 ---
 
-## 11. Piloto white-label
+## 12. Piloto white-label
 
 Roteiro completo: [`PILOTO-WHITELABEL.md`](./PILOTO-WHITELABEL.md)
+
+1. Entregar zip comercial (`scripts/package-dist.sh`) + este guia
+2. Homologação conjunta (checklist §5) com o parceiro
+3. Branding do parceiro (logo/cores) — documentar no contrato
+4. Go-live produção Asaas + Focus + Keycloak
+5. Suporte 1º nível pelo parceiro; 2º nível sua equipe
 
 ---
 
