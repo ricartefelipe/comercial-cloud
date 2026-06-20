@@ -144,6 +144,8 @@ public class BillingResource {
         map.put("transacaoRef", f.transacaoRef);
         map.put("motivoRecusa", f.motivoRecusa);
         map.put("pagaEm", f.pagaEm);
+        map.put("checkoutUrl", f.checkoutUrl);
+        map.put("gatewayPaymentId", f.gatewayPaymentId);
         return map;
     }
 

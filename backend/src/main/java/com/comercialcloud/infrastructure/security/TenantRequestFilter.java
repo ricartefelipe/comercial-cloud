@@ -97,6 +97,18 @@ public class TenantRequestFilter implements ContainerRequestFilter {
     }
 
     private UUID resolveUserId(ContainerRequestContext ctx) {
+        if (jwt.isResolvable()) {
+            JsonWebToken token = jwt.get();
+            Object claim = token.getClaim("app_user_id");
+            if (claim != null && !claim.toString().isBlank()) {
+                try {
+                    return UUID.fromString(claim.toString().trim());
+                } catch (IllegalArgumentException e) {
+                    throw new BusinessException("USER_INVALID", "Claim app_user_id deve ser um UUID válido");
+                }
+            }
+        }
+
         String userHeader = ctx.getHeaderString(USER_HEADER);
         if (userHeader == null || userHeader.isBlank()) {
             return null;

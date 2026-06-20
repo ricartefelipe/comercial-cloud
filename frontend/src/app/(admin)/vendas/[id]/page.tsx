@@ -7,7 +7,8 @@ import { ErrorMessage, LoadingSpinner, PageHeader } from "@/components/ui/Common
 import { ConfirmModal } from "@/components/ui/Modal";
 import { formatCurrency, formatDateTime } from "@/lib/format";
 import { cancelarVenda, getVenda } from "@/lib/api/vendas";
-import { FORMA_PAGAMENTO_LABELS, STATUS_VENDA_LABELS } from "@/types";
+import { getDocumentoFiscalPorVenda } from "@/lib/api/fiscal";
+import { FORMA_PAGAMENTO_LABELS, STATUS_DOCUMENTO_FISCAL_LABELS, STATUS_VENDA_LABELS } from "@/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -34,6 +35,12 @@ export default function VendaDetalhePage() {
   const { data: venda, isLoading, error } = useQuery({
     queryKey: ["venda", id],
     queryFn: () => getVenda(id),
+  });
+
+  const { data: documentoFiscal } = useQuery({
+    queryKey: ["fiscal-venda", id],
+    queryFn: () => getDocumentoFiscalPorVenda(id),
+    enabled: venda?.status === "FINALIZADA",
   });
 
   const cancelMutation = useMutation({
@@ -134,6 +141,40 @@ export default function VendaDetalhePage() {
               <p className="text-sm text-slate-500">Nenhum pagamento registrado.</p>
             )}
           </Card>
+
+          {venda.status === "FINALIZADA" && (
+            <Card>
+              <CardHeader title="Documento fiscal" />
+              {documentoFiscal ? (
+                <dl className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <dt className="text-slate-500">Status</dt>
+                    <dd>{STATUS_DOCUMENTO_FISCAL_LABELS[documentoFiscal.status]}</dd>
+                  </div>
+                  {documentoFiscal.chaveAcesso && (
+                    <div>
+                      <dt className="text-slate-500">Chave de acesso</dt>
+                      <dd className="mt-1 break-all font-mono text-xs">{documentoFiscal.chaveAcesso}</dd>
+                    </div>
+                  )}
+                  {documentoFiscal.urlDanfe && (
+                    <a
+                      href={documentoFiscal.urlDanfe}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-block text-brand-600 hover:underline"
+                    >
+                      Abrir DANFE
+                    </a>
+                  )}
+                </dl>
+              ) : (
+                <p className="text-sm text-slate-500">
+                  NFC-e em processamento ou não configurada.
+                </p>
+              )}
+            </Card>
+          )}
         </div>
 
         <Card>

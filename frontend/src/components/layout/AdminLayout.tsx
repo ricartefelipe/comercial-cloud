@@ -1,11 +1,20 @@
 "use client";
 
-import { Menu } from "lucide-react";
+import { Menu, LogOut } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { clearSession } from "@/lib/auth/session";
+import { Button } from "@/components/ui/Button";
 import { Sidebar } from "./Sidebar";
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const handleLogout = () => {
+    clearSession();
+    router.push("/login");
+  };
 
   return (
     <div className="flex min-h-screen bg-slate-50">
@@ -22,11 +31,10 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           <div className="flex-1">
             <p className="text-sm text-slate-500">Retaguarda</p>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-full bg-brand-100 flex items-center justify-center">
-              <span className="text-xs font-semibold text-brand-700">AD</span>
-            </div>
-          </div>
+          <Button variant="outline" size="sm" onClick={handleLogout}>
+            <LogOut className="h-4 w-4" />
+            Sair
+          </Button>
         </header>
 
         <main className="flex-1 p-4 lg:p-6">{children}</main>

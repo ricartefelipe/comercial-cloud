@@ -14,7 +14,12 @@ import java.util.Set;
 @Priority(Priorities.AUTHORIZATION)
 public class RoleAuthorizationFilter implements ContainerRequestFilter {
 
-    private static final Set<String> PROTECTED_PREFIXES = Set.of("api/v1/usuarios", "api/v1/configuracoes");
+    private static final Set<String> PROTECTED_PREFIXES = Set.of(
+            "api/v1/usuarios",
+            "api/v1/configuracoes",
+            "api/v1/billing/faturar",
+            "api/v1/billing/cobrar",
+            "api/v1/fiscal/processar");
 
     @Inject
     TenantContext tenantContext;
@@ -22,6 +27,16 @@ public class RoleAuthorizationFilter implements ContainerRequestFilter {
     @Override
     public void filter(ContainerRequestContext ctx) {
         String path = ctx.getUriInfo().getPath();
+
+        if (path.startsWith("api/v1/billing/faturar")
+                || path.startsWith("api/v1/billing/cobrar")
+                || path.startsWith("api/v1/fiscal/processar")) {
+            if (!tenantContext.isAdmin()) {
+                throw new ForbiddenException("Apenas ADMIN pode executar esta operação");
+            }
+            return;
+        }
+
         if (PROTECTED_PREFIXES.stream().noneMatch(path::startsWith)) {
             return;
         }

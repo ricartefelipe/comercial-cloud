@@ -32,6 +32,7 @@ public class OnboardingResource {
                         request.cnpj(),
                         request.adminNome(),
                         request.adminEmail(),
+                        request.adminSenha(),
                         request.planoCodigo(),
                         request.comTrial(),
                         request.seedDemo()));
@@ -44,6 +45,16 @@ public class OnboardingResource {
         body.put("assinaturaStatus", result.assinaturaStatus());
         body.put("trialFim", result.trialFim());
         body.put("produtosDemo", result.produtosDemo());
+        body.put("loginEmail", result.loginEmail());
+        if (result.loginSenha() != null) {
+            body.put("loginSenha", result.loginSenha());
+        }
+        body.put("modoAcesso", result.keycloakStatus());
+        body.put(
+                "proximoPasso",
+                "keycloak".equals(result.keycloakStatus())
+                        ? "Faça login com o e-mail e senha informados no cadastro."
+                        : "Modo demo ativo com os IDs retornados. Configure Keycloak para login com senha.");
         return Response.status(Response.Status.CREATED).entity(body).build();
     }
 
@@ -53,6 +64,7 @@ public class OnboardingResource {
             @NotBlank String cnpj,
             @NotBlank String adminNome,
             @NotBlank String adminEmail,
+            String adminSenha,
             String planoCodigo,
             Boolean comTrial,
             Boolean seedDemo) {}

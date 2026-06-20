@@ -294,3 +294,154 @@ export const STATUS_CONTA_LABELS: Record<StatusContaReceber, string> = {
   PAGO: "Pago",
   CANCELADO: "Cancelado",
 };
+
+export type StatusAssinatura =
+  | "TRIAL"
+  | "ATIVA"
+  | "SUSPENSA"
+  | "CANCELADA"
+  | "INADIMPLENTE";
+
+export type StatusFatura = "PENDENTE" | "PAGA" | "VENCIDA" | "FALHA" | "CANCELADA";
+
+export type StatusDocumentoFiscal =
+  | "PENDENTE"
+  | "PROCESSANDO"
+  | "AUTORIZADA"
+  | "REJEITADA"
+  | "CANCELADA";
+
+export type AmbienteFiscal = "HOMOLOGACAO" | "PRODUCAO";
+export type RegimeTributario = "SIMPLES_NACIONAL" | "LUCRO_PRESUMIDO" | "LUCRO_REAL";
+
+export interface PlanoPublico {
+  codigo: string;
+  nome: string;
+  precoMensal: number;
+}
+
+export interface PlanoAssinatura extends PlanoPublico {
+  id?: string;
+  ativo?: boolean;
+}
+
+export interface OnboardingRequest {
+  nomeFantasia: string;
+  razaoSocial: string;
+  cnpj: string;
+  adminNome: string;
+  adminEmail: string;
+  adminSenha?: string;
+  planoCodigo?: string;
+  comTrial?: boolean;
+  seedDemo?: boolean;
+}
+
+export interface OnboardingResult {
+  tenantId: string;
+  lojaId: string;
+  adminUserId: string;
+  planoCodigo: string;
+  assinaturaStatus: StatusAssinatura;
+  trialFim?: string;
+  produtosDemo: number;
+  proximoPasso?: string;
+  loginEmail?: string;
+  loginSenha?: string;
+  modoAcesso?: string;
+}
+
+export interface AssinaturaTenant {
+  id: string;
+  tenantId: string;
+  planoId: string;
+  status: StatusAssinatura;
+  inicio?: string;
+  proximaCobranca?: string;
+  trialFim?: string;
+  tentativasFalha?: number;
+}
+
+export interface FaturaAssinatura {
+  id: string;
+  assinaturaId: string;
+  competencia?: string;
+  valor: number;
+  vencimento?: string;
+  status: StatusFatura;
+  tentativas?: number;
+  transacaoRef?: string;
+  motivoRecusa?: string;
+  pagaEm?: string;
+  checkoutUrl?: string;
+  gatewayPaymentId?: string;
+}
+
+export interface ConfiguracaoFiscal {
+  id?: string;
+  lojaId: string;
+  cnpj: string;
+  inscricaoEstadual?: string;
+  razaoSocial: string;
+  regimeTributario: RegimeTributario;
+  ambiente: AmbienteFiscal;
+  uf: string;
+  serieNfce?: number;
+  proximoNumeroNfce?: number;
+  habilitado: boolean;
+}
+
+export interface ConfiguracaoFiscalRequest {
+  lojaId: string;
+  cnpj: string;
+  inscricaoEstadual?: string;
+  razaoSocial: string;
+  regimeTributario: RegimeTributario;
+  ambiente: AmbienteFiscal;
+  uf: string;
+  cscId?: string;
+  csc?: string;
+  serieNfce?: number;
+  habilitado: boolean;
+}
+
+export interface DocumentoFiscal {
+  id: string;
+  lojaId: string;
+  vendaId: string;
+  modelo: string;
+  status: StatusDocumentoFiscal;
+  numero?: number;
+  serie?: number;
+  chaveAcesso?: string;
+  protocolo?: string;
+  motivoRejeicao?: string;
+  urlDanfe?: string;
+  tentativas?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export const STATUS_ASSINATURA_LABELS: Record<StatusAssinatura, string> = {
+  TRIAL: "Trial",
+  ATIVA: "Ativa",
+  SUSPENSA: "Suspensa",
+  CANCELADA: "Cancelada",
+  INADIMPLENTE: "Inadimplente",
+};
+
+export const STATUS_FATURA_LABELS: Record<StatusFatura, string> = {
+  PENDENTE: "Pendente",
+  PAGA: "Paga",
+  VENCIDA: "Vencida",
+  FALHA: "Falha",
+  CANCELADA: "Cancelada",
+};
+
+export const STATUS_DOCUMENTO_FISCAL_LABELS: Record<StatusDocumentoFiscal, string> = {
+  PENDENTE: "Pendente",
+  PROCESSANDO: "Processando",
+  AUTORIZADA: "Autorizada",
+  REJEITADA: "Rejeitada",
+  CANCELADA: "Cancelada",
+};

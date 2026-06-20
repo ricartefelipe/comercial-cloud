@@ -77,7 +77,10 @@ npm run dev
 
 Acesse:
 - Login: `http://localhost:3000/login` (Keycloak ou **modo demo**)
+- Cadastro trial: `http://localhost:3000/cadastro`
 - Retaguarda: `http://localhost:3000/dashboard`
+- Assinatura/billing: `http://localhost:3000/assinatura`
+- Fiscal NFC-e: `http://localhost:3000/fiscal`
 - PDV: `http://localhost:3000/pdv`
 
 ### 4. Keycloak (opcional)
@@ -100,7 +103,7 @@ Backend com JWT: `./mvnw quarkus:dev -Dquarkus.profile=auth`
 
 ```bash
 cd backend
-./mvnw clean -Dtest=ComercialCloudIT test
+./mvnw clean -Dtest=ComercialCloudIT,FiscalBillingIT test
 ```
 
 ### 6. Testes E2E (Playwright)

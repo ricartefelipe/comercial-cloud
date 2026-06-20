@@ -4,10 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BarChart3,
-  Box,
   CreditCard,
+  FileText,
   LayoutDashboard,
   Package,
+  Receipt,
   Settings,
   ShoppingCart,
   Store,
@@ -26,6 +27,8 @@ const menuItems = [
   { href: "/vendas", label: "Vendas", icon: ShoppingCart },
   { href: "/caixa", label: "Caixa", icon: Wallet },
   { href: "/financeiro", label: "Financeiro", icon: CreditCard },
+  { href: "/fiscal", label: "Fiscal", icon: FileText },
+  { href: "/assinatura", label: "Assinatura", icon: Receipt },
   { href: "/usuarios", label: "Usuários", icon: Users },
   { href: "/configuracoes", label: "Configurações", icon: Settings },
 ];

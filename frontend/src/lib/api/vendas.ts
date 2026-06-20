@@ -1,5 +1,5 @@
 import { apiClient, buildQuery } from "@/lib/api/client";
-import { LOJA_ID } from "@/lib/constants";
+import { getLojaId } from "@/lib/auth/tenant-context";
 import type {
   ItemVendaRequest,
   PagamentoVendaRequest,
@@ -14,7 +14,7 @@ export async function listVendas(params?: {
 }): Promise<Venda[]> {
   return apiClient<Venda[]>(
     `/api/v1/vendas${buildQuery({
-      lojaId: params?.lojaId ?? LOJA_ID,
+      lojaId: params?.lojaId ?? getLojaId(),
       dataInicio: params?.dataInicio,
       dataFim: params?.dataFim,
     })}`,

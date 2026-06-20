@@ -1,0 +1,26 @@
+databaseChangeLog:
+  - changeSet:
+      id: 021-fatura-checkout-gateway
+      author: comercialcloud
+      changes:
+        - addColumn:
+            tableName: fatura_assinatura
+            columns:
+              - column:
+                  name: checkout_url
+                  type: varchar(512)
+              - column:
+                  name: gateway_payment_id
+                  type: varchar(100)
+        - addColumn:
+            tableName: assinatura_tenant
+            columns:
+              - column:
+                  name: asaas_customer_id
+                  type: varchar(100)
+              - column:
+                  name: billing_email
+                  type: varchar(255)
+              - column:
+                  name: billing_cnpj
+                  type: varchar(20)

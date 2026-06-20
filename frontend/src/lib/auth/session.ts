@@ -1,3 +1,8 @@
+import {
+  clearWorkspaceContext,
+  resetWorkspaceToDemo,
+} from "@/lib/auth/tenant-context";
+
 const TOKEN_KEY = "cc_access_token";
 const DEMO_MODE_KEY = "cc_demo_mode";
 
@@ -30,6 +35,7 @@ export function clearToken(): void {
 
 export function enableDemoMode(): void {
   if (typeof window === "undefined") return;
+  resetWorkspaceToDemo();
   sessionStorage.setItem(DEMO_MODE_KEY, "true");
   setCookie(DEMO_MODE_KEY, "true");
 }
@@ -52,4 +58,5 @@ export function isAuthenticated(): boolean {
 export function clearSession(): void {
   clearToken();
   clearDemoMode();
+  clearWorkspaceContext();
 }

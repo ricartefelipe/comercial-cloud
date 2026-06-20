@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/Card";
 import { ErrorMessage } from "@/components/ui/Common";
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
+import { getCaixaAberto } from "@/lib/api/caixa";
 import { listClientes } from "@/lib/api/clientes";
 import { buscarProdutos } from "@/lib/api/produtos";
 import {
@@ -15,7 +16,7 @@ import {
   finalizarVenda,
   removeItemVenda,
 } from "@/lib/api/vendas";
-import { LOJA_ID, USER_ID } from "@/lib/constants";
+import { getLojaId, getUserId } from "@/lib/auth/tenant-context";
 import { formatCurrency } from "@/lib/format";
 import type { FormaPagamento, ItemVenda, Produto, Venda } from "@/types";
 import { FORMA_PAGAMENTO_LABELS } from "@/types";
@@ -62,6 +63,11 @@ export default function PdvPage() {
     queryFn: () => listClientes(0, 100),
   });
 
+  const { data: caixaAberto, isLoading: caixaLoading } = useQuery({
+    queryKey: ["caixa-aberto-pdv"],
+    queryFn: () => getCaixaAberto(),
+  });
+
   const clienteOptions = [
     { value: "", label: "Consumidor (sem cliente)" },
     ...(clientes?.content ?? []).map((c) => ({
@@ -73,7 +79,7 @@ export default function PdvPage() {
   const ensureVenda = useCallback(async () => {
     if (venda) return venda;
     const nova = await createVenda({
-      lojaId: LOJA_ID,
+      lojaId: getLojaId(),
       clienteId: clienteId || undefined,
     });
     setVenda(nova);
@@ -307,13 +313,23 @@ export default function PdvPage() {
         </div>
         <div className="text-right">
           <p className="text-xs text-slate-400">Operador caixa</p>
-          <p className="text-xs text-slate-500">{USER_ID.slice(0, 8)}...</p>
+          <p className="text-xs text-slate-500">{getUserId().slice(0, 8)}...</p>
           <p className="text-xs text-slate-400">Total</p>
           <p className="text-2xl font-bold text-brand-400">
             {formatCurrency(totalVenda)}
           </p>
         </div>
       </header>
+
+      {!caixaLoading && !caixaAberto && (
+        <div className="border-b border-amber-200 bg-amber-50 px-4 py-3 text-center text-sm text-amber-900 lg:px-6">
+          Caixa fechado.{" "}
+          <Link href="/caixa" className="font-medium underline">
+            Abra o caixa na retaguarda
+          </Link>{" "}
+          antes de registrar vendas.
+        </div>
+      )}
 
       <div className="flex flex-1 flex-col lg:flex-row">
         {/* Left: Search & Products */}

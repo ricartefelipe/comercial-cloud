@@ -5,7 +5,7 @@ import { Card, CardHeader } from "@/components/ui/Card";
 import { ErrorMessage, LoadingSpinner, PageHeader } from "@/components/ui/Common";
 import { Input } from "@/components/ui/Input";
 import { listConfiguracoes, upsertConfiguracoes } from "@/lib/api/configuracoes";
-import { LOJA_ID, TENANT_ID } from "@/lib/constants";
+import { getLojaId, getTenantId } from "@/lib/auth/tenant-context";
 import type { ConfiguracaoRequest } from "@/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Save } from "lucide-react";
@@ -47,8 +47,8 @@ export default function ConfiguracoesPage() {
   const queryClient = useQueryClient();
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["configuracoes", LOJA_ID],
-    queryFn: () => listConfiguracoes(LOJA_ID),
+    queryKey: ["configuracoes", getLojaId()],
+    queryFn: () => listConfiguracoes(getLojaId()),
   });
 
   useEffect(() => {
@@ -65,7 +65,7 @@ export default function ConfiguracoesPage() {
   const saveMutation = useMutation({
     mutationFn: (items: ConfiguracaoRequest[]) => upsertConfiguracoes(items),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["configuracoes", LOJA_ID] });
+      queryClient.invalidateQueries({ queryKey: ["configuracoes", getLojaId()] });
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     },
@@ -79,7 +79,7 @@ export default function ConfiguracoesPage() {
     e.preventDefault();
     const items: ConfiguracaoRequest[] = Object.entries(values)
       .filter(([, valor]) => valor.trim() !== "")
-      .map(([chave, valor]) => ({ lojaId: LOJA_ID, chave, valor }));
+      .map(([chave, valor]) => ({ lojaId: getLojaId(), chave, valor }));
     await saveMutation.mutateAsync(items);
   };
 
@@ -105,7 +105,7 @@ export default function ConfiguracoesPage() {
       <Card className="mb-6">
         <p className="text-sm font-medium text-slate-900">Ambiente atual</p>
         <p className="text-xs text-slate-500">
-          Tenant: {TENANT_ID.slice(0, 8)}... | Loja: {LOJA_ID.slice(0, 8)}...
+          Tenant: {getTenantId().slice(0, 8)}... | Loja: {getLojaId().slice(0, 8)}...
         </p>
       </Card>
 

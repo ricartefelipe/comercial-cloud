@@ -35,4 +35,13 @@ public class AssinaturaTenantEntity extends TenantScopedEntity {
 
     @Column(name = "updated_at", nullable = false)
     public Instant updatedAt;
+
+    @Column(name = "asaas_customer_id", length = 100)
+    public String asaasCustomerId;
+
+    @Column(name = "billing_email", length = 255)
+    public String billingEmail;
+
+    @Column(name = "billing_cnpj", length = 20)
+    public String billingCnpj;
 }

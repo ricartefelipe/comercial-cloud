@@ -1,8 +1,8 @@
 import { apiClient, buildQuery } from "@/lib/api/client";
-import { LOJA_ID } from "@/lib/constants";
+import { getLojaId } from "@/lib/auth/tenant-context";
 import type { Configuracao, ConfiguracaoRequest } from "@/types";
 
-export async function listConfiguracoes(lojaId = LOJA_ID): Promise<Configuracao[]> {
+export async function listConfiguracoes(lojaId = getLojaId()): Promise<Configuracao[]> {
   return apiClient<Configuracao[]>(
     `/api/v1/configuracoes${buildQuery({ lojaId })}`,
     { includeUserId: false },
