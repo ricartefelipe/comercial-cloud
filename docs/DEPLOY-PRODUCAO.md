@@ -233,11 +233,11 @@ O **app** (`frontend`) é onde mora o trial (`/cadastro`). Isso é independente 
 ```bash
 NEXT_PUBLIC_API_URL=https://api.seudominio.com.br
 APP_URL=https://app.seudominio.com.br
-NEXT_PUBLIC_TERMS_URL=https://app.seudominio.com.br/termos
-NEXT_PUBLIC_PRIVACY_URL=https://app.seudominio.com.br/privacidade
 ```
 
-Termos e privacidade: publique no **domínio do operador SaaS** (você ou o parceiro white-label), não na landing de venda do código.
+Termos e privacidade: rotas nativas do frontend em `/termos` e `/privacidade` (linkadas no `/cadastro`).
+
+A **landing de venda do boilerplate** (`comercial-cloud-landing`, repo separado) não faz parte do app SaaS.
 
 ---
 
