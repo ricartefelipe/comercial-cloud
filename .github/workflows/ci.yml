@@ -22,7 +22,7 @@ jobs:
 
       - name: Test backend
         working-directory: backend
-        run: ./mvnw -B clean -Dtest=ComercialCloudIT test
+        run: ./mvnw -B clean -Dtest=ComercialCloudIT,FiscalBillingIT test
 
   frontend:
     runs-on: ubuntu-latest

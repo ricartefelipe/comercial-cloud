@@ -9,7 +9,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Select } from "@/components/ui/Select";
 import { ajustarEstoque, listEstoques, listMovimentacoes } from "@/lib/api/estoque";
 import { listProdutos } from "@/lib/api/produtos";
-import { LOJA_ID } from "@/lib/constants";
+import { getLojaId } from "@/lib/auth/tenant-context";
 import { formatDateTime } from "@/lib/format";
 import { TIPO_MOVIMENTACAO_LABELS } from "@/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -161,7 +161,7 @@ export default function EstoquePage() {
               loading={adjustMutation.isPending}
               onClick={() =>
                 adjustMutation.mutate({
-                  lojaId: LOJA_ID,
+                  lojaId: getLojaId(),
                   produtoId: selectedProdutoId,
                   quantidade: Number(quantidade),
                   motivo,

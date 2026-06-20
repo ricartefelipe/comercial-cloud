@@ -309,6 +309,14 @@ public class BillingService {
             return;
         }
 
+        if (resultado.pendente()) {
+            fatura.gatewayPaymentId = resultado.transacaoRef();
+            fatura.checkoutUrl = resultado.checkoutUrl();
+            fatura.motivoRecusa = resultado.motivoRecusa();
+            fatura.tentativas -= 1;
+            return;
+        }
+
         fatura.motivoRecusa = resultado.motivoRecusa();
         assinatura.tentativasFalha += 1;
         assinatura.updatedAt = Instant.now();
@@ -353,6 +361,20 @@ public class BillingService {
         if (tenant != null && !tenant.ativo) {
             tenant.ativo = true;
         }
+    }
+
+    @Transactional
+    public void confirmarPagamentoGateway(String gatewayPaymentId, String transacaoRef) {
+        FaturaAssinaturaEntity fatura =
+                FaturaAssinaturaEntity.<FaturaAssinaturaEntity>find(
+                                "gatewayPaymentId = ?1 or transacaoRef = ?1", gatewayPaymentId)
+                        .firstResultOptional()
+                        .orElse(null);
+        if (fatura == null || StatusFatura.PAGA.name().equals(fatura.status)) {
+            return;
+        }
+        aplicarPagamentoAprovado(fatura, transacaoRef != null ? transacaoRef : gatewayPaymentId);
+        auditService.registrar("FaturaAssinatura", fatura.id, "PAGAR_WEBHOOK", fatura.competencia);
     }
 
     private GatewayPagamento gateway() {

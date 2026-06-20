@@ -1,5 +1,5 @@
 import { apiClient, buildQuery, ApiClientError } from "@/lib/api/client";
-import { LOJA_ID, USER_ID } from "@/lib/constants";
+import { getLojaId, getUserId } from "@/lib/auth/tenant-context";
 import type {
   AbrirCaixaRequest,
   Caixa,
@@ -15,8 +15,8 @@ export async function abrirCaixa(data: AbrirCaixaRequest): Promise<Caixa> {
 }
 
 export async function getCaixaAberto(
-  lojaId = LOJA_ID,
-  operadorId = USER_ID,
+  lojaId = getLojaId(),
+  operadorId = getUserId(),
 ): Promise<Caixa | null> {
   try {
     return await apiClient<Caixa>(

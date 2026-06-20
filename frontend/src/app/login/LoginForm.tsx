@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/Card";
 import { ErrorMessage } from "@/components/ui/Common";
 import { Input } from "@/components/ui/Input";
 import { enableDemoMode, saveToken } from "@/lib/auth/session";
+import { applyJwtWorkspaceClaims } from "@/lib/auth/tenant-context";
 import {
   KEYCLOAK_CLIENT_ID,
   KEYCLOAK_REALM,
@@ -58,6 +59,7 @@ export default function LoginForm() {
       }
 
       saveToken(data.access_token);
+      applyJwtWorkspaceClaims(data.access_token);
       router.push(redirectTo);
     } catch (err) {
       setError((err as Error).message);
@@ -107,7 +109,7 @@ export default function LoginForm() {
           </Button>
         </form>
 
-        <div className="mt-4 border-t border-slate-200 pt-4 text-center">
+        <div className="mt-4 border-t border-slate-200 pt-4 text-center space-y-2">
           <button
             type="button"
             onClick={handleDemoLogin}
@@ -115,9 +117,12 @@ export default function LoginForm() {
           >
             Entrar em modo demo
           </button>
-          <p className="mt-2 text-xs text-slate-400">
+          <p className="text-xs text-slate-400">
             Usa headers X-Tenant-Id e X-User-Id sem token JWT
           </p>
+          <Link href="/cadastro" className="block text-sm font-medium text-brand-600 hover:text-brand-700">
+            Criar conta grátis (14 dias)
+          </Link>
         </div>
 
         <div className="mt-4 text-center">

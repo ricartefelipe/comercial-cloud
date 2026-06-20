@@ -55,6 +55,11 @@ comercial-cloud:
     enabled: true
     gateway: sandbox
     sandbox-comportamento: APROVAR_SEMPRE
+    asaas:
+      enabled: false
+      api-key: ${ASAAS_API_KEY:}
+      base-url: https://api-sandbox.asaas.com/v3
+      webhook-token: ${ASAAS_WEBHOOK_TOKEN:}
     plano-padrao: ESSENCIAL
     trial-dias: 14
     max-tentativas: 3
@@ -62,6 +67,15 @@ comercial-cloud:
     scheduler:
       faturamento-every: 1h
       cobranca-every: 30m
+  onboarding:
+    seed-demo: true
+  keycloak:
+    provisioning:
+      enabled: false
+    server-url: http://localhost:8180
+    realm: comercialcloud
+    admin-client-id: comercial-cloud-api
+    admin-client-secret: comercial-cloud-api-secret
 
 "%auth":
   quarkus:

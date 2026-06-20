@@ -18,14 +18,23 @@ public interface GatewayPagamento {
 
     record CobrancaRequest(UUID tenantId, UUID faturaId, BigDecimal valor, String descricao) {}
 
-    record ResultadoCobranca(boolean aprovado, String transacaoRef, String motivoRecusa) {
+    record ResultadoCobranca(
+            boolean aprovado,
+            boolean pendente,
+            String transacaoRef,
+            String motivoRecusa,
+            String checkoutUrl) {
 
         public static ResultadoCobranca aprovado(String transacaoRef) {
-            return new ResultadoCobranca(true, transacaoRef, null);
+            return new ResultadoCobranca(true, false, transacaoRef, null, null);
         }
 
         public static ResultadoCobranca recusado(String motivo) {
-            return new ResultadoCobranca(false, null, motivo);
+            return new ResultadoCobranca(false, false, null, motivo, null);
+        }
+
+        public static ResultadoCobranca pendente(String transacaoRef, String checkoutUrl, String motivo) {
+            return new ResultadoCobranca(false, true, transacaoRef, motivo, checkoutUrl);
         }
     }
 }

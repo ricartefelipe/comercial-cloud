@@ -13,7 +13,7 @@ import {
   getCaixaAberto,
   getCaixaResumo,
 } from "@/lib/api/caixa";
-import { LOJA_ID } from "@/lib/constants";
+import { getLojaId } from "@/lib/auth/tenant-context";
 import { STATUS_CAIXA_LABELS } from "@/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Lock, LockOpen, Wallet } from "lucide-react";
@@ -160,7 +160,7 @@ export default function CaixaPage() {
               loading={abrirMutation.isPending}
               onClick={() =>
                 abrirMutation.mutate({
-                  lojaId: LOJA_ID,
+                  lojaId: getLojaId(),
                   valorAbertura: Number(valorAbertura),
                 })
               }

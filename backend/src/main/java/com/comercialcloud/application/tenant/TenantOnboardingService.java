@@ -12,6 +12,7 @@ import com.comercialcloud.infrastructure.persistence.entity.LojaEntity;
 import com.comercialcloud.infrastructure.persistence.entity.ProdutoEntity;
 import com.comercialcloud.infrastructure.persistence.entity.TenantEntity;
 import com.comercialcloud.infrastructure.persistence.mapper.EntityMapper;
+import com.comercialcloud.infrastructure.security.KeycloakProvisioningService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -20,6 +21,7 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -40,6 +42,13 @@ public class TenantOnboardingService {
     BillingService billingService;
 
     @Inject
+    KeycloakProvisioningService keycloakProvisioningService;
+
+    @Inject
+    @ConfigProperty(name = "comercial-cloud.onboarding.senha-padrao")
+    Optional<String> senhaPadraoOnboarding;
+
+    @Inject
     @ConfigProperty(name = "comercial-cloud.billing.plano-padrao", defaultValue = "ESSENCIAL")
     String planoPadrao;
 
@@ -53,6 +62,7 @@ public class TenantOnboardingService {
             String cnpj,
             String adminNome,
             String adminEmail,
+            String adminSenha,
             String planoCodigo,
             Boolean comTrial,
             Boolean seedDemo) {}
@@ -64,7 +74,10 @@ public class TenantOnboardingService {
             String planoCodigo,
             String assinaturaStatus,
             LocalDate trialFim,
-            int produtosDemo) {}
+            int produtosDemo,
+            String loginEmail,
+            String loginSenha,
+            String keycloakStatus) {}
 
     @Transactional
     public OnboardingResult onboard(OnboardRequest req) {
@@ -98,9 +111,38 @@ public class TenantOnboardingService {
         boolean comTrial = req.comTrial() == null || req.comTrial();
         AssinaturaTenantEntity assinatura =
                 billingService.assinar(tenantId, planoCodigo, comTrial);
+        assinatura.billingEmail = req.adminEmail();
+        assinatura.billingCnpj = req.cnpj();
 
         boolean seed = req.seedDemo() != null ? req.seedDemo() : seedDemoPadrao;
         int produtosDemo = seed ? seedDadosDemo(tenantId, lojaId, now) : 0;
+
+        String senha =
+                req.adminSenha() != null && !req.adminSenha().isBlank()
+                        ? req.adminSenha()
+                        : senhaPadraoOnboarding.filter(s -> !s.isBlank()).orElse(null);
+
+        String loginEmail = req.adminEmail();
+        String loginSenha = null;
+        String keycloakStatus = "demo_headers";
+
+        if (keycloakProvisioningService.isEnabled() && senha != null && !senha.isBlank()) {
+            KeycloakProvisioningService.ProvisionResult kc =
+                    keycloakProvisioningService.provisionar(
+                            new KeycloakProvisioningService.ProvisionRequest(
+                                    tenantId,
+                                    lojaId,
+                                    adminUserId,
+                                    req.adminEmail(),
+                                    req.adminNome(),
+                                    senha,
+                                    "ADMIN"));
+            keycloakStatus = kc.mensagem();
+            if (kc.criado()) {
+                loginSenha = senha;
+                keycloakStatus = "keycloak";
+            }
+        }
 
         return new OnboardingResult(
                 tenantId,
@@ -109,7 +151,10 @@ public class TenantOnboardingService {
                 planoCodigo,
                 assinatura.status,
                 assinatura.trialFim,
-                produtosDemo);
+                produtosDemo,
+                loginEmail,
+                loginSenha,
+                keycloakStatus);
     }
 
     private int seedDadosDemo(UUID tenantId, UUID lojaId, Instant now) {

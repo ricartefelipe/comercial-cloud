@@ -42,4 +42,10 @@ public class FaturaAssinaturaEntity extends TenantScopedEntity {
 
     @Column(name = "paga_em")
     public Instant pagaEm;
+
+    @Column(name = "checkout_url", length = 512)
+    public String checkoutUrl;
+
+    @Column(name = "gateway_payment_id", length = 100)
+    public String gatewayPaymentId;
 }

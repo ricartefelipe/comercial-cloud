@@ -1,5 +1,6 @@
-import { API_BASE_URL, TENANT_ID, USER_ID } from "@/lib/constants";
+import { getTenantId, getUserId } from "@/lib/auth/tenant-context";
 import { getToken } from "@/lib/auth/session";
+import { API_BASE_URL } from "@/lib/constants";
 import type { ApiError } from "@/types";
 
 export class ApiClientError extends Error {
@@ -60,9 +61,9 @@ export async function apiClient<T>(
   const { body, includeUserId = true, headers, ...rest } = options;
 
   const requestHeaders: Record<string, string> = {
-    "X-Tenant-Id": TENANT_ID,
+    "X-Tenant-Id": getTenantId(),
     "X-Correlation-Id": getCorrelationId(),
-    ...(includeUserId ? { "X-User-Id": USER_ID } : {}),
+    ...(includeUserId ? { "X-User-Id": getUserId() } : {}),
     ...(headers as Record<string, string>),
   };
 
@@ -100,7 +101,17 @@ export async function apiClient<T>(
       }
     }
 
-    throw new ApiClientError(errorMessage, response.status, code, details);
+    const apiError = new ApiClientError(errorMessage, response.status, code, details);
+
+    if (
+      response.status === 402 &&
+      typeof window !== "undefined" &&
+      !window.location.pathname.startsWith("/assinatura")
+    ) {
+      window.location.href = "/assinatura?suspensa=1";
+    }
+
+    throw apiError;
   }
 
   if (response.status === 204) {

@@ -1,8 +1,8 @@
 import { apiClient, buildQuery } from "@/lib/api/client";
-import { LOJA_ID } from "@/lib/constants";
+import { getLojaId } from "@/lib/auth/tenant-context";
 import type { AjusteEstoqueRequest, Estoque, MovimentacaoEstoque } from "@/types";
 
-export async function listEstoques(lojaId = LOJA_ID): Promise<Estoque[]> {
+export async function listEstoques(lojaId = getLojaId()): Promise<Estoque[]> {
   return apiClient<Estoque[]>(
     `/api/v1/estoques${buildQuery({ lojaId })}`,
     { includeUserId: false },
@@ -18,7 +18,7 @@ export async function ajustarEstoque(data: AjusteEstoqueRequest): Promise<void> 
 
 export async function listMovimentacoes(
   produtoId: string,
-  lojaId = LOJA_ID,
+  lojaId = getLojaId(),
 ): Promise<MovimentacaoEstoque[]> {
   return apiClient<MovimentacaoEstoque[]>(
     `/api/v1/estoques/movimentacoes${buildQuery({ produtoId, lojaId })}`,
