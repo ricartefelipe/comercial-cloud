@@ -198,38 +198,17 @@ export default function CadastroPage() {
 
           {error && <ErrorMessage message={error} />}
 
-          {(process.env.NEXT_PUBLIC_TERMS_URL || process.env.NEXT_PUBLIC_PRIVACY_URL) && (
-            <p className="text-xs text-slate-500">
-              Ao criar conta, você concorda com os{" "}
-              {process.env.NEXT_PUBLIC_TERMS_URL ? (
-                <a
-                  href={process.env.NEXT_PUBLIC_TERMS_URL}
-                  className="text-brand-600 hover:text-brand-700"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  termos de uso
-                </a>
-              ) : (
-                "termos de uso"
-              )}
-              {process.env.NEXT_PUBLIC_PRIVACY_URL && (
-                <>
-                  {" "}
-                  e a{" "}
-                  <a
-                    href={process.env.NEXT_PUBLIC_PRIVACY_URL}
-                    className="text-brand-600 hover:text-brand-700"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    política de privacidade
-                  </a>
-                </>
-              )}
-              .
-            </p>
-          )}
+          <p className="text-xs text-slate-500">
+            Ao criar conta, você concorda com os{" "}
+            <Link href="/termos" className="text-brand-600 hover:text-brand-700">
+              termos de uso
+            </Link>{" "}
+            e a{" "}
+            <Link href="/privacidade" className="text-brand-600 hover:text-brand-700">
+              política de privacidade
+            </Link>
+            .
+          </p>
 
           <Button type="submit" className="w-full" size="lg" loading={loading}>
             Criar conta e começar trial
