@@ -189,3 +189,5 @@ comercial-cloud/
 | `release/*` | Preparação de versão (`develop` → `main`) |
 
 Releases são publicadas a partir de `main` com tags semver (`v1.0.0`, `v1.1.0`, …).
+
+Documentação adicional: [`README-COMERCIAL.md`](README-COMERCIAL.md) · [`docs/DEPLOY-PRODUCAO.md`](docs/DEPLOY-PRODUCAO.md) · [`docs/RELEASE-v1.0.0.md`](docs/RELEASE-v1.0.0.md)
