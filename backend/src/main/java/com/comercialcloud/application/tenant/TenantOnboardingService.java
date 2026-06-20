@@ -13,6 +13,7 @@ import com.comercialcloud.infrastructure.persistence.entity.ProdutoEntity;
 import com.comercialcloud.infrastructure.persistence.entity.TenantEntity;
 import com.comercialcloud.infrastructure.persistence.mapper.EntityMapper;
 import com.comercialcloud.infrastructure.security.KeycloakProvisioningService;
+import com.comercialcloud.infrastructure.mail.TransacionalEmailService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -43,6 +44,9 @@ public class TenantOnboardingService {
 
     @Inject
     KeycloakProvisioningService keycloakProvisioningService;
+
+    @Inject
+    TransacionalEmailService emailService;
 
     @Inject
     @ConfigProperty(name = "comercial-cloud.onboarding.senha-padrao")
@@ -143,6 +147,9 @@ public class TenantOnboardingService {
                 keycloakStatus = "keycloak";
             }
         }
+
+        emailService.enviarBoasVindas(
+                req.adminEmail(), req.adminNome(), planoCodigo, assinatura.trialFim);
 
         return new OnboardingResult(
                 tenantId,

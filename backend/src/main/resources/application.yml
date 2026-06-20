@@ -42,6 +42,12 @@ quarkus:
     export:
       prometheus:
         path: /metrics
+  mailer:
+    from: ${MAIL_FROM:noreply@comercialcloud.local}
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:1025}
+    ssl: false
+    start-tls: ${MAIL_STARTTLS:DISABLED}
 
 comercial-cloud:
   fiscal:
@@ -81,6 +87,20 @@ comercial-cloud:
     realm: comercialcloud
     admin-client-id: comercial-cloud-api
     admin-client-secret: comercial-cloud-api-secret
+  mail:
+    enabled: false
+    from: ${MAIL_FROM:noreply@comercialcloud.local}
+    app-url: ${APP_URL:http://localhost:3000}
+
+"%test":
+  quarkus:
+    mailer:
+      mock: true
+
+"%dev":
+  quarkus:
+    mailer:
+      mock: true
 
 "%auth":
   quarkus:

@@ -10,6 +10,7 @@ import com.comercialcloud.infrastructure.persistence.entity.AssinaturaTenantEnti
 import com.comercialcloud.infrastructure.persistence.entity.FaturaAssinaturaEntity;
 import com.comercialcloud.infrastructure.persistence.entity.PlanoAssinaturaEntity;
 import com.comercialcloud.infrastructure.persistence.entity.TenantEntity;
+import com.comercialcloud.infrastructure.mail.TransacionalEmailService;
 import com.comercialcloud.infrastructure.security.TenantContext;
 import io.quarkus.panache.common.Sort;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -37,6 +38,7 @@ public class BillingService {
     @Inject TenantContext tenantContext;
     @Inject AuditService auditService;
     @Inject Instance<GatewayPagamento> gateways;
+    @Inject TransacionalEmailService emailService;
 
     @Inject
     @ConfigProperty(name = "comercial-cloud.billing.enabled", defaultValue = "true")
@@ -246,6 +248,12 @@ public class BillingService {
             fatura.tentativas = 0;
             fatura.createdAt = Instant.now();
             fatura.persist();
+            emailService.enviarNovaFatura(
+                    emailCobranca(assinatura),
+                    competencia,
+                    fatura.valor,
+                    fatura.vencimento,
+                    null);
         }
 
         if (StatusAssinatura.TRIAL.name().equals(assinatura.status)) {
@@ -314,6 +322,12 @@ public class BillingService {
             fatura.checkoutUrl = resultado.checkoutUrl();
             fatura.motivoRecusa = resultado.motivoRecusa();
             fatura.tentativas -= 1;
+            emailService.enviarNovaFatura(
+                    emailCobranca(assinatura),
+                    fatura.competencia,
+                    fatura.valor,
+                    fatura.vencimento,
+                    fatura.checkoutUrl);
             return;
         }
 
@@ -324,6 +338,7 @@ public class BillingService {
             fatura.status = StatusFatura.FALHA.name();
             assinatura.status = StatusAssinatura.SUSPENSA.name();
             suspenderTenant(assinatura.tenantId);
+            emailService.enviarSuspensao(emailCobranca(assinatura), fatura.competencia);
         } else {
             assinatura.status = StatusAssinatura.INADIMPLENTE.name();
         }
@@ -346,7 +361,19 @@ public class BillingService {
             assinatura.tentativasFalha = 0;
             assinatura.updatedAt = Instant.now();
             ativarTenant(assinatura.tenantId);
+            emailService.enviarPagamentoConfirmado(
+                    emailCobranca(assinatura), fatura.competencia);
         }
+    }
+
+    private String emailCobranca(AssinaturaTenantEntity assinatura) {
+        if (assinatura == null) {
+            return null;
+        }
+        if (assinatura.billingEmail != null && !assinatura.billingEmail.isBlank()) {
+            return assinatura.billingEmail;
+        }
+        return null;
     }
 
     private void suspenderTenant(UUID tenantId) {
