@@ -87,7 +87,7 @@ Estes pontos estão **mapeados e com interface pronta**, mas usam adapters sandb
 | Pagamentos | `SandboxGatewayPagamento` | **Asaas** (`billing.gateway=asaas`) ou Iugu, Stripe, Pagar.me |
 | NFC-e / SEFAZ | `SandboxFiscalProvider` | **Focus NFe** (`fiscal.provider=focusnfe`) ou PlugNotas/NFe.io |
 | Login pós-onboarding | Modo demo + headers | Keycloak com protocol mappers (`tenant_id`, `app_user_id`) |
-| E-mails transacionais | — | SMTP / SendGrid / SES |
+| E-mails transacionais | `TransacionalEmailService` (SMTP) | SendGrid / SES / MailHog homolog |
 | Backup / HTTPS / domínio | — | Infra de produção |
 
 Implemente os adapters reais **sem alterar** a lógica de domínio (`BillingService`, `FiscalService`).

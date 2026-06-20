@@ -249,6 +249,56 @@ window.COMERCIALCLOUD_CONFIG = {
 
 ---
 
+## 8. E-mail transacional
+
+Ative SMTP para boas-vindas, fatura, suspensão e confirmação de pagamento:
+
+```yaml
+comercial-cloud:
+  mail:
+    enabled: true
+    from: ${MAIL_FROM}
+    app-url: ${APP_URL}
+```
+
+```bash
+MAIL_HOST=smtp.seudominio.com.br
+MAIL_PORT=587
+MAIL_STARTTLS=REQUIRED
+```
+
+**Homologação com MailHog:**
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.homolog.yml up -d
+# UI: http://localhost:8025
+```
+
+---
+
+## 9. Backup
+
+```bash
+./scripts/backup-postgres.sh
+# Agende cron diário; retenção 14 dias automática
+```
+
+---
+
+## 10. Verificação rápida
+
+```bash
+./scripts/verify-homologacao.sh
+```
+
+---
+
+## 11. Piloto white-label
+
+Roteiro completo: [`PILOTO-WHITELABEL.md`](./PILOTO-WHITELABEL.md)
+
+---
+
 ## Referências
 
 - [`README-COMERCIAL.md`](../README-COMERCIAL.md) — visão comercial e adapters
