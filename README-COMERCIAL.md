@@ -150,7 +150,7 @@ Termos completos: [`LICENSE`](LICENSE).
 ## Suporte e entrega
 
 - Política de suporte/SLA: [`comercial-cloud-landing/POLITICA-SUPORTE-SLA.md`](../comercial-cloud-landing/POLITICA-SUPORTE-SLA.md)
-- Landing comercial: repositório `comercial-cloud-landing` (GitHub Pages)
+- **Landing de venda do boilerplate** (repo separado `comercial-cloud-landing`, GitHub Pages, Kiwify) — não confundir com o app SaaS `/cadastro`
 - Roteiro de demo: [`comercial-cloud-landing/ROTEIRO-DEMO.md`](../comercial-cloud-landing/ROTEIRO-DEMO.md)
 
 ---

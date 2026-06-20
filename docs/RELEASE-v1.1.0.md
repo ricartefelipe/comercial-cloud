@@ -20,9 +20,6 @@ Release operacional para piloto white-label: e-mails transacionais, homologaçã
 - `docs/PILOTO-WHITELABEL.md` — playbook do 1º parceiro
 - `docs/DEPLOY-PRODUCAO.md` — seções e-mail, backup e verificação
 
-### Landing
-- `config.example.js` — template de URL trial e contato
-
 ---
 
 ## Upgrade de v1.0.0
