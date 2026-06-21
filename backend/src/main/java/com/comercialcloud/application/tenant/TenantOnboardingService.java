@@ -2,6 +2,7 @@ package com.comercialcloud.application.tenant;
 
 import com.comercialcloud.application.billing.BillingService;
 import com.comercialcloud.domain.exception.ConflictException;
+import com.comercialcloud.domain.model.Estoque;
 import com.comercialcloud.domain.model.Loja;
 import com.comercialcloud.domain.model.Tenant;
 import com.comercialcloud.domain.model.Usuario;
@@ -194,6 +195,7 @@ public class TenantOnboardingService {
             estoque.lojaId = lojaId;
             estoque.produtoId = produtoId;
             estoque.quantidade = new BigDecimal(d.estoque());
+            estoque.quantidadeMinima = Estoque.QUANTIDADE_MINIMA_PADRAO;
             estoque.updatedAt = now;
             estoque.persist();
         }
