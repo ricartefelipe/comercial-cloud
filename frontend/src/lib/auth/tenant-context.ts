@@ -7,11 +7,13 @@ import {
 const TENANT_KEY = "cc_tenant_id";
 const USER_KEY = "cc_user_id";
 const LOJA_KEY = "cc_loja_id";
+const DISPLAY_NAME_KEY = "cc_display_name";
 
 export interface WorkspaceContext {
   tenantId: string;
   userId: string;
   lojaId: string;
+  displayName?: string;
 }
 
 function readStorage(key: string): string | null {
@@ -45,10 +47,25 @@ export function setLojaId(lojaId: string): void {
   writeStorage(LOJA_KEY, lojaId);
 }
 
+export function getDisplayName(): string | null {
+  return readStorage(DISPLAY_NAME_KEY);
+}
+
+export function setDisplayName(name: string): void {
+  writeStorage(DISPLAY_NAME_KEY, name);
+}
+
+export function getOperatorLabel(): string {
+  return getDisplayName() ?? "Operador";
+}
+
 export function setWorkspaceContext(ctx: WorkspaceContext): void {
   writeStorage(TENANT_KEY, ctx.tenantId);
   writeStorage(USER_KEY, ctx.userId);
   writeStorage(LOJA_KEY, ctx.lojaId);
+  if (ctx.displayName) {
+    writeStorage(DISPLAY_NAME_KEY, ctx.displayName);
+  }
 }
 
 export function resetWorkspaceToDemo(): void {
@@ -56,6 +73,7 @@ export function resetWorkspaceToDemo(): void {
     tenantId: DEMO_TENANT_ID,
     userId: DEMO_USER_ID,
     lojaId: DEMO_LOJA_ID,
+    displayName: "Caixa Demo",
   });
 }
 
@@ -63,6 +81,7 @@ export function clearWorkspaceContext(): void {
   removeStorage(TENANT_KEY);
   removeStorage(USER_KEY);
   removeStorage(LOJA_KEY);
+  removeStorage(DISPLAY_NAME_KEY);
 }
 
 interface JwtPayload {
@@ -70,6 +89,9 @@ interface JwtPayload {
   app_user_id?: string;
   loja_id?: string;
   sub?: string;
+  preferred_username?: string;
+  name?: string;
+  email?: string;
 }
 
 export function applyJwtWorkspaceClaims(token: string): void {
@@ -81,10 +103,14 @@ export function applyJwtWorkspaceClaims(token: string): void {
   const lojaId = claims.loja_id;
   if (!tenantId || !userId) return;
 
+  const displayName =
+    claims.preferred_username ?? claims.name ?? claims.email ?? undefined;
+
   setWorkspaceContext({
     tenantId,
     userId,
     lojaId: lojaId ?? getLojaId(),
+    displayName,
   });
 }
 
