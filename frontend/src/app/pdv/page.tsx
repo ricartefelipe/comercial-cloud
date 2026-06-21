@@ -48,6 +48,7 @@ import {
   Trash2,
   Wallet,
   X,
+  Loader2,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
@@ -70,6 +71,9 @@ const FORMA_PAGAMENTO_ICONS: Record<FormaPagamento, LucideIcon> = {
   VALE: Ticket,
   OUTROS: Wallet,
 };
+
+const SEARCH_DEBOUNCE_MS = 300;
+const SEARCH_MIN_CHARS = 2;
 
 function roundMoney(value: number): number {
   return Math.round(value * 100) / 100;
@@ -246,33 +250,85 @@ export default function PdvPage() {
     return nova;
   }, [venda, clienteId]);
 
-  const handleSearch = async () => {
-    if (!termo.trim()) return;
+  const trimmedTermo = termo.trim();
+  const isBarcodeInput = looksLikeBarcode(trimmedTermo);
+  const showLiveSearch = trimmedTermo.length >= SEARCH_MIN_CHARS && !isBarcodeInput;
+
+  useEffect(() => {
+    if (!showLiveSearch) {
+      setSearchResults([]);
+      setSearching(false);
+      return;
+    }
+
     setSearching(true);
-    setError("");
-    try {
-      if (looksLikeBarcode(termo.trim())) {
-        try {
-          const produto = await getProdutoByCodigoBarras(termo.trim());
-          if (produto.ativo) {
-            await handleAddProduct(produto);
-            return;
-          }
-        } catch {
-          // fallback para busca textual
+    let cancelled = false;
+    const timer = window.setTimeout(async () => {
+      try {
+        const results = await buscarProdutos(trimmedTermo);
+        if (!cancelled) {
+          setSearchResults(results.filter((p) => p.ativo));
+          setError("");
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError((err as Error).message);
+          setSearchResults([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setSearching(false);
         }
       }
-      const results = await buscarProdutos(termo.trim());
-      const ativos = results.filter((p) => p.ativo);
-      if (ativos.length === 1) {
-        await handleAddProduct(ativos[0]);
-        return;
+    }, SEARCH_DEBOUNCE_MS);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [trimmedTermo, showLiveSearch]);
+
+  const handleSearchEnter = async () => {
+    if (!trimmedTermo) return;
+    setError("");
+
+    if (isBarcodeInput) {
+      setSearching(true);
+      try {
+        const produto = await getProdutoByCodigoBarras(trimmedTermo);
+        if (produto.ativo) {
+          await handleAddProduct(produto);
+          return;
+        }
+        setError("Produto inativo.");
+      } catch (err) {
+        setError((err as Error).message);
+      } finally {
+        setSearching(false);
       }
-      setSearchResults(ativos);
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setSearching(false);
+      return;
+    }
+
+    if (searchResults.length === 1) {
+      await handleAddProduct(searchResults[0]);
+      return;
+    }
+
+    if (searchResults.length === 0 && showLiveSearch) {
+      setSearching(true);
+      try {
+        const results = await buscarProdutos(trimmedTermo);
+        const ativos = results.filter((p) => p.ativo);
+        if (ativos.length === 1) {
+          await handleAddProduct(ativos[0]);
+        } else {
+          setSearchResults(ativos);
+        }
+      } catch (err) {
+        setError((err as Error).message);
+      } finally {
+        setSearching(false);
+      }
     }
   };
 
@@ -620,7 +676,7 @@ export default function PdvPage() {
           {" · "}
           <kbd className="rounded bg-slate-100 px-1.5 py-0.5 font-mono">F4</kbd> ir para pagamento
           {" · "}
-          <kbd className="rounded bg-slate-100 px-1.5 py-0.5 font-mono">Enter</kbd> na busca
+          digite para filtrar · <kbd className="rounded bg-slate-100 px-1.5 py-0.5 font-mono">Enter</kbd> confirma
         </span>
       </div>
 
@@ -629,22 +685,20 @@ export default function PdvPage() {
         <div className="flex flex-1 flex-col p-4 lg:p-6">
           {step === "cart" && (
             <>
-              <div className="mb-4 flex gap-2">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-                  <input
-                    ref={searchRef}
-                    type="text"
-                    placeholder="Buscar produto (F2)..."
-                    className="w-full rounded-xl border border-slate-300 bg-white py-3 pl-11 pr-4 text-lg focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
-                    value={termo}
-                    onChange={(e) => setTermo(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                  />
-                </div>
-                <Button size="lg" onClick={handleSearch} loading={searching}>
-                  Buscar
-                </Button>
+              <div className="relative mb-4">
+                <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+                <input
+                  ref={searchRef}
+                  type="text"
+                  placeholder="Digite nome, SKU ou código de barras..."
+                  className="w-full rounded-xl border border-slate-300 bg-white py-3 pl-11 pr-11 text-lg focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                  value={termo}
+                  onChange={(e) => setTermo(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && void handleSearchEnter()}
+                />
+                {searching && (
+                  <Loader2 className="absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 animate-spin text-brand-500" />
+                )}
               </div>
 
               <div className="mb-4 grid gap-4 sm:grid-cols-2">
@@ -674,21 +728,33 @@ export default function PdvPage() {
                 />
               </div>
 
-              {searchResults.length > 0 ? (
-                <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-                  {searchResults.map((produto) => {
-                    const estoque = estoquePorProduto.get(produto.id);
-                    return (
-                    <ProductTile
-                      key={produto.id}
-                      produto={produto}
-                      disabled={loading || !caixaPronto}
-                      estoqueQty={estoque?.qty}
-                      estoqueMinimo={estoque?.minimo}
-                      onAdd={handleAddProduct}
-                    />
-                    );
-                  })}
+              {showLiveSearch ? (
+                <div className="flex flex-1 flex-col">
+                  {searching && searchResults.length === 0 ? (
+                    <LoadingSpinner />
+                  ) : searchResults.length > 0 ? (
+                    <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                      {searchResults.map((produto) => {
+                        const estoque = estoquePorProduto.get(produto.id);
+                        return (
+                          <ProductTile
+                            key={produto.id}
+                            produto={produto}
+                            disabled={loading || !caixaPronto}
+                            estoqueQty={estoque?.qty}
+                            estoqueMinimo={estoque?.minimo}
+                            onAdd={handleAddProduct}
+                          />
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    !searching && (
+                      <p className="text-center text-slate-500">
+                        Nenhum produto encontrado para &quot;{trimmedTermo}&quot;.
+                      </p>
+                    )
+                  )}
                 </div>
               ) : (
                 <div className="flex flex-1 flex-col">
@@ -725,9 +791,17 @@ export default function PdvPage() {
                     </div>
                   )}
 
-                  {termo && !searching && searchResults.length === 0 && (
-                    <p className="mt-4 text-center text-slate-500">
-                      Nenhum produto encontrado para &quot;{termo}&quot;.
+                  {trimmedTermo.length > 0 && trimmedTermo.length < SEARCH_MIN_CHARS && !isBarcodeInput && (
+                    <p className="mt-4 text-center text-sm text-slate-500">
+                      Digite mais {SEARCH_MIN_CHARS - trimmedTermo.length} caractere
+                      {SEARCH_MIN_CHARS - trimmedTermo.length > 1 ? "s" : ""} para buscar.
+                    </p>
+                  )}
+
+                  {isBarcodeInput && (
+                    <p className="mt-4 text-center text-sm text-slate-500">
+                      Pressione <kbd className="rounded bg-slate-100 px-1.5 py-0.5 font-mono">Enter</kbd> para
+                      adicionar pelo código de barras.
                     </p>
                   )}
                 </div>
