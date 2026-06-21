@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { ProductImage } from "@/components/produtos/ProductImage";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import type { Produto, ProdutoRequest } from "@/types";
@@ -12,6 +13,7 @@ const produtoSchema = z.object({
   codigoBarras: z.string().optional(),
   nome: z.string().min(1, "Nome obrigatório"),
   descricao: z.string().optional(),
+  imagemUrl: z.string().url("URL inválida").optional().or(z.literal("")),
   categoria: z.string().optional(),
   unidadeMedida: z.string().min(1, "Unidade obrigatória"),
   precoVenda: z.coerce.number().min(0, "Preço inválido"),
@@ -31,6 +33,7 @@ export function ProdutoForm({ produto, onSubmit, loading }: ProdutoFormProps) {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<ProdutoFormData>({
     resolver: zodResolver(produtoSchema),
@@ -39,6 +42,7 @@ export function ProdutoForm({ produto, onSubmit, loading }: ProdutoFormProps) {
       codigoBarras: produto?.codigoBarras ?? "",
       nome: produto?.nome ?? "",
       descricao: produto?.descricao ?? "",
+      imagemUrl: produto?.imagemUrl ?? "",
       categoria: produto?.categoria ?? "",
       unidadeMedida: produto?.unidadeMedida ?? "UN",
       precoVenda: produto?.precoVenda ?? 0,
@@ -47,8 +51,30 @@ export function ProdutoForm({ produto, onSubmit, loading }: ProdutoFormProps) {
     },
   });
 
+  const imagemUrl = watch("imagemUrl");
+  const nome = watch("nome");
+
+  const handleFormSubmit = (data: ProdutoFormData) => {
+    const payload: ProdutoRequest = {
+      ...data,
+      imagemUrl: data.imagemUrl?.trim() || undefined,
+    };
+    return onSubmit(payload);
+  };
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+        <ProductImage src={imagemUrl} alt={nome || "Produto"} size="lg" />
+        <Input
+          label="URL da imagem"
+          placeholder="https://..."
+          error={errors.imagemUrl?.message}
+          className="flex-1"
+          {...register("imagemUrl")}
+        />
+      </div>
+
       <div className="grid gap-4 sm:grid-cols-2">
         <Input label="SKU" error={errors.sku?.message} {...register("sku")} />
         <Input

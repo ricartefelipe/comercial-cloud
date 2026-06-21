@@ -16,5 +16,7 @@ public interface EstoqueRepository {
 
     List<Estoque> listPorQuantidadeMax(UUID tenantId, UUID lojaId, BigDecimal maxQuantidade);
 
+    List<Estoque> listEstoqueBaixo(UUID tenantId, UUID lojaId);
+
     Estoque save(Estoque estoque);
 }

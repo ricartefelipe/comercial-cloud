@@ -26,7 +26,8 @@ public class ProdutoService {
     public record PageResult<T>(List<T> content, long totalElements, int totalPages, int size, int number) {}
 
     @Transactional
-    public Produto criar(String sku, String codigoBarras, String nome, String descricao, BigDecimal preco) {
+    public Produto criar(
+            String sku, String codigoBarras, String nome, String descricao, String imagemUrl, BigDecimal preco) {
         UUID tenantId = tenantContext.getTenantId();
         validarPreco(preco);
         validarSkuUnico(tenantId, sku, null);
@@ -40,6 +41,7 @@ public class ProdutoService {
                         codigoBarras,
                         nome,
                         descricao,
+                        normalizarImagemUrl(imagemUrl),
                         preco,
                         true,
                         now,
@@ -51,7 +53,13 @@ public class ProdutoService {
 
     @Transactional
     public Produto atualizar(
-            UUID id, String sku, String codigoBarras, String nome, String descricao, BigDecimal preco) {
+            UUID id,
+            String sku,
+            String codigoBarras,
+            String nome,
+            String descricao,
+            String imagemUrl,
+            BigDecimal preco) {
         Produto atual = obter(tenantContext.getTenantId(), id);
         validarPreco(preco);
         validarSkuUnico(atual.tenantId(), sku, id);
@@ -65,6 +73,7 @@ public class ProdutoService {
                         codigoBarras,
                         nome,
                         descricao,
+                        normalizarImagemUrl(imagemUrl),
                         preco,
                         atual.ativo(),
                         atual.createdAt(),
@@ -119,6 +128,7 @@ public class ProdutoService {
                         produto.codigoBarras(),
                         produto.nome(),
                         produto.descricao(),
+                        produto.imagemUrl(),
                         produto.preco(),
                         ativo,
                         produto.createdAt(),
@@ -132,6 +142,13 @@ public class ProdutoService {
         return produtoRepository
                 .find(tenantId, id)
                 .orElseThrow(() -> new NotFoundException("PRODUTO_NOT_FOUND", "Produto não encontrado"));
+    }
+
+    private String normalizarImagemUrl(String imagemUrl) {
+        if (imagemUrl == null || imagemUrl.isBlank()) {
+            return null;
+        }
+        return imagemUrl.trim();
     }
 
     private void validarPreco(BigDecimal preco) {

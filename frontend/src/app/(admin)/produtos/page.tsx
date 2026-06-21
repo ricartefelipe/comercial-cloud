@@ -12,7 +12,9 @@ import {
   inativarProduto,
   listProdutos,
 } from "@/lib/api/produtos";
+import { listEstoques } from "@/lib/api/estoque";
 import type { Produto } from "@/types";
+import { ProductImage } from "@/components/produtos/ProductImage";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Search } from "lucide-react";
 import Link from "next/link";
@@ -28,6 +30,15 @@ export default function ProdutosPage() {
     queryKey: ["produtos", page],
     queryFn: () => listProdutos(page, 20),
   });
+
+  const { data: estoques } = useQuery({
+    queryKey: ["estoques-produtos"],
+    queryFn: () => listEstoques(),
+  });
+
+  const estoquePorProduto = new Map(
+    (estoques ?? []).map((e) => [e.produtoId, e.quantidadeAtual]),
+  );
 
   const toggleMutation = useMutation({
     mutationFn: (produto: Produto) =>
@@ -83,20 +94,39 @@ export default function ProdutosPage() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-slate-200 bg-slate-50 text-left text-slate-500">
+                      <th className="px-6 py-3 font-medium">Produto</th>
                       <th className="px-6 py-3 font-medium">SKU</th>
-                      <th className="px-6 py-3 font-medium">Nome</th>
-                      <th className="px-6 py-3 font-medium">Categoria</th>
+                      <th className="px-6 py-3 font-medium">Estoque</th>
                       <th className="px-6 py-3 font-medium">Preço</th>
                       <th className="px-6 py-3 font-medium">Status</th>
                       <th className="px-6 py-3 font-medium">Ações</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filtered.map((produto) => (
+                    {filtered.map((produto) => {
+                      const qty = estoquePorProduto.get(produto.id);
+                      return (
                       <tr key={produto.id} className="border-b border-slate-100 hover:bg-slate-50">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <ProductImage src={produto.imagemUrl} alt={produto.nome} size="sm" />
+                            <span className="font-medium">{produto.nome}</span>
+                          </div>
+                        </td>
                         <td className="px-6 py-4 font-mono text-xs">{produto.sku}</td>
-                        <td className="px-6 py-4 font-medium">{produto.nome}</td>
-                        <td className="px-6 py-4 text-slate-500">{produto.categoria ?? "-"}</td>
+                        <td className="px-6 py-4">
+                          {produto.controlaEstoque ? (
+                            qty !== undefined ? (
+                              <span className={qty <= 0 ? "font-medium text-red-600" : "text-slate-700"}>
+                                {qty} un.
+                              </span>
+                            ) : (
+                              <span className="text-slate-400">—</span>
+                            )
+                          ) : (
+                            <span className="text-slate-400">N/A</span>
+                          )}
+                        </td>
                         <td className="px-6 py-4">{formatCurrency(produto.precoVenda)}</td>
                         <td className="px-6 py-4">
                           <Badge variant={produto.ativo ? "success" : "default"}>
@@ -120,7 +150,8 @@ export default function ProdutosPage() {
                           </div>
                         </td>
                       </tr>
-                    ))}
+                    );
+                    })}
                   </tbody>
                 </table>
               </div>

@@ -1,0 +1,58 @@
+databaseChangeLog:
+  - changeSet:
+      id: 025-produto-imagem-url
+      author: comercialcloud
+      changes:
+        - addColumn:
+            tableName: produto
+            columns:
+              - column:
+                  name: imagem_url
+                  type: varchar(500)
+
+  - changeSet:
+      id: 025-estoque-quantidade-minima
+      author: comercialcloud
+      changes:
+        - addColumn:
+            tableName: estoque
+            columns:
+              - column:
+                  name: quantidade_minima
+                  type: decimal(15, 3)
+                  defaultValueNumeric: 10
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 025-seed-demo-imagens-produto
+      author: comercialcloud
+      changes:
+        - update:
+            tableName: produto
+            columns:
+              - column:
+                  name: imagem_url
+                  value: https://images.unsplash.com/photo-1505744386214-51dba16bd1fb?w=200&h=200&fit=crop
+            where: id = '55555555-5555-5555-5555-555555555551'
+        - update:
+            tableName: produto
+            columns:
+              - column:
+                  name: imagem_url
+                  value: https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=200&h=200&fit=crop
+            where: id = '55555555-5555-5555-5555-555555555552'
+        - update:
+            tableName: produto
+            columns:
+              - column:
+                  name: imagem_url
+                  value: https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=200&h=200&fit=crop
+            where: id = '55555555-5555-5555-5555-555555555554'
+        - update:
+            tableName: produto
+            columns:
+              - column:
+                  name: imagem_url
+                  value: https://images.unsplash.com/photo-1585421514284-efb74c2d69e7?w=200&h=200&fit=crop
+            where: id = '55555555-5555-5555-5555-555555555555'

@@ -78,6 +78,7 @@ export interface Produto {
   codigoBarras?: string;
   nome: string;
   descricao?: string;
+  imagemUrl?: string;
   categoria?: string;
   unidadeMedida: string;
   precoVenda: number;
@@ -93,6 +94,7 @@ export interface ProdutoRequest {
   codigoBarras?: string;
   nome: string;
   descricao?: string;
+  imagemUrl?: string;
   categoria?: string;
   unidadeMedida: string;
   precoVenda: number;

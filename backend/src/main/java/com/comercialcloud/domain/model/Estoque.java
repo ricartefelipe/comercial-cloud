@@ -5,4 +5,13 @@ import java.time.Instant;
 import java.util.UUID;
 
 public record Estoque(
-        UUID id, UUID tenantId, UUID lojaId, UUID produtoId, BigDecimal quantidade, Instant updatedAt) {}
+        UUID id,
+        UUID tenantId,
+        UUID lojaId,
+        UUID produtoId,
+        BigDecimal quantidade,
+        BigDecimal quantidadeMinima,
+        Instant updatedAt) {
+
+    public static final BigDecimal QUANTIDADE_MINIMA_PADRAO = new BigDecimal("10");
+}
