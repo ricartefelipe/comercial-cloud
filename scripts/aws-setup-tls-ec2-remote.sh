@@ -23,9 +23,13 @@ else
   EMAIL_ARG="--register-unsafely-without-email"
 fi
 
-$COMPOSE $CF run --rm --entrypoint certbot certbot certonly --webroot -w /var/www/certbot \
-  $EMAIL_ARG --agree-tos --no-eff-email \
-  -d "$COMERCIAL_DOMAIN"
+if $COMPOSE $CF run --rm --entrypoint certbot certbot certificates 2>/dev/null | grep -q "$COMERCIAL_DOMAIN"; then
+  echo "Certificado já existe para ${COMERCIAL_DOMAIN}"
+else
+  $COMPOSE $CF run --rm --entrypoint certbot certbot certonly --webroot -w /var/www/certbot \
+    $EMAIL_ARG --agree-tos --no-eff-email --non-interactive \
+    -d "$COMERCIAL_DOMAIN"
+fi
 
 $COMPOSE $CF run --rm --entrypoint sh certbot -c "chmod 644 /etc/letsencrypt/archive/${COMERCIAL_DOMAIN}/privkey1.pem"
 
