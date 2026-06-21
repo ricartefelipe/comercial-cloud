@@ -36,8 +36,6 @@ quarkus:
         level: INFO
   smallrye-jwt:
     enabled: false
-  smallrye-health:
-    root-path: /health
   micrometer:
     export:
       prometheus:
@@ -113,7 +111,7 @@ comercial-cloud:
       auth:
         permission:
           health:
-            paths: /health,/health/*
+            paths: /q/health,/q/health/*
             policy: permit
           metrics:
             paths: /metrics

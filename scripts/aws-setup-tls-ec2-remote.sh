@@ -38,4 +38,4 @@ sleep 5
 $COMPOSE $CF up -d --force-recreate backend frontend keycloak
 sleep 10
 
-curl -sf "https://${COMERCIAL_DOMAIN}/api/v1/public/planos" >/dev/null && echo " TLS OK"
+curl -sf "https://${COMERCIAL_DOMAIN}/health" >/dev/null && echo " TLS OK"
