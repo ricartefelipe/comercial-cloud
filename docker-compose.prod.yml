@@ -67,6 +67,7 @@ services:
       QUARKUS_HTTP_CORS_ORIGINS: ${APP_URL:?defina APP_URL}
       QUARKUS_OIDC_AUTH_SERVER_URL: http://keycloak:8080/auth/realms/comercialcloud
       QUARKUS_OIDC_DISCOVERY_ENABLED: "false"
+      QUARKUS_OIDC_JWKS_PATH: http://keycloak:8080/auth/realms/comercialcloud/protocol/openid-connect/certs
       QUARKUS_OIDC_TOKEN_ISSUER: ${KEYCLOAK_ISSUER_URL:?defina KEYCLOAK_ISSUER_URL}
       QUARKUS_OIDC_CLIENT_ID: comercial-cloud-api
       QUARKUS_OIDC_CREDENTIALS_SECRET: comercial-cloud-api-secret
