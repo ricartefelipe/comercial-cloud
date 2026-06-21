@@ -105,6 +105,7 @@ comercial-cloud:
     oidc:
       auth-server-url: http://localhost:8180/realms/comercialcloud
       discovery-enabled: false
+      jwks-path: http://localhost:8180/realms/comercialcloud/protocol/openid-connect/certs
       token:
         issuer: http://localhost:8180/realms/comercialcloud
       client-id: comercial-cloud-api
