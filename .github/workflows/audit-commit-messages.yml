@@ -1,0 +1,31 @@
+name: Audit commit messages
+
+on:
+  pull_request:
+    branches: [develop, main]
+
+jobs:
+  no-ai-trailers:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verificar mensagens de commit
+        env:
+          BASE: ${{ github.base_ref }}
+        run: |
+          set -euo pipefail
+          git fetch origin "$BASE"
+          RANGE="origin/${BASE}..HEAD"
+          if ! git rev-list "$RANGE" >/dev/null 2>&1; then
+            echo "Nenhum commit novo para auditar."
+            exit 0
+          fi
+          PATTERN='(Co-authored-by:.*Cursor|Made-with:.*Cursor|cursoragent@cursor\.com|@cursor\.com>)'
+          if git log "$RANGE" --format='%B' | grep -iE "$PATTERN"; then
+            echo "::error::Rastros de ferramenta de IA detectados nos commits. Remova trailers antes do merge."
+            exit 1
+          fi
+          echo "OK: mensagens de commit limpas."
