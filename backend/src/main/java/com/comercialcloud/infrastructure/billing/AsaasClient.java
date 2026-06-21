@@ -80,6 +80,10 @@ public class AsaasClient {
         return get("/payments/" + paymentId, PaymentResponse.class);
     }
 
+    public PixQrCodeResponse getPixQrCode(String paymentId) throws Exception {
+        return get("/payments/" + paymentId + "/pixQrCode", PixQrCodeResponse.class);
+    }
+
     private <T> T get(String path, Class<T> type) throws Exception {
         HttpRequest request =
                 HttpRequest.newBuilder()
@@ -133,5 +137,12 @@ public class AsaasClient {
         public String invoiceUrl;
         public String bankSlipUrl;
         public String transactionReceiptUrl;
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class PixQrCodeResponse {
+        public String encodedImage;
+        public String payload;
+        public String expirationDate;
     }
 }

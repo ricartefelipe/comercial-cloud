@@ -46,3 +46,13 @@ export async function getCaixaResumo(caixaId: string): Promise<CaixaResumo> {
     includeUserId: false,
   });
 }
+
+export async function listHistoricoCaixas(
+  lojaId = getLojaId(),
+  limit = 20,
+): Promise<Caixa[]> {
+  return apiClient<Caixa[]>(
+    `/api/v1/caixas/historico${buildQuery({ lojaId, limit })}`,
+    { includeUserId: false },
+  );
+}

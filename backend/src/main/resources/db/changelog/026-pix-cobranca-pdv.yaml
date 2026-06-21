@@ -1,0 +1,62 @@
+databaseChangeLog:
+  - changeSet:
+      id: 026-pix-cobranca-pdv
+      author: comercialcloud
+      changes:
+        - createTable:
+            tableName: pix_cobranca_pdv
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: tenant_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: venda_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: gateway_payment_id
+                  type: varchar(100)
+              - column:
+                  name: valor
+                  type: decimal(15, 2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: checkout_url
+                  type: varchar(500)
+              - column:
+                  name: pix_payload
+                  type: text
+              - column:
+                  name: pix_encoded_image
+                  type: text
+              - column:
+                  name: created_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+        - createIndex:
+            tableName: pix_cobranca_pdv
+            indexName: idx_pix_cobranca_pdv_venda
+            columns:
+              - column:
+                  name: venda_id

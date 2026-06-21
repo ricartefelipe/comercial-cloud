@@ -113,6 +113,12 @@ public class CaixaService {
         return calcularResumo(obter(tenantContext.getTenantId(), id));
     }
 
+    public List<Caixa> listarHistorico(UUID lojaId, int limit) {
+        UUID tenantId = tenantContext.getTenantId();
+        validarLoja(tenantId, lojaId);
+        return caixaRepository.listHistorico(tenantId, lojaId, limit);
+    }
+
     private ResumoCaixa calcularResumo(Caixa caixa) {
         List<Venda> vendas = vendaRepository.listFinalizadasPorCaixaComDetalhes(caixa.tenantId(), caixa.id());
         BigDecimal totalVendas = BigDecimal.ZERO;

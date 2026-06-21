@@ -11,6 +11,7 @@ import jakarta.inject.Inject;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -46,5 +47,20 @@ public class PanacheCaixaRepository implements CaixaRepository {
         CaixaEntity merged = entityManager.merge(entity);
         entityManager.flush();
         return mapper.toDomain(merged);
+    }
+
+    @Override
+    public List<Caixa> listHistorico(UUID tenantId, UUID lojaId, int limit) {
+        int safeLimit = Math.max(limit, 1);
+        return CaixaEntity.<CaixaEntity>find(
+                        "tenantId = ?1 and lojaId = ?2 and status = ?3 order by fechadoEm desc",
+                        tenantId,
+                        lojaId,
+                        StatusCaixa.FECHADO.name())
+                .page(0, safeLimit)
+                .list()
+                .stream()
+                .map(mapper::toDomain)
+                .toList();
     }
 }

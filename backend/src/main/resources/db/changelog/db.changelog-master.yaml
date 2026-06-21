@@ -49,3 +49,5 @@ databaseChangeLog:
       file: db/changelog/024-seed-demo-operacional.yaml
   - include:
       file: db/changelog/025-produto-imagem-estoque-minimo.yaml
+  - include:
+      file: db/changelog/026-pix-cobranca-pdv.yaml
