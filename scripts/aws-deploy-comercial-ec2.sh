@@ -112,10 +112,22 @@ if ! swapon --show | grep -q /swapfile; then
 fi
 cp -f deploy/nginx/conf.d/default-pilot.conf deploy/nginx/conf.d/default-pilot-active.conf
 COMPOSE="\$(command -v docker-compose || echo docker-compose)"
-sudo \$COMPOSE --env-file .env.aws-pilot -f docker-compose.prod.yml build 2>&1 | tail -20
-sudo \$COMPOSE --env-file .env.aws-pilot -f docker-compose.prod.yml up -d
+CF="--env-file .env.aws-pilot -f docker-compose.prod.yml"
+DOMAIN="\$(grep '^DOMAIN=' .env.aws-pilot | cut -d= -f2- || true)"
+CERT_VOL="\$(sudo \$COMPOSE \$CF config --volumes 2>/dev/null | grep certbot_conf || true)"
+if [[ -n "\$DOMAIN" && -n "\$CERT_VOL" ]]; then
+  if sudo docker run --rm -v "\${CERT_VOL}:/etc/letsencrypt:ro" alpine \
+    test -f "/etc/letsencrypt/live/\${DOMAIN}/fullchain.pem"; then
+    sed "s/__COMERCIAL_DOMAIN__/\${DOMAIN}/g" \
+      deploy/nginx/conf.d/default-pilot-ssl.conf > deploy/nginx/conf.d/default-pilot-active.conf
+    CF="\${CF} -f docker-compose.prod.tls.yml"
+  fi
+fi
+sudo \$COMPOSE \$CF build 2>&1 | tail -20
+sudo \$COMPOSE \$CF up -d --force-recreate nginx
+sudo \$COMPOSE \$CF up -d
 sleep 45
-sudo \$COMPOSE --env-file .env.aws-pilot -f docker-compose.prod.yml ps
+sudo \$COMPOSE \$CF ps
 curl -sf http://127.0.0.1/health && echo " nginx/backend OK" || echo " aguardando health..."
 REMOTE
 

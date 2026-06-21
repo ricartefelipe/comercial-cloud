@@ -20,7 +20,7 @@ check() {
 }
 
 echo "=== ComercialCloud — verificação de homologação ==="
-check "Backend health" "$API_URL/health/ready"
+check "Backend health" "$API_URL/health"
 check "Frontend" "$APP_URL"
 check "OpenAPI" "$API_URL/q/openapi"
 
