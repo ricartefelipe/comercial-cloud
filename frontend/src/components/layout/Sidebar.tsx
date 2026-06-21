@@ -28,6 +28,7 @@ const menuItems = [
   { href: "/vendas", label: "Vendas", icon: ShoppingCart },
   { href: "/caixa", label: "Caixa", icon: Wallet },
   { href: "/financeiro", label: "Financeiro", icon: CreditCard },
+  { href: "/relatorios", label: "Relatórios", icon: BarChart3 },
   { href: "/fiscal", label: "Fiscal", icon: FileText },
   { href: "/lojas", label: "Lojas", icon: Store },
   { href: "/assinatura", label: "Assinatura", icon: Receipt },
@@ -87,7 +88,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                   active
-                    ? "bg-brand-600 text-white"
+                    ? "bg-[var(--brand-primary,#059669)] text-white"
                     : "text-slate-300 hover:bg-slate-800 hover:text-white",
                 )}
               >
@@ -102,7 +103,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           <Link
             href="/pdv"
             onClick={onClose}
-            className="flex items-center gap-3 rounded-lg bg-brand-600 px-3 py-2.5 text-sm font-medium text-white transition-colors hover:bg-brand-500"
+            className="flex items-center gap-3 rounded-lg bg-[var(--brand-primary,#059669)] px-3 py-2.5 text-sm font-medium text-white transition-colors hover:brightness-110"
           >
             <BarChart3 className="h-5 w-5" />
             Abrir PDV
