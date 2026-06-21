@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" role="img" aria-label="ComercialCloud">
+  <rect width="32" height="32" rx="8" fill="#4f7cff"/>
+  <path
+    d="M8 13h16v11a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2V13z"
+    stroke="#ffffff"
+    stroke-width="2"
+    stroke-linejoin="round"
+  />
+  <path d="M6 13h20" stroke="#ffffff" stroke-width="2" stroke-linecap="round"/>
+  <path
+    d="M12 13V10a4 4 0 0 1 8 0v3"
+    stroke="#ffffff"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+</svg>
