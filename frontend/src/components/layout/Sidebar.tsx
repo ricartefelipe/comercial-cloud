@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BarChart3,
+  ClipboardList,
   CreditCard,
   FileText,
   LayoutDashboard,
@@ -19,21 +20,25 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBranding } from "@/components/branding/BrandingProvider";
+import { getSessaoContexto } from "@/lib/api/sessao";
+import type { UsuarioRole } from "@/types";
+import { useQuery } from "@tanstack/react-query";
 
 const menuItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/produtos", label: "Produtos", icon: Package },
-  { href: "/estoque", label: "Estoque", icon: Warehouse },
-  { href: "/clientes", label: "Clientes", icon: Users },
-  { href: "/vendas", label: "Vendas", icon: ShoppingCart },
-  { href: "/caixa", label: "Caixa", icon: Wallet },
-  { href: "/financeiro", label: "Financeiro", icon: CreditCard },
-  { href: "/relatorios", label: "Relatórios", icon: BarChart3 },
-  { href: "/fiscal", label: "Fiscal", icon: FileText },
-  { href: "/lojas", label: "Lojas", icon: Store },
-  { href: "/assinatura", label: "Assinatura", icon: Receipt },
-  { href: "/usuarios", label: "Usuários", icon: Users },
-  { href: "/configuracoes", label: "Configurações", icon: Settings },
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["ADMIN", "GERENTE", "CAIXA"] as UsuarioRole[] },
+  { href: "/produtos", label: "Produtos", icon: Package, roles: ["ADMIN", "GERENTE"] as UsuarioRole[] },
+  { href: "/estoque", label: "Estoque", icon: Warehouse, roles: ["ADMIN", "GERENTE"] as UsuarioRole[] },
+  { href: "/clientes", label: "Clientes", icon: Users, roles: ["ADMIN", "GERENTE"] as UsuarioRole[] },
+  { href: "/vendas", label: "Vendas", icon: ShoppingCart, roles: ["ADMIN", "GERENTE", "CAIXA"] as UsuarioRole[] },
+  { href: "/caixa", label: "Caixa", icon: Wallet, roles: ["ADMIN", "GERENTE", "CAIXA"] as UsuarioRole[] },
+  { href: "/financeiro", label: "Financeiro", icon: CreditCard, roles: ["ADMIN", "GERENTE"] as UsuarioRole[] },
+  { href: "/relatorios", label: "Relatórios", icon: BarChart3, roles: ["ADMIN", "GERENTE"] as UsuarioRole[] },
+  { href: "/fiscal", label: "Fiscal", icon: FileText, roles: ["ADMIN", "GERENTE"] as UsuarioRole[] },
+  { href: "/auditoria", label: "Auditoria", icon: ClipboardList, roles: ["ADMIN", "GERENTE"] as UsuarioRole[] },
+  { href: "/lojas", label: "Lojas", icon: Store, roles: ["ADMIN"] as UsuarioRole[] },
+  { href: "/assinatura", label: "Assinatura", icon: Receipt, roles: ["ADMIN"] as UsuarioRole[] },
+  { href: "/usuarios", label: "Usuários", icon: Users, roles: ["ADMIN"] as UsuarioRole[] },
+  { href: "/configuracoes", label: "Configurações", icon: Settings, roles: ["ADMIN"] as UsuarioRole[] },
 ];
 
 interface SidebarProps {
@@ -44,6 +49,15 @@ interface SidebarProps {
 export function Sidebar({ open, onClose }: SidebarProps) {
   const pathname = usePathname();
   const branding = useBranding();
+
+  const { data: sessao } = useQuery({
+    queryKey: ["sessao"],
+    queryFn: getSessaoContexto,
+    staleTime: 60_000,
+  });
+
+  const role = sessao?.role ?? "ADMIN";
+  const visibleItems = menuItems.filter((item) => item.roles.includes(role));
 
   return (
     <>
@@ -76,7 +90,7 @@ export function Sidebar({ open, onClose }: SidebarProps) {
         </div>
 
         <nav className="flex-1 space-y-1 overflow-y-auto p-3">
-          {menuItems.map((item) => {
+          {visibleItems.map((item) => {
             const Icon = item.icon;
             const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
 

@@ -78,6 +78,48 @@ public class EstoqueService {
     }
 
     @Transactional
+    public void entrada(UUID lojaId, UUID produtoId, BigDecimal quantidade, String motivo) {
+        movimentarDelta(lojaId, produtoId, quantidade, TipoMovimentacaoEstoque.ENTRADA, motivo);
+    }
+
+    @Transactional
+    public void saida(UUID lojaId, UUID produtoId, BigDecimal quantidade, String motivo) {
+        if (quantidade == null || quantidade.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BusinessException("QUANTIDADE_INVALIDA", "Quantidade deve ser maior que zero");
+        }
+        movimentarDelta(lojaId, produtoId, quantidade.negate(), TipoMovimentacaoEstoque.SAIDA, motivo);
+    }
+
+    @Transactional
+    public void inventario(UUID lojaId, UUID produtoId, BigDecimal quantidadeContada, String motivo) {
+        UUID tenantId = tenantContext.getTenantId();
+        validarLoja(tenantId, lojaId);
+        validarProduto(tenantId, produtoId);
+
+        if (quantidadeContada == null || quantidadeContada.compareTo(BigDecimal.ZERO) < 0) {
+            throw new BusinessException("ESTOQUE_NEGATIVO", "Estoque não pode ser negativo");
+        }
+
+        Estoque estoque = obterOuCriar(tenantId, lojaId, produtoId);
+        BigDecimal saldoAnterior = estoque.quantidade();
+
+        Estoque atualizado = comQuantidade(estoque, quantidadeContada);
+        estoqueRepository.save(atualizado);
+
+        registrarMovimentacao(
+                tenantId,
+                lojaId,
+                produtoId,
+                TipoMovimentacaoEstoque.INVENTARIO,
+                quantidadeContada.subtract(saldoAnterior).abs(),
+                saldoAnterior,
+                quantidadeContada,
+                motivo,
+                null);
+        auditService.registrar("Estoque", estoque.id(), "INVENTARIO", motivo);
+    }
+
+    @Transactional
     public Estoque definirQuantidadeMinima(UUID lojaId, UUID produtoId, BigDecimal quantidadeMinima) {
         UUID tenantId = tenantContext.getTenantId();
         validarLoja(tenantId, lojaId);
@@ -223,5 +265,41 @@ public class EstoqueService {
     private void validarProduto(UUID tenantId, UUID produtoId) {
         produtoRepository.find(tenantId, produtoId)
                 .orElseThrow(() -> new NotFoundException("PRODUTO_NOT_FOUND", "Produto não encontrado"));
+    }
+
+    private void movimentarDelta(
+            UUID lojaId,
+            UUID produtoId,
+            BigDecimal delta,
+            TipoMovimentacaoEstoque tipo,
+            String motivo) {
+        UUID tenantId = tenantContext.getTenantId();
+        validarLoja(tenantId, lojaId);
+        validarProduto(tenantId, produtoId);
+
+        if (delta == null || delta.compareTo(BigDecimal.ZERO) == 0) {
+            throw new BusinessException("QUANTIDADE_INVALIDA", "Quantidade deve ser diferente de zero");
+        }
+
+        Estoque estoque = obterOuCriar(tenantId, lojaId, produtoId);
+        BigDecimal saldoAnterior = estoque.quantidade();
+        BigDecimal saldoPosterior = saldoAnterior.add(delta);
+
+        if (saldoPosterior.compareTo(BigDecimal.ZERO) < 0) {
+            throw new BusinessException("ESTOQUE_INSUFICIENTE", "Estoque insuficiente para a operação");
+        }
+
+        estoqueRepository.save(comQuantidade(estoque, saldoPosterior));
+        registrarMovimentacao(
+                tenantId,
+                lojaId,
+                produtoId,
+                tipo,
+                delta.abs(),
+                saldoAnterior,
+                saldoPosterior,
+                motivo,
+                null);
+        auditService.registrar("Estoque", estoque.id(), tipo.name(), motivo);
     }
 }

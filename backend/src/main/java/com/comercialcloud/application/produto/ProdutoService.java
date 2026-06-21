@@ -25,62 +25,67 @@ public class ProdutoService {
 
     public record PageResult<T>(List<T> content, long totalElements, int totalPages, int size, int number) {}
 
-    @Transactional
-    public Produto criar(
-            String sku, String codigoBarras, String nome, String descricao, String imagemUrl, BigDecimal preco) {
-        UUID tenantId = tenantContext.getTenantId();
-        validarPreco(preco);
-        validarSkuUnico(tenantId, sku, null);
-        validarCodigoBarrasUnico(tenantId, codigoBarras, null);
-        Instant now = Instant.now();
-        Produto produto =
-                new Produto(
-                        UUID.randomUUID(),
-                        tenantId,
-                        sku,
-                        codigoBarras,
-                        nome,
-                        descricao,
-                        normalizarImagemUrl(imagemUrl),
-                        preco,
-                        true,
-                        now,
-                        now);
-        Produto salvo = produtoRepository.save(produto);
-        auditService.registrar("Produto", salvo.id(), "CRIAR", "SKU: " + sku);
-        return salvo;
-    }
-
-    @Transactional
-    public Produto atualizar(
-            UUID id,
+    public record DadosProduto(
             String sku,
             String codigoBarras,
             String nome,
             String descricao,
             String imagemUrl,
-            BigDecimal preco) {
-        Produto atual = obter(tenantContext.getTenantId(), id);
-        validarPreco(preco);
-        validarSkuUnico(atual.tenantId(), sku, id);
-        validarCodigoBarrasUnico(atual.tenantId(), codigoBarras, id);
+            String categoria,
+            BigDecimal preco,
+            BigDecimal precoCusto,
+            boolean controlaEstoque) {
+
+        DadosProduto withImagemUrl(String url) {
+            return new DadosProduto(
+                    sku, codigoBarras, nome, descricao, url, categoria, preco, precoCusto, controlaEstoque);
+        }
+    }
+
+    @Transactional
+    public Produto criar(DadosProduto dados) {
+        UUID tenantId = tenantContext.getTenantId();
+        validarPreco(dados.preco());
+        validarSkuUnico(tenantId, dados.sku(), null);
+        validarCodigoBarrasUnico(tenantId, dados.codigoBarras(), null);
         Instant now = Instant.now();
+        Produto produto = novoProduto(UUID.randomUUID(), tenantId, dados, true, now, now);
+        Produto salvo = produtoRepository.save(produto);
+        auditService.registrar("Produto", salvo.id(), "CRIAR", "SKU: " + dados.sku());
+        return salvo;
+    }
+
+    @Transactional
+    public Produto atualizar(UUID id, DadosProduto dados) {
+        Produto atual = obter(tenantContext.getTenantId(), id);
+        validarPreco(dados.preco());
+        validarSkuUnico(atual.tenantId(), dados.sku(), id);
+        validarCodigoBarrasUnico(atual.tenantId(), dados.codigoBarras(), id);
         Produto atualizado =
-                new Produto(
+                novoProduto(
                         atual.id(),
                         atual.tenantId(),
-                        sku,
-                        codigoBarras,
-                        nome,
-                        descricao,
-                        normalizarImagemUrl(imagemUrl),
-                        preco,
+                        dados,
                         atual.ativo(),
                         atual.createdAt(),
-                        now);
+                        Instant.now());
         Produto salvo = produtoRepository.save(atualizado);
-        auditService.registrar("Produto", salvo.id(), "ATUALIZAR", "SKU: " + sku);
+        auditService.registrar("Produto", salvo.id(), "ATUALIZAR", "SKU: " + dados.sku());
         return salvo;
+    }
+
+    @Transactional
+    public Produto atualizarImagemUrl(UUID id, String imagemUrl) {
+        Produto atual = obter(tenantContext.getTenantId(), id);
+        DadosProduto dados = dadosFrom(atual).withImagemUrl(normalizarImagemUrl(imagemUrl));
+        return produtoRepository.save(
+                novoProduto(
+                        atual.id(),
+                        atual.tenantId(),
+                        dados,
+                        atual.ativo(),
+                        atual.createdAt(),
+                        Instant.now()));
     }
 
     public Produto buscarPorId(UUID id) {
@@ -107,6 +112,10 @@ public class ProdutoService {
                         () -> new NotFoundException("PRODUTO_NOT_FOUND", "Produto não encontrado para o código de barras"));
     }
 
+    public List<String> listarCategorias() {
+        return produtoRepository.listCategorias(tenantContext.getTenantId());
+    }
+
     @Transactional
     public Produto ativar(UUID id) {
         return alterarStatus(id, true);
@@ -119,23 +128,54 @@ public class ProdutoService {
 
     private Produto alterarStatus(UUID id, boolean ativo) {
         Produto produto = obter(tenantContext.getTenantId(), id);
-        Instant now = Instant.now();
         Produto atualizado =
-                new Produto(
+                novoProduto(
                         produto.id(),
                         produto.tenantId(),
-                        produto.sku(),
-                        produto.codigoBarras(),
-                        produto.nome(),
-                        produto.descricao(),
-                        produto.imagemUrl(),
-                        produto.preco(),
+                        dadosFrom(produto),
                         ativo,
                         produto.createdAt(),
-                        now);
+                        Instant.now());
         Produto salvo = produtoRepository.save(atualizado);
         auditService.registrar("Produto", salvo.id(), ativo ? "ATIVAR" : "INATIVAR", null);
         return salvo;
+    }
+
+    static DadosProduto dadosFrom(Produto produto) {
+        return new DadosProduto(
+                produto.sku(),
+                produto.codigoBarras(),
+                produto.nome(),
+                produto.descricao(),
+                produto.imagemUrl(),
+                produto.categoria(),
+                produto.preco(),
+                produto.precoCusto(),
+                produto.controlaEstoque());
+    }
+
+    private static Produto novoProduto(
+            UUID id,
+            UUID tenantId,
+            DadosProduto dados,
+            boolean ativo,
+            Instant createdAt,
+            Instant updatedAt) {
+        return new Produto(
+                id,
+                tenantId,
+                dados.sku(),
+                dados.codigoBarras(),
+                dados.nome(),
+                dados.descricao(),
+                normalizarImagemUrl(dados.imagemUrl()),
+                dados.categoria(),
+                dados.preco(),
+                normalizarPrecoCusto(dados.precoCusto()),
+                dados.controlaEstoque(),
+                ativo,
+                createdAt,
+                updatedAt);
     }
 
     private Produto obter(UUID tenantId, UUID id) {
@@ -144,11 +184,15 @@ public class ProdutoService {
                 .orElseThrow(() -> new NotFoundException("PRODUTO_NOT_FOUND", "Produto não encontrado"));
     }
 
-    private String normalizarImagemUrl(String imagemUrl) {
+    private static String normalizarImagemUrl(String imagemUrl) {
         if (imagemUrl == null || imagemUrl.isBlank()) {
             return null;
         }
         return imagemUrl.trim();
+    }
+
+    private static BigDecimal normalizarPrecoCusto(BigDecimal precoCusto) {
+        return precoCusto != null ? precoCusto : BigDecimal.ZERO;
     }
 
     private void validarPreco(BigDecimal preco) {

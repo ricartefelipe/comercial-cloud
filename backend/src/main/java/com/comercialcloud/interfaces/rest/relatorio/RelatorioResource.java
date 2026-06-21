@@ -67,6 +67,26 @@ public class RelatorioResource {
         return Response.ok(json).build();
     }
 
+    @GET
+    @Path("/abc")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<Map<String, Object>> curvaAbc(
+            @QueryParam("lojaId") UUID lojaId,
+            @QueryParam("dataInicio") String dataInicio,
+            @QueryParam("dataFim") String dataFim) {
+        return relatorioService.curvaAbc(lojaId, parseInicio(dataInicio), parseFim(dataFim));
+    }
+
+    @GET
+    @Path("/margem")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<Map<String, Object>> margem(
+            @QueryParam("lojaId") UUID lojaId,
+            @QueryParam("dataInicio") String dataInicio,
+            @QueryParam("dataFim") String dataFim) {
+        return relatorioService.margemLucro(lojaId, parseInicio(dataInicio), parseFim(dataFim));
+    }
+
     private static Instant parseInicio(String data) {
         if (data == null || data.isBlank()) {
             return LocalDate.now().minusDays(30).atStartOfDay().toInstant(ZoneOffset.UTC);

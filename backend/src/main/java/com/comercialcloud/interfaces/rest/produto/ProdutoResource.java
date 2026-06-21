@@ -1,5 +1,7 @@
 package com.comercialcloud.interfaces.rest.produto;
 
+import com.comercialcloud.application.produto.ProdutoImagemService;
+import com.comercialcloud.application.produto.ProdutoImportService;
 import com.comercialcloud.application.produto.ProdutoService;
 import com.comercialcloud.domain.model.Produto;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -32,18 +34,44 @@ import java.util.UUID;
 @Tag(name = "Produtos")
 public class ProdutoResource {
 
-    @Inject
-    ProdutoService produtoService;
+    @Inject ProdutoService produtoService;
+
+    @Inject ProdutoImagemService produtoImagemService;
+
+    @Inject ProdutoImportService produtoImportService;
+
+    @GET
+    @Path("/categorias")
+    public List<String> categorias() {
+        return produtoService.listarCategorias();
+    }
+
+    @POST
+    @Path("/importacao")
+    public Map<String, Object> importar(ImportacaoBody request) {
+        return produtoImportService.importarCsv(request.csv());
+    }
+
+    @POST
+    @Path("/{id}/imagem")
+    public Map<String, Object> uploadImagem(@PathParam("id") UUID id, ImagemBody request) {
+        String url = produtoImagemService.salvarImagemBase64(id, request.contentType(), request.conteudoBase64());
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("imagemUrl", url);
+        return map;
+    }
+
+    @GET
+    @Path("/midias/{tenantId}/{fileName}")
+    @Produces({"image/jpeg", "image/png", "image/webp", "image/gif"})
+    public Response midia(@PathParam("tenantId") UUID tenantId, @PathParam("fileName") String fileName) {
+        byte[] bytes = produtoImagemService.lerImagem(tenantId, fileName);
+        return Response.ok(bytes, produtoImagemService.contentTypeDeArquivo(fileName)).build();
+    }
 
     @POST
     public Response criar(ProdutoBody request) {
-        var produto = produtoService.criar(
-                request.sku(),
-                request.codigoBarras(),
-                request.nome(),
-                request.descricao(),
-                request.imagemUrl(),
-                request.resolverPreco());
+        var produto = produtoService.criar(request.toDados());
         return Response.status(Response.Status.CREATED).entity(toMap(produto)).build();
     }
 
@@ -59,7 +87,7 @@ public class ProdutoResource {
             @QueryParam("size") @DefaultValue("20") int size) {
         var result = produtoService.listar(page, size);
         Map<String, Object> response = new LinkedHashMap<>();
-        response.put("content", result.content().stream().map(p -> toMap(p)).toList());
+        response.put("content", result.content().stream().map(ProdutoResource::toMap).toList());
         response.put("totalElements", result.totalElements());
         response.put("totalPages", result.totalPages());
         response.put("size", result.size());
@@ -70,7 +98,7 @@ public class ProdutoResource {
     @GET
     @Path("/busca")
     public List<Map<String, Object>> buscar(@QueryParam("termo") String termo) {
-        return produtoService.buscar(termo).stream().map(p -> toMap(p)).toList();
+        return produtoService.buscar(termo).stream().map(ProdutoResource::toMap).toList();
     }
 
     @GET
@@ -82,14 +110,7 @@ public class ProdutoResource {
     @PUT
     @Path("/{id}")
     public Map<String, Object> atualizar(@PathParam("id") UUID id, ProdutoBody request) {
-        return toMap(produtoService.atualizar(
-                id,
-                request.sku(),
-                request.codigoBarras(),
-                request.nome(),
-                request.descricao(),
-                request.imagemUrl(),
-                request.resolverPreco()));
+        return toMap(produtoService.atualizar(id, request.toDados()));
     }
 
     @PATCH
@@ -113,11 +134,13 @@ public class ProdutoResource {
         map.put("nome", produto.nome());
         map.put("descricao", produto.descricao());
         map.put("imagemUrl", produto.imagemUrl());
+        map.put("categoria", produto.categoria());
         map.put("unidadeMedida", "UN");
         map.put("precoVenda", produto.preco());
         map.put("preco", produto.preco());
+        map.put("precoCusto", produto.precoCusto());
         map.put("ativo", produto.ativo());
-        map.put("controlaEstoque", true);
+        map.put("controlaEstoque", produto.controlaEstoque());
         map.put("createdAt", produto.createdAt());
         map.put("updatedAt", produto.updatedAt());
         return map;
@@ -130,9 +153,13 @@ public class ProdutoResource {
             @NotBlank String nome,
             String descricao,
             String imagemUrl,
+            String categoria,
             String unidadeMedida,
             @DecimalMin("0.0") BigDecimal precoVenda,
-            @DecimalMin("0.0") BigDecimal preco) {
+            @DecimalMin("0.0") BigDecimal preco,
+            @DecimalMin("0.0") BigDecimal precoCusto,
+            Boolean controlaEstoque) {
+
         BigDecimal resolverPreco() {
             if (precoVenda != null) {
                 return precoVenda;
@@ -142,5 +169,22 @@ public class ProdutoResource {
             }
             throw new IllegalArgumentException("preco ou precoVenda é obrigatório");
         }
+
+        ProdutoService.DadosProduto toDados() {
+            return new ProdutoService.DadosProduto(
+                    sku,
+                    codigoBarras,
+                    nome,
+                    descricao,
+                    imagemUrl,
+                    categoria,
+                    resolverPreco(),
+                    precoCusto != null ? precoCusto : BigDecimal.ZERO,
+                    controlaEstoque == null || controlaEstoque);
+        }
     }
+
+    public record ImagemBody(String contentType, String conteudoBase64) {}
+
+    public record ImportacaoBody(@NotBlank String csv) {}
 }

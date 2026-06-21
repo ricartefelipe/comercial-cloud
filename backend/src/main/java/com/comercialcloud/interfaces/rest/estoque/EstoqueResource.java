@@ -42,6 +42,25 @@ public class EstoqueResource {
     }
 
     @POST
+    @Path("/entrada")
+    public void entrada(MovimentoBody request) {
+        estoqueService.entrada(request.lojaId(), request.produtoId(), request.quantidade(), request.motivo());
+    }
+
+    @POST
+    @Path("/saida")
+    public void saida(MovimentoBody request) {
+        estoqueService.saida(request.lojaId(), request.produtoId(), request.quantidade(), request.motivo());
+    }
+
+    @POST
+    @Path("/inventario")
+    public void inventario(InventarioBody request) {
+        estoqueService.inventario(
+                request.lojaId(), request.produtoId(), request.quantidadeContada(), request.motivo());
+    }
+
+    @POST
     @Path("/ajustes")
     public void ajustar(AjusteBody request) {
         estoqueService.ajustar(request.lojaId(), request.produtoId(), request.quantidade(), request.motivo());
@@ -102,6 +121,18 @@ public class EstoqueResource {
             @NotNull UUID lojaId,
             @NotNull UUID produtoId,
             @NotNull @DecimalMin("0.0") BigDecimal quantidade,
+            @NotBlank String motivo) {}
+
+    public record MovimentoBody(
+            @NotNull UUID lojaId,
+            @NotNull UUID produtoId,
+            @NotNull @DecimalMin("0.01") BigDecimal quantidade,
+            @NotBlank String motivo) {}
+
+    public record InventarioBody(
+            @NotNull UUID lojaId,
+            @NotNull UUID produtoId,
+            @NotNull @DecimalMin("0.0") BigDecimal quantidadeContada,
             @NotBlank String motivo) {}
 
     public record MinimoBody(

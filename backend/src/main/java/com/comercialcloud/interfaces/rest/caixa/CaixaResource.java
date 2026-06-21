@@ -1,8 +1,11 @@
 package com.comercialcloud.interfaces.rest.caixa;
 
+import com.comercialcloud.application.caixa.CaixaMovimentoService;
 import com.comercialcloud.application.caixa.CaixaService;
 import com.comercialcloud.domain.exception.BusinessException;
 import com.comercialcloud.domain.model.Caixa;
+import com.comercialcloud.domain.model.MovimentoCaixa;
+import com.comercialcloud.domain.model.TipoMovimentoCaixa;
 import com.comercialcloud.infrastructure.security.TenantContext;
 import jakarta.inject.Inject;
 import jakarta.validation.constraints.DecimalMin;
@@ -32,6 +35,8 @@ import java.util.UUID;
 public class CaixaResource {
 
     @Inject CaixaService caixaService;
+
+    @Inject CaixaMovimentoService caixaMovimentoService;
 
     @Inject TenantContext tenantContext;
 
@@ -77,6 +82,36 @@ public class CaixaResource {
         map.put("quantidadeVendas", resumo.quantidadeVendas());
         map.put("valorAbertura", resumo.valorAbertura());
         map.put("valorCalculado", resumo.valorCalculado());
+        map.put("totalSangrias", resumo.totalSangrias());
+        map.put("totalSuprimentos", resumo.totalSuprimentos());
+        map.put("valorGavetaEsperada", resumo.valorGavetaEsperada());
+        return map;
+    }
+
+    @POST
+    @Path("/{id}/movimentos")
+    public Response registrarMovimento(@PathParam("id") UUID id, MovimentoBody request) {
+        TipoMovimentoCaixa tipo = TipoMovimentoCaixa.valueOf(request.tipo().toUpperCase());
+        var movimento = caixaMovimentoService.registrar(id, tipo, request.valor(), request.motivo());
+        return Response.status(Response.Status.CREATED).entity(toMovimentoMap(movimento)).build();
+    }
+
+    @GET
+    @Path("/{id}/movimentos")
+    public List<Map<String, Object>> listarMovimentos(@PathParam("id") UUID id) {
+        return caixaMovimentoService.listar(id).stream().map(CaixaResource::toMovimentoMap).toList();
+    }
+
+    static Map<String, Object> toMovimentoMap(MovimentoCaixa movimento) {
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("id", movimento.id());
+        map.put("caixaId", movimento.caixaId());
+        map.put("lojaId", movimento.lojaId());
+        map.put("usuarioId", movimento.usuarioId());
+        map.put("tipo", movimento.tipo().name());
+        map.put("valor", movimento.valor());
+        map.put("motivo", movimento.motivo());
+        map.put("createdAt", movimento.createdAt());
         return map;
     }
 
@@ -113,4 +148,9 @@ public class CaixaResource {
 
     public record FecharBody(
             @NotNull @DecimalMin("0.0") BigDecimal valorFechamentoInformado) {}
+
+    public record MovimentoBody(
+            @NotNull String tipo,
+            @NotNull @DecimalMin("0.01") BigDecimal valor,
+            @NotNull String motivo) {}
 }

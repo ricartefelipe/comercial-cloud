@@ -23,4 +23,6 @@ public interface ProdutoRepository {
     List<Produto> buscarPorTermo(UUID tenantId, String termo);
 
     Optional<Produto> findByCodigoBarras(UUID tenantId, String codigoBarras);
+
+    List<String> listCategorias(UUID tenantId);
 }

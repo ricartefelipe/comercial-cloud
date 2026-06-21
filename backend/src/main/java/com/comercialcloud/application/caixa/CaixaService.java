@@ -33,6 +33,8 @@ public class CaixaService {
     @Inject UsuarioRepository usuarioRepository;
     @Inject VendaRepository vendaRepository;
 
+    @Inject CaixaMovimentoService caixaMovimentoService;
+
     public record ResumoCaixa(
             UUID caixaId,
             BigDecimal totalVendas,
@@ -42,7 +44,10 @@ public class CaixaService {
             BigDecimal totalOutros,
             long quantidadeVendas,
             BigDecimal valorAbertura,
-            BigDecimal valorCalculado
+            BigDecimal valorCalculado,
+            BigDecimal totalSangrias,
+            BigDecimal totalSuprimentos,
+            BigDecimal valorGavetaEsperada
     ) {}
 
     @Transactional
@@ -138,6 +143,8 @@ public class CaixaService {
                 }
             }
         }
+        BigDecimal sangrias = caixaMovimentoService.totalSangrias(caixa.tenantId(), caixa.id());
+        BigDecimal suprimentos = caixaMovimentoService.totalSuprimentos(caixa.tenantId(), caixa.id());
         return new ResumoCaixa(
                 caixa.id(),
                 totalVendas,
@@ -147,7 +154,10 @@ public class CaixaService {
                 out,
                 vendas.size(),
                 caixa.valorAbertura(),
-                caixa.valorAbertura().add(totalVendas));
+                caixa.valorAbertura().add(totalVendas),
+                sangrias,
+                suprimentos,
+                caixa.valorAbertura().add(din).add(suprimentos).subtract(sangrias));
     }
 
     private Caixa obter(UUID tenantId, UUID id) {

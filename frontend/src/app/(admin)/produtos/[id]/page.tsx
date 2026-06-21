@@ -3,7 +3,7 @@
 import { Card } from "@/components/ui/Card";
 import { ErrorMessage, LoadingSpinner, PageHeader } from "@/components/ui/Common";
 import { ProdutoForm } from "@/features/produtos/ProdutoForm";
-import { getProduto, updateProduto } from "@/lib/api/produtos";
+import { getProduto, updateProduto, uploadProdutoImagem } from "@/lib/api/produtos";
 import type { ProdutoRequest } from "@/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
@@ -45,6 +45,10 @@ export default function EditarProdutoPage() {
         <ProdutoForm
           produto={produto}
           onSubmit={handleSubmit}
+          onUploadImagem={async (contentType, base64) => {
+            await uploadProdutoImagem(id, contentType, base64);
+            queryClient.invalidateQueries({ queryKey: ["produto", id] });
+          }}
           loading={mutation.isPending}
         />
       </Card>

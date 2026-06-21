@@ -5,6 +5,8 @@ import type {
   Caixa,
   CaixaResumo,
   FecharCaixaRequest,
+  MovimentoCaixa,
+  MovimentoCaixaRequest,
 } from "@/types";
 
 export async function abrirCaixa(data: AbrirCaixaRequest): Promise<Caixa> {
@@ -55,4 +57,20 @@ export async function listHistoricoCaixas(
     `/api/v1/caixas/historico${buildQuery({ lojaId, limit })}`,
     { includeUserId: false },
   );
+}
+
+export async function registrarMovimentoCaixa(
+  caixaId: string,
+  data: MovimentoCaixaRequest,
+): Promise<MovimentoCaixa> {
+  return apiClient<MovimentoCaixa>(`/api/v1/caixas/${caixaId}/movimentos`, {
+    method: "POST",
+    body: data,
+  });
+}
+
+export async function listMovimentosCaixa(caixaId: string): Promise<MovimentoCaixa[]> {
+  return apiClient<MovimentoCaixa[]>(`/api/v1/caixas/${caixaId}/movimentos`, {
+    includeUserId: false,
+  });
 }
