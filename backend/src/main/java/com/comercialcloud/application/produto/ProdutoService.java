@@ -91,6 +91,13 @@ public class ProdutoService {
         return produtoRepository.buscarPorTermo(tenantContext.getTenantId(), termo);
     }
 
+    public Produto buscarPorCodigoBarras(String codigoBarras) {
+        return produtoRepository
+                .findByCodigoBarras(tenantContext.getTenantId(), codigoBarras)
+                .orElseThrow(
+                        () -> new NotFoundException("PRODUTO_NOT_FOUND", "Produto não encontrado para o código de barras"));
+    }
+
     @Transactional
     public Produto ativar(UUID id) {
         return alterarStatus(id, true);

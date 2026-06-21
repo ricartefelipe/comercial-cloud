@@ -6,16 +6,24 @@ import { ErrorMessage, LoadingSpinner } from "@/components/ui/Common";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { Select } from "@/components/ui/Select";
+import { OfflineIndicator, OnlineBadge } from "@/components/pdv/OfflineIndicator";
+import { PdvReceipt } from "@/components/pdv/PdvReceipt";
+import { useBranding } from "@/components/branding/BrandingProvider";
 import { abrirCaixa, getCaixaAberto } from "@/lib/api/caixa";
-import { listClientes } from "@/lib/api/clientes";
-import { buscarProdutos, listProdutos } from "@/lib/api/produtos";
+import { listClientes, consumidorRapido } from "@/lib/api/clientes";
+import { getDashboardResumo } from "@/lib/api/dashboard";
+import { listEstoques } from "@/lib/api/estoque";
+import { buscarProdutos, getProdutoByCodigoBarras, listProdutos } from "@/lib/api/produtos";
 import {
   addItemVenda,
   addPagamentoVenda,
+  aplicarDescontoVenda,
   createVenda,
   finalizarVenda,
   removeItemVenda,
+  vincularClienteVenda,
 } from "@/lib/api/vendas";
+import { looksLikeBarcode, useBarcodeScanner } from "@/hooks/useBarcodeScanner";
 import { getLojaId, getOperatorLabel } from "@/lib/auth/tenant-context";
 import { formatCurrency, itemVendaLineTotal, toNumber } from "@/lib/format";
 import type { FormaPagamento, ItemVenda, Produto, Venda } from "@/types";
@@ -27,10 +35,11 @@ import {
   CreditCard,
   Keyboard,
   LockOpen,
+  Maximize2,
+  Minimize2,
   Minus,
   Package,
   Plus,
-  Receipt,
   Search,
   ShoppingCart,
   Smartphone,
@@ -41,7 +50,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 const FORMAS_PAGAMENTO: FormaPagamento[] = [
   "DINHEIRO",
@@ -68,12 +77,17 @@ function roundMoney(value: number): number {
 function ProductTile({
   produto,
   disabled,
+  estoqueQty,
   onAdd,
 }: {
   produto: Produto;
   disabled: boolean;
+  estoqueQty?: number;
   onAdd: (produto: Produto) => void;
 }) {
+  const estoqueBaixo =
+    produto.controlaEstoque && estoqueQty !== undefined && estoqueQty <= 10;
+
   return (
     <button
       type="button"
@@ -92,6 +106,9 @@ function ProductTile({
         )}
       </div>
       <p className="text-xs text-slate-500">{produto.sku}</p>
+      {estoqueBaixo && (
+        <p className="mt-1 text-xs font-medium text-amber-600">Estoque: {estoqueQty} un.</p>
+      )}
       <p className="mt-2 text-lg font-bold text-brand-600">
         {formatCurrency(produto.precoVenda)}
       </p>
@@ -101,6 +118,7 @@ function ProductTile({
 
 export default function PdvPage() {
   const queryClient = useQueryClient();
+  const branding = useBranding();
   const searchRef = useRef<HTMLInputElement>(null);
   const [termo, setTermo] = useState("");
   const [searchResults, setSearchResults] = useState<Produto[]>([]);
@@ -118,6 +136,9 @@ export default function PdvPage() {
   const [loading, setLoading] = useState(false);
   const [openCaixaModal, setOpenCaixaModal] = useState(false);
   const [valorAbertura, setValorAbertura] = useState("100");
+  const [cpfNota, setCpfNota] = useState("");
+  const [descontoVenda, setDescontoVenda] = useState("");
+  const [kioskMode, setKioskMode] = useState(false);
 
   const { data: clientes } = useQuery({
     queryKey: ["clientes-pdv"],
@@ -131,10 +152,42 @@ export default function PdvPage() {
 
   const { data: catalogo, isLoading: catalogoLoading } = useQuery({
     queryKey: ["produtos-pdv"],
-    queryFn: () => listProdutos(0, 24),
+    queryFn: () => listProdutos(0, 48),
   });
 
-  const produtosRapidos = (catalogo?.content ?? []).filter((p) => p.ativo);
+  const { data: estoques } = useQuery({
+    queryKey: ["estoques-pdv"],
+    queryFn: () => listEstoques(),
+  });
+
+  const { data: dashboardPdv } = useQuery({
+    queryKey: ["dashboard-pdv"],
+    queryFn: () => getDashboardResumo(),
+    staleTime: 60_000,
+  });
+
+  const estoquePorProduto = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const e of estoques ?? []) {
+      map.set(e.produtoId, e.quantidadeAtual);
+    }
+    return map;
+  }, [estoques]);
+
+  const produtosRapidos = useMemo(() => {
+    const ativos = (catalogo?.content ?? []).filter((p) => p.ativo);
+    const topIds = dashboardPdv?.topProdutos?.map((p) => p.produtoId) ?? [];
+    const byId = new Map(ativos.map((p) => [p.id, p]));
+    const ordenados: Produto[] = [];
+    for (const id of topIds) {
+      const p = byId.get(id);
+      if (p) ordenados.push(p);
+    }
+    for (const p of ativos) {
+      if (!topIds.includes(p.id)) ordenados.push(p);
+    }
+    return ordenados.slice(0, 24);
+  }, [catalogo?.content, dashboardPdv?.topProdutos]);
   const caixaPronto = !caixaLoading && !!caixaAberto;
   const operadorLabel = getOperatorLabel();
 
@@ -176,14 +229,56 @@ export default function PdvPage() {
     setSearching(true);
     setError("");
     try {
+      if (looksLikeBarcode(termo.trim())) {
+        try {
+          const produto = await getProdutoByCodigoBarras(termo.trim());
+          if (produto.ativo) {
+            await handleAddProduct(produto);
+            return;
+          }
+        } catch {
+          // fallback para busca textual
+        }
+      }
       const results = await buscarProdutos(termo.trim());
-      setSearchResults(results.filter((p) => p.ativo));
+      const ativos = results.filter((p) => p.ativo);
+      if (ativos.length === 1) {
+        await handleAddProduct(ativos[0]);
+        return;
+      }
+      setSearchResults(ativos);
     } catch (err) {
       setError((err as Error).message);
     } finally {
       setSearching(false);
     }
   };
+
+  const resolverProdutoPorCodigo = useCallback(
+    async (codigo: string) => {
+      setError("");
+      try {
+        const produto = await getProdutoByCodigoBarras(codigo);
+        if (!produto.ativo) {
+          setError("Produto inativo.");
+          return;
+        }
+        await handleAddProduct(produto);
+      } catch (err) {
+        setError((err as Error).message);
+      }
+    },
+    // handleAddProduct is stable enough for scanner callback
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [caixaPronto, venda, clienteId],
+  );
+
+  useBarcodeScanner(
+    (codigo) => {
+      void resolverProdutoPorCodigo(codigo);
+    },
+    step === "cart" && caixaPronto,
+  );
 
   const handleAddProduct = async (produto: Produto) => {
     if (!caixaPronto) {
@@ -267,18 +362,40 @@ export default function PdvPage() {
       : 0;
   const pagamentoValido = Math.abs(diferencaPagamento) <= 0.01 && totalPago > 0;
 
-  const iniciarPagamento = useCallback(() => {
+  const iniciarPagamento = useCallback(async () => {
     if (!caixaPronto) {
       setOpenCaixaModal(true);
       return;
     }
-    setFormaPrincipal("DINHEIRO");
-    setPagamentoMisto(false);
-    setPagamentos([{ forma: "DINHEIRO", valor: String(totalVenda) }]);
-    setValorRecebido("");
+    if (!venda) return;
+    setLoading(true);
     setError("");
-    setStep("payment");
-  }, [caixaPronto, totalVenda]);
+    try {
+      let current = venda;
+      const desconto = toNumber(descontoVenda);
+      if (desconto > 0) {
+        current = await aplicarDescontoVenda(current.id, desconto);
+        setVenda(current);
+      }
+      if (cpfNota.trim()) {
+        const cliente = await consumidorRapido(cpfNota.trim());
+        current = await vincularClienteVenda(current.id, cliente.id);
+        setVenda(current);
+      } else if (clienteId) {
+        current = await vincularClienteVenda(current.id, clienteId);
+        setVenda(current);
+      }
+      setFormaPrincipal("DINHEIRO");
+      setPagamentoMisto(false);
+      setPagamentos([{ forma: "DINHEIRO", valor: String(toNumber(current.total)) }]);
+      setValorRecebido("");
+      setStep("payment");
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  }, [caixaPronto, venda, descontoVenda, cpfNota, clienteId]);
 
   const selecionarForma = (forma: FormaPagamento) => {
     setFormaPrincipal(forma);
@@ -358,9 +475,27 @@ export default function PdvPage() {
     setPagamentoMisto(false);
     setPagamentos([{ forma: "DINHEIRO", valor: "" }]);
     setValorRecebido("");
+    setCpfNota("");
+    setDescontoVenda("");
     setClienteId("");
     setError("");
     searchRef.current?.focus();
+  };
+
+  const toggleKiosk = async () => {
+    if (!kioskMode) {
+      setKioskMode(true);
+      try {
+        await document.documentElement.requestFullscreen();
+      } catch {
+        // fullscreen opcional
+      }
+      return;
+    }
+    setKioskMode(false);
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+    }
   };
 
   useEffect(() => {
@@ -384,81 +519,11 @@ export default function PdvPage() {
 
   if (step === "receipt" && venda) {
     return (
-      <div className="flex min-h-screen flex-col bg-slate-900 text-white">
-        <header className="flex items-center justify-between border-b border-slate-700 px-6 py-4">
-          <div className="flex items-center gap-3">
-            <Receipt className="h-6 w-6 text-brand-400" />
-            <h1 className="text-xl font-bold">Comprovante</h1>
-          </div>
-          <Badge variant="success">Venda finalizada</Badge>
-        </header>
-
-        <main className="mx-auto w-full max-w-md flex-1 p-6">
-          <div className="rounded-xl bg-white p-6 text-slate-900 shadow-xl">
-            <div className="border-b border-dashed border-slate-300 pb-4 text-center">
-              <p className="text-lg font-bold">ComercialCloud</p>
-              <p className="text-sm text-slate-500">
-                Venda #{venda.numero ?? venda.id.slice(0, 8)}
-              </p>
-            </div>
-
-            <div className="space-y-2 border-b border-dashed border-slate-300 py-4">
-              {venda.itens?.map((item) => (
-                <div key={item.id} className="flex justify-between text-sm">
-                  <span>
-                    {item.quantidade}x {item.produtoNome ?? item.produtoSku}
-                  </span>
-                  <span>{formatCurrency(itemVendaLineTotal(item))}</span>
-                </div>
-              ))}
-            </div>
-
-            <div className="space-y-1 py-4 text-sm">
-              <div className="flex justify-between">
-                <span>Subtotal</span>
-                <span>{formatCurrency(venda.subtotal)}</span>
-              </div>
-              {venda.descontoTotal > 0 && (
-                <div className="flex justify-between text-red-600">
-                  <span>Desconto</span>
-                  <span>-{formatCurrency(venda.descontoTotal)}</span>
-                </div>
-              )}
-              <div className="flex justify-between text-lg font-bold">
-                <span>TOTAL</span>
-                <span>{formatCurrency(venda.total)}</span>
-              </div>
-            </div>
-
-            {venda.pagamentos && venda.pagamentos.length > 0 && (
-              <div className="border-t border-dashed border-slate-300 pt-4 text-sm">
-                <p className="mb-2 font-medium">Pagamentos:</p>
-                {venda.pagamentos.map((pag) => (
-                  <div key={pag.id} className="flex justify-between">
-                    <span>{FORMA_PAGAMENTO_LABELS[pag.formaPagamento]}</span>
-                    <span>{formatCurrency(pag.valor)}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            <p className="mt-6 text-center text-xs text-slate-400">
-              Obrigado pela preferência!
-            </p>
-          </div>
-
-          <div className="mt-6 flex gap-3">
-            <Button className="flex-1" onClick={handleNovaVenda}>
-              Nova venda
-            </Button>
-            <Link href="/dashboard" className="flex-1">
-              <Button variant="outline" className="w-full bg-transparent text-white border-slate-600 hover:bg-slate-800">
-                Retaguarda
-              </Button>
-            </Link>
-          </div>
-        </main>
-      </div>
+      <PdvReceipt
+        venda={venda}
+        brandName={branding.nomeExibicao}
+        onNovaVenda={handleNovaVenda}
+      />
     );
   }
 
@@ -466,18 +531,30 @@ export default function PdvPage() {
     <div className="flex min-h-screen flex-col bg-slate-100">
       <header className="flex items-center justify-between bg-slate-900 px-4 py-3 text-white lg:px-6">
         <div className="flex items-center gap-4">
-          <Link href="/dashboard">
-            <Button variant="ghost" size="sm" className="text-white hover:bg-slate-800">
-              <ArrowLeft className="h-4 w-4" />
-              Retaguarda
-            </Button>
-          </Link>
+          {!kioskMode && (
+            <Link href="/dashboard">
+              <Button variant="ghost" size="sm" className="text-white hover:bg-slate-800">
+                <ArrowLeft className="h-4 w-4" />
+                Retaguarda
+              </Button>
+            </Link>
+          )}
           <div className="flex items-center gap-2">
             <ShoppingCart className="h-5 w-5 text-brand-400" />
-            <h1 className="text-lg font-bold">PDV</h1>
+            <h1 className="text-lg font-bold">{kioskMode ? branding.nomeExibicao : "PDV"}</h1>
           </div>
+          <OfflineIndicator />
         </div>
         <div className="flex items-center gap-4">
+          <OnlineBadge />
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-white hover:bg-slate-800 print:hidden"
+            onClick={() => void toggleKiosk()}
+          >
+            {kioskMode ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+          </Button>
           <div className="hidden text-right sm:block">
             <p className="text-xs text-slate-400">Operador</p>
             <p className="max-w-[160px] truncate text-sm font-medium">{operadorLabel}</p>
@@ -543,12 +620,30 @@ export default function PdvPage() {
                 </Button>
               </div>
 
-              <div className="mb-4">
+              <div className="mb-4 grid gap-4 sm:grid-cols-2">
                 <Select
                   label="Cliente (opcional)"
                   options={clienteOptions}
                   value={clienteId}
                   onChange={(e) => setClienteId(e.target.value)}
+                />
+                <Input
+                  label="CPF/CNPJ na nota (opcional)"
+                  placeholder="000.000.000-00"
+                  value={cpfNota}
+                  onChange={(e) => setCpfNota(e.target.value)}
+                />
+              </div>
+
+              <div className="mb-4 max-w-xs">
+                <Input
+                  label="Desconto na venda (R$)"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="0,00"
+                  value={descontoVenda}
+                  onChange={(e) => setDescontoVenda(e.target.value)}
                 />
               </div>
 
@@ -559,6 +654,7 @@ export default function PdvPage() {
                       key={produto.id}
                       produto={produto}
                       disabled={loading || !caixaPronto}
+                      estoqueQty={estoquePorProduto.get(produto.id)}
                       onAdd={handleAddProduct}
                     />
                   ))}
@@ -579,6 +675,7 @@ export default function PdvPage() {
                           key={produto.id}
                           produto={produto}
                           disabled={loading || !caixaPronto}
+                          estoqueQty={estoquePorProduto.get(produto.id)}
                           onAdd={handleAddProduct}
                         />
                       ))}
@@ -931,8 +1028,9 @@ export default function PdvPage() {
                 <Button
                   className="w-full"
                   size="lg"
+                  loading={loading}
                   disabled={!venda?.itens?.length || !caixaPronto}
-                  onClick={iniciarPagamento}
+                  onClick={() => void iniciarPagamento()}
                 >
                   Ir para pagamento (F4)
                 </Button>

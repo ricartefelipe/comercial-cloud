@@ -72,6 +72,12 @@ public class ProdutoResource {
         return produtoService.buscar(termo).stream().map(p -> toMap(p)).toList();
     }
 
+    @GET
+    @Path("/codigo-barras/{codigo}")
+    public Map<String, Object> buscarPorCodigoBarras(@PathParam("codigo") String codigo) {
+        return toMap(produtoService.buscarPorCodigoBarras(codigo));
+    }
+
     @PUT
     @Path("/{id}")
     public Map<String, Object> atualizar(@PathParam("id") UUID id, ProdutoBody request) {

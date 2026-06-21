@@ -25,10 +25,13 @@ import { FormEvent, useEffect, useState } from "react";
 
 function docVariant(status: StatusDocumentoFiscal) {
   switch (status) {
-    case "AUTORIZADA":
+    case "AUTORIZADO":
       return "success" as const;
-    case "REJEITADA":
+    case "REJEITADO":
+    case "ERRO":
       return "danger" as const;
+    case "CANCELADO":
+      return "default" as const;
     default:
       return "warning" as const;
   }

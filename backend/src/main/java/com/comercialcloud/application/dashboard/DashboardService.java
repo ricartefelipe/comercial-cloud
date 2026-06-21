@@ -9,12 +9,14 @@ import com.comercialcloud.domain.repository.VendaRepository;
 import com.comercialcloud.infrastructure.security.TenantContext;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.persistence.EntityManager;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +35,15 @@ public class DashboardService {
 
     @Inject ProdutoRepository produtoRepository;
 
+    @Inject EntityManager entityManager;
+
+    public record TopProduto(
+            UUID produtoId,
+            String produtoNome,
+            String produtoSku,
+            BigDecimal quantidadeVendida,
+            BigDecimal faturamento) {}
+
     public record ResumoDashboard(
             long vendasDoDia,
             BigDecimal faturamentoDoDia,
@@ -40,7 +51,8 @@ public class DashboardService {
             List<Estoque> produtosEstoqueBaixo,
             Map<UUID, Produto> produtosPorId,
             Map<String, BigDecimal> vendasPorFormaPagamento,
-            List<Venda> ultimasVendas
+            List<Venda> ultimasVendas,
+            List<TopProduto> topProdutos
     ) {}
 
     public ResumoDashboard resumo(UUID lojaId) {
@@ -76,6 +88,49 @@ public class DashboardService {
 
         List<Venda> ultimas = vendaRepository.listUltimasCompleto(tenantId, lojaId, 10);
 
-        return new ResumoDashboard(qtd, faturamento, ticket, estoqueBaixo, produtosPorId, porForma, ultimas);
+        List<TopProduto> topProdutos = listarTopProdutos(tenantId, lojaId, 30, 5);
+
+        return new ResumoDashboard(qtd, faturamento, ticket, estoqueBaixo, produtosPorId, porForma, ultimas, topProdutos);
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<TopProduto> listarTopProdutos(UUID tenantId, UUID lojaId, int dias, int limite) {
+        Instant inicio = LocalDate.now().minusDays(dias).atStartOfDay().toInstant(ZoneOffset.UTC);
+        List<Object[]> rows =
+                entityManager
+                        .createQuery(
+                                """
+                                SELECT i.produtoId, SUM(i.quantidade), SUM(i.subtotal)
+                                FROM ItemVendaEntity i
+                                JOIN i.venda v
+                                WHERE v.tenantId = :tenantId
+                                  AND v.lojaId = :lojaId
+                                  AND v.status = 'FINALIZADA'
+                                  AND v.finalizedAt >= :inicio
+                                GROUP BY i.produtoId
+                                ORDER BY SUM(i.quantidade) DESC
+                                """,
+                                Object[].class)
+                        .setParameter("tenantId", tenantId)
+                        .setParameter("lojaId", lojaId)
+                        .setParameter("inicio", inicio)
+                        .setMaxResults(limite)
+                        .getResultList();
+
+        List<TopProduto> result = new ArrayList<>();
+        for (Object[] row : rows) {
+            UUID produtoId = (UUID) row[0];
+            BigDecimal qtd = (BigDecimal) row[1];
+            BigDecimal fat = (BigDecimal) row[2];
+            String nome = produtoId.toString();
+            String sku = "";
+            var produtoOpt = produtoRepository.find(tenantId, produtoId);
+            if (produtoOpt.isPresent()) {
+                nome = produtoOpt.get().nome();
+                sku = produtoOpt.get().sku();
+            }
+            result.add(new TopProduto(produtoId, nome, sku, qtd, fat));
+        }
+        return result;
     }
 }

@@ -3,9 +3,9 @@
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { ErrorMessage, LoadingSpinner, PageHeader, StatCard } from "@/components/ui/Common";
-import { formatCurrency, formatDateTime } from "@/lib/format";
+import { formatCurrency, formatDateTime, formatNumber } from "@/lib/format";
 import { getDashboardResumo } from "@/lib/api/dashboard";
-import { STATUS_VENDA_LABELS } from "@/types";
+import { FORMA_PAGAMENTO_LABELS, STATUS_VENDA_LABELS } from "@/types";
 import { useQuery } from "@tanstack/react-query";
 import { DollarSign, Package, ShoppingCart, TrendingUp } from "lucide-react";
 import Link from "next/link";
@@ -30,12 +30,11 @@ export default function DashboardPage() {
   if (isLoading) return <LoadingSpinner />;
   if (error) return <ErrorMessage message={(error as Error).message} />;
 
+  const formas = data?.vendasPorFormaPagamento ?? {};
+
   return (
     <div>
-      <PageHeader
-        title="Dashboard"
-        description="Visão geral do dia"
-      />
+      <PageHeader title="Dashboard" description="Visão geral do dia" />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
@@ -133,6 +132,53 @@ export default function DashboardPage() {
             </div>
           ) : (
             <p className="text-sm text-slate-500">Nenhum produto com estoque baixo.</p>
+          )}
+        </Card>
+
+        <Card>
+          <CardHeader title="Vendas por forma de pagamento (hoje)" />
+          {Object.keys(formas).length ? (
+            <ul className="space-y-2 text-sm">
+              {Object.entries(formas).map(([forma, valor]) => (
+                <li key={forma} className="flex justify-between border-b border-slate-100 py-2">
+                  <span>
+                    {FORMA_PAGAMENTO_LABELS[forma as keyof typeof FORMA_PAGAMENTO_LABELS] ??
+                      forma}
+                  </span>
+                  <span className="font-medium">{formatCurrency(valor)}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-slate-500">Sem pagamentos registrados hoje.</p>
+          )}
+        </Card>
+
+        <Card>
+          <CardHeader title="Mais vendidos (30 dias)" />
+          {data?.topProdutos?.length ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200 text-left text-slate-500">
+                    <th className="pb-3 font-medium">Produto</th>
+                    <th className="pb-3 font-medium">Qtd</th>
+                    <th className="pb-3 font-medium">Fat.</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.topProdutos.map((item) => (
+                    <tr key={item.produtoId} className="border-b border-slate-100">
+                      <td className="py-3 font-medium">{item.produtoNome}</td>
+                      <td className="py-3">{formatNumber(item.quantidadeVendida, 0)}</td>
+                      <td className="py-3">{formatCurrency(item.faturamento)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-sm text-slate-500">Sem histórico de vendas ainda.</p>
           )}
         </Card>
       </div>

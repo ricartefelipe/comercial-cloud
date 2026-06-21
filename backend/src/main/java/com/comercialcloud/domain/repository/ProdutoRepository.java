@@ -21,4 +21,6 @@ public interface ProdutoRepository {
     List<Produto> page(UUID tenantId, int page, int size);
 
     List<Produto> buscarPorTermo(UUID tenantId, String termo);
+
+    Optional<Produto> findByCodigoBarras(UUID tenantId, String codigoBarras);
 }

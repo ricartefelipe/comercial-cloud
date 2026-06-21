@@ -102,4 +102,14 @@ public class PanacheProdutoRepository implements ProdutoRepository {
                 .map(mapper::toDomain)
                 .toList();
     }
+
+    @Override
+    public Optional<Produto> findByCodigoBarras(UUID tenantId, String codigoBarras) {
+        if (codigoBarras == null || codigoBarras.isBlank()) {
+            return Optional.empty();
+        }
+        return ProdutoEntity.<ProdutoEntity>find("tenantId = ?1 and codigoBarras = ?2", tenantId, codigoBarras)
+                .firstResultOptional()
+                .map(mapper::toDomain);
+    }
 }

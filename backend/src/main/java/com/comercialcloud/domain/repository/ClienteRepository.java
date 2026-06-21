@@ -11,6 +11,8 @@ public interface ClienteRepository {
 
     Optional<Cliente> find(UUID tenantId, UUID id);
 
+    Optional<Cliente> findByCpfCnpj(UUID tenantId, String cpfCnpj);
+
     Cliente save(Cliente cliente);
 
     PageResult<Cliente> list(UUID tenantId, int page, int size);

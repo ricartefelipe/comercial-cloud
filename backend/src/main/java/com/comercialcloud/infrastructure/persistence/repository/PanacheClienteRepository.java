@@ -28,6 +28,17 @@ public class PanacheClienteRepository implements ClienteRepository {
     }
 
     @Override
+    public Optional<Cliente> findByCpfCnpj(UUID tenantId, String cpfCnpj) {
+        if (cpfCnpj == null || cpfCnpj.isBlank()) {
+            return Optional.empty();
+        }
+        String digits = cpfCnpj.replaceAll("\\D", "");
+        return ClienteEntity.<ClienteEntity>find("tenantId = ?1 and cpfCnpj = ?2", tenantId, digits)
+                .firstResultOptional()
+                .map(mapper::toDomain);
+    }
+
+    @Override
     public Cliente save(Cliente cliente) {
         ClienteEntity managed =
                 ClienteEntity.<ClienteEntity>find("tenantId = ?1 and id = ?2", cliente.tenantId(), cliente.id())

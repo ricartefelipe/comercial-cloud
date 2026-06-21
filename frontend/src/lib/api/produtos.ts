@@ -42,6 +42,12 @@ export async function ativarProduto(id: string): Promise<Produto> {
   });
 }
 
+export async function getProdutoByCodigoBarras(codigo: string): Promise<Produto> {
+  return apiClient<Produto>(`/api/v1/produtos/codigo-barras/${encodeURIComponent(codigo)}`, {
+    includeUserId: false,
+  });
+}
+
 export async function inativarProduto(id: string): Promise<Produto> {
   return apiClient<Produto>(`/api/v1/produtos/${id}/inativar`, {
     method: "PATCH",

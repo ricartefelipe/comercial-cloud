@@ -20,6 +20,14 @@ export async function createCliente(data: ClienteRequest): Promise<Cliente> {
   });
 }
 
+export async function consumidorRapido(cpfCnpj: string): Promise<Cliente> {
+  return apiClient<Cliente>("/api/v1/clientes/consumidor-rapido", {
+    method: "POST",
+    body: { cpfCnpj },
+    includeUserId: false,
+  });
+}
+
 export async function updateCliente(id: string, data: ClienteRequest): Promise<Cliente> {
   return apiClient<Cliente>(`/api/v1/clientes/${id}`, {
     method: "PUT",
