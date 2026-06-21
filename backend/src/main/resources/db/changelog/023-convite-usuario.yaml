@@ -1,0 +1,65 @@
+databaseChangeLog:
+  - changeSet:
+      id: 023-convite-usuario
+      author: comercialcloud
+      changes:
+        - createTable:
+            tableName: convite_usuario
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: tenant_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: email
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: nome
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: role
+                  type: VARCHAR(30)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: token
+                  type: VARCHAR(64)
+                  constraints:
+                    nullable: false
+                    unique: true
+                    uniqueConstraintName: uk_convite_usuario_token
+              - column:
+                  name: expira_em
+                  type: TIMESTAMP WITH TIME ZONE
+                  constraints:
+                    nullable: false
+              - column:
+                  name: aceito_em
+                  type: TIMESTAMP WITH TIME ZONE
+              - column:
+                  name: criado_por
+                  type: UUID
+              - column:
+                  name: created_at
+                  type: TIMESTAMP WITH TIME ZONE
+                  constraints:
+                    nullable: false
+        - createIndex:
+            tableName: convite_usuario
+            indexName: idx_convite_usuario_tenant_email
+            columns:
+              - column:
+                  name: tenant_id
+              - column:
+                  name: email

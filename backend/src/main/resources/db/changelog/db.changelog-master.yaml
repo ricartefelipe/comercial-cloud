@@ -43,3 +43,5 @@ databaseChangeLog:
       file: db/changelog/021-fatura-checkout-gateway.yaml
   - include:
       file: db/changelog/022-plano-max-lojas.yaml
+  - include:
+      file: db/changelog/023-convite-usuario.yaml

@@ -122,6 +122,29 @@ public class TransacionalEmailService {
                         + "— Equipe ComercialCloud");
     }
 
+    public void enviarConviteUsuario(String destinatario, String nome, String token) {
+        if (destinatario == null || destinatario.isBlank()) {
+            return;
+        }
+        String link = appUrl + "/convite/" + token;
+        enviar(
+                destinatario,
+                "Convite para acessar o ComercialCloud",
+                "Olá, "
+                        + nome
+                        + "!\n\n"
+                        + "Você foi convidado para acessar o ComercialCloud.\n"
+                        + "Defina sua senha e ative sua conta:\n\n"
+                        + link
+                        + "\n\n"
+                        + "O link expira em alguns dias.\n\n"
+                        + "— Equipe ComercialCloud");
+    }
+
+    public String appLoginUrl() {
+        return appUrl + "/login";
+    }
+
     private void enviar(String destinatario, String assunto, String corpo) {
         if (!enabled) {
             LOG.debugf("Mail desabilitado — não enviado para %s: %s", destinatario, assunto);
