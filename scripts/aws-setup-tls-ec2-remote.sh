@@ -32,10 +32,10 @@ $COMPOSE $CF run --rm --entrypoint sh certbot -c "chmod 644 /etc/letsencrypt/arc
 sed "s/__COMERCIAL_DOMAIN__/${COMERCIAL_DOMAIN}/g" \
   deploy/nginx/conf.d/default-pilot-ssl.conf > deploy/nginx/conf.d/default-pilot-active.conf
 
-$COMPOSE $CF up -d nginx certbot-renew
+$COMPOSE $CF up -d --force-recreate nginx certbot-renew
 sleep 5
 
 $COMPOSE $CF up -d --force-recreate backend frontend keycloak
 sleep 10
 
-curl -sf "https://${COMERCIAL_DOMAIN}/health" && echo " TLS OK"
+curl -sf "https://${COMERCIAL_DOMAIN}/api/v1/public/planos" >/dev/null && echo " TLS OK"
