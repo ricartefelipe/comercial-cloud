@@ -2,10 +2,15 @@
 
 Itens que **dependem de você** (credenciais, domínio, contrato ou acesso externo). O restante do produto pode evoluir no repositório sem sua intervenção.
 
+**Guia na ordem recomendada:** [`OPERADOR-PASSO-A-PASSO.md`](./OPERADOR-PASSO-A-PASSO.md)  
+**Script:** `./scripts/operador-passo.sh asaas` (e demais etapas)
+
+Piloto: https://56-124-36-136.sslip.io
+
 ## Pagamentos (Asaas)
 
 - [ ] Criar conta produção Asaas e gerar `ASAAS_API_KEY`
-- [ ] Configurar webhook apontando para `https://api.<seu-dominio>/api/v1/public/webhooks/asaas`
+- [ ] Configurar webhook apontando para `https://56-124-36-136.sslip.io/api/v1/public/webhooks/asaas`
 - [ ] Validar checkout e confirmação de pagamento em ambiente real
 
 ## Fiscal (Focus NFe)

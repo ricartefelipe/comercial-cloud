@@ -15,8 +15,16 @@ DB_PORT="${POSTGRES_PORT:-5432}"
 
 mkdir -p "$DEST"
 
-if docker ps --format '{{.Names}}' | grep -qx comercialcloud-postgres; then
-  docker exec comercialcloud-postgres \
+POSTGRES_CONTAINER=""
+for name in comercial-cloud-postgres-1 comercialcloud-postgres comercial-cloud-postgres; do
+  if docker ps --format '{{.Names}}' | grep -qx "$name"; then
+    POSTGRES_CONTAINER="$name"
+    break
+  fi
+done
+
+if [[ -n "$POSTGRES_CONTAINER" ]]; then
+  docker exec "$POSTGRES_CONTAINER" \
     pg_dump -U "$DB_USER" -d "$DB_NAME" --no-owner --clean | gzip > "$FILE"
 else
   PGPASSWORD="${POSTGRES_PASSWORD:-comercialcloud}" \
