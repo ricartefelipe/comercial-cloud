@@ -104,6 +104,8 @@ comercial-cloud:
   quarkus:
     oidc:
       auth-server-url: http://localhost:8180/realms/comercialcloud
+      token:
+        issuer: http://localhost:8180/realms/comercialcloud
       client-id: comercial-cloud-api
       credentials:
         secret: comercial-cloud-api-secret
