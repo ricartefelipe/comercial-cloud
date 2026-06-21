@@ -16,9 +16,7 @@ public class BillingScheduler {
     @Inject
     BillingService billingService;
 
-    @Scheduled(
-            every = "${comercial-cloud.billing.scheduler.faturamento-every}",
-            concurrentExecution = Scheduled.ConcurrentExecution.SKIP)
+    @Scheduled(every = "1h", concurrentExecution = Scheduled.ConcurrentExecution.SKIP)
     void gerarFaturas() {
         for (UUID id : billingService.idsAssinaturasParaFaturar()) {
             try {
@@ -29,9 +27,7 @@ public class BillingScheduler {
         }
     }
 
-    @Scheduled(
-            every = "${comercial-cloud.billing.scheduler.cobranca-every}",
-            concurrentExecution = Scheduled.ConcurrentExecution.SKIP)
+    @Scheduled(every = "30m", concurrentExecution = Scheduled.ConcurrentExecution.SKIP)
     void processarCobrancas() {
         for (UUID id : billingService.idsFaturasParaCobrar()) {
             try {
