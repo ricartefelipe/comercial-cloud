@@ -24,6 +24,6 @@ test.describe("ComercialCloud smoke", () => {
     await page.goto("/login");
     await page.getByRole("button", { name: /entrar em modo demo/i }).click();
     await page.goto("/auditoria");
-    await expect(page.getByText("Auditoria")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Auditoria" })).toBeVisible();
   });
 });
