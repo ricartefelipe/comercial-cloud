@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState, ErrorMessage, LoadingSpinner, PageHeader } from "@/components/ui/Common";
 import { Input } from "@/components/ui/Input";
-import { ConfirmModal } from "@/components/ui/Modal";
+import { ConfirmModal, Modal } from "@/components/ui/Modal";
 import { formatCurrency } from "@/lib/format";
 import {
   ativarProduto,
+  importarProdutosCsv,
   inativarProduto,
   listProdutos,
 } from "@/lib/api/produtos";
@@ -16,14 +17,17 @@ import { listEstoques } from "@/lib/api/estoque";
 import type { Produto } from "@/types";
 import { ProductImage } from "@/components/produtos/ProductImage";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Upload } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 export default function ProdutosPage() {
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState("");
   const [toggleTarget, setToggleTarget] = useState<Produto | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
+  const [importResult, setImportResult] = useState<string>("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
   const { data, isLoading, error } = useQuery({
@@ -49,6 +53,20 @@ export default function ProdutosPage() {
     },
   });
 
+  const importMutation = useMutation({
+    mutationFn: (csv: string) => importarProdutosCsv(csv),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ["produtos"] });
+      setImportResult(`${result.criados} criados, ${result.ignorados} ignorados`);
+    },
+  });
+
+  const handleImportFile = async (file: File | null) => {
+    if (!file) return;
+    const text = await file.text();
+    importMutation.mutate(text);
+  };
+
   const filtered = data?.content.filter(
     (p) =>
       !search ||
@@ -62,12 +80,18 @@ export default function ProdutosPage() {
         title="Produtos"
         description="Gerencie o catálogo de produtos"
         action={
-          <Link href="/produtos/novo">
-            <Button>
-              <Plus className="h-4 w-4" />
-              Novo produto
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setImportOpen(true)}>
+              <Upload className="h-4 w-4" />
+              Importar CSV
             </Button>
-          </Link>
+            <Link href="/produtos/novo">
+              <Button>
+                <Plus className="h-4 w-4" />
+                Novo produto
+              </Button>
+            </Link>
+          </div>
         }
       />
 
@@ -219,6 +243,38 @@ export default function ProdutosPage() {
         loading={toggleMutation.isPending}
         variant={toggleTarget?.ativo ? "danger" : "primary"}
       />
+
+      <Modal
+        open={importOpen}
+        onClose={() => {
+          setImportOpen(false);
+          setImportResult("");
+        }}
+        title="Importar produtos (CSV)"
+        footer={
+          <Button variant="ghost" onClick={() => setImportOpen(false)}>
+            Fechar
+          </Button>
+        }
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-slate-600">
+            Cabeçalho esperado: sku;nome;preco (opcional: codigo_barras, categoria, preco_custo)
+          </p>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".csv,text/csv"
+            className="block w-full text-sm"
+            onChange={(e) => handleImportFile(e.target.files?.[0] ?? null)}
+          />
+          {importMutation.isPending && <p className="text-sm text-slate-500">Importando...</p>}
+          {importResult && <p className="text-sm text-emerald-700">{importResult}</p>}
+          {importMutation.error && (
+            <ErrorMessage message={(importMutation.error as Error).message} />
+          )}
+        </div>
+      </Modal>
     </div>
   );
 }

@@ -1,0 +1,78 @@
+databaseChangeLog:
+  - changeSet:
+      id: 027-produto-categoria-custo
+      author: comercialcloud
+      changes:
+        - addColumn:
+            tableName: produto
+            columns:
+              - column:
+                  name: categoria
+                  type: varchar(100)
+              - column:
+                  name: preco_custo
+                  type: decimal(15, 2)
+              - column:
+                  name: controla_estoque
+                  type: boolean
+                  defaultValueBoolean: true
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 028-movimento-caixa
+      author: comercialcloud
+      changes:
+        - createTable:
+            tableName: movimento_caixa
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: tenant_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: loja_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: caixa_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: usuario_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: tipo
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: valor
+                  type: decimal(15, 2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: motivo
+                  type: varchar(500)
+              - column:
+                  name: created_at
+                  type: timestamp with time zone
+                  constraints:
+                    nullable: false
+        - createIndex:
+            tableName: movimento_caixa
+            indexName: idx_movimento_caixa_caixa
+            columns:
+              - column:
+                  name: caixa_id

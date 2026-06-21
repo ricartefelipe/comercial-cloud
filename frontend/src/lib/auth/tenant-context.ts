@@ -73,7 +73,7 @@ export function resetWorkspaceToDemo(): void {
     tenantId: DEMO_TENANT_ID,
     userId: DEMO_USER_ID,
     lojaId: DEMO_LOJA_ID,
-    displayName: "Caixa Demo",
+    displayName: "Admin Demo",
   });
 }
 

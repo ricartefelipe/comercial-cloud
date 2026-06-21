@@ -19,7 +19,7 @@ import java.util.UUID;
 @Priority(Priorities.AUTHENTICATION)
 public class TenantRequestFilter implements ContainerRequestFilter {
 
-    private static final Set<String> PUBLIC_PREFIXES = Set.of("health", "q/", "api/v1/public/");
+    private static final Set<String> PUBLIC_PREFIXES = Set.of("health", "q/", "api/v1/public/", "api/v1/produtos/midias/");
 
     /**
      * Prefixos isentos da verificação de tenant suspenso, para que um tenant

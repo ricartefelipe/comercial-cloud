@@ -13,8 +13,17 @@ test.describe("ComercialCloud smoke", () => {
     await expect(page).toHaveURL(/dashboard/);
   });
 
-  test("PDV carrega", async ({ page }) => {
-    await page.goto("/pdv");
-    await expect(page.getByText(/ComercialCloud|Caixa fechado|PDV/i).first()).toBeVisible();
+  test("modo demo acessa relatórios", async ({ page }) => {
+    await page.goto("/login");
+    await page.getByRole("button", { name: /entrar em modo demo/i }).click();
+    await page.goto("/relatorios");
+    await expect(page.getByText("Relatórios")).toBeVisible();
+  });
+
+  test("página de auditoria carrega", async ({ page }) => {
+    await page.goto("/login");
+    await page.getByRole("button", { name: /entrar em modo demo/i }).click();
+    await page.goto("/auditoria");
+    await expect(page.getByText("Auditoria")).toBeVisible();
   });
 });

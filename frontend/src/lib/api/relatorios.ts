@@ -1,7 +1,8 @@
-import { ApiClientError, buildQuery } from "@/lib/api/client";
+import { ApiClientError, buildQuery, apiClient } from "@/lib/api/client";
 import { getLojaId, getTenantId, getUserId } from "@/lib/auth/tenant-context";
 import { getToken } from "@/lib/auth/session";
 import { API_BASE_URL } from "@/lib/constants";
+import type { RelatorioAbcItem, RelatorioMargemItem } from "@/types";
 
 async function authHeaders(): Promise<Record<string, string>> {
   const headers: Record<string, string> = {
@@ -65,4 +66,30 @@ export async function getRelatorioResumo(params: {
     throw new ApiClientError(`Erro ${response.status}`, response.status);
   }
   return response.json();
+}
+
+export async function getRelatorioAbc(params: {
+  lojaId?: string;
+  dataInicio?: string;
+  dataFim?: string;
+}): Promise<RelatorioAbcItem[]> {
+  const query = buildQuery({
+    lojaId: params.lojaId ?? getLojaId(),
+    dataInicio: params.dataInicio,
+    dataFim: params.dataFim,
+  });
+  return apiClient<RelatorioAbcItem[]>(`/api/v1/relatorios/abc${query}`, { includeUserId: false });
+}
+
+export async function getRelatorioMargem(params: {
+  lojaId?: string;
+  dataInicio?: string;
+  dataFim?: string;
+}): Promise<RelatorioMargemItem[]> {
+  const query = buildQuery({
+    lojaId: params.lojaId ?? getLojaId(),
+    dataInicio: params.dataInicio,
+    dataFim: params.dataFim,
+  });
+  return apiClient<RelatorioMargemItem[]>(`/api/v1/relatorios/margem${query}`, { includeUserId: false });
 }

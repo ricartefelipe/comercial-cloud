@@ -26,10 +26,11 @@ type ProdutoFormData = z.infer<typeof produtoSchema>;
 interface ProdutoFormProps {
   produto?: Produto;
   onSubmit: (data: ProdutoRequest) => Promise<void>;
+  onUploadImagem?: (contentType: string, base64: string) => Promise<void>;
   loading?: boolean;
 }
 
-export function ProdutoForm({ produto, onSubmit, loading }: ProdutoFormProps) {
+export function ProdutoForm({ produto, onSubmit, onUploadImagem, loading }: ProdutoFormProps) {
   const {
     register,
     handleSubmit,
@@ -54,6 +55,18 @@ export function ProdutoForm({ produto, onSubmit, loading }: ProdutoFormProps) {
   const imagemUrl = watch("imagemUrl");
   const nome = watch("nome");
 
+  const handleFileChange = async (file: File | null) => {
+    if (!file || !onUploadImagem) return;
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const result = reader.result;
+      if (typeof result === "string") {
+        await onUploadImagem(file.type || "image/jpeg", result);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleFormSubmit = (data: ProdutoFormData) => {
     const payload: ProdutoRequest = {
       ...data,
@@ -68,12 +81,20 @@ export function ProdutoForm({ produto, onSubmit, loading }: ProdutoFormProps) {
         <ProductImage src={imagemUrl} alt={nome || "Produto"} size="lg" />
         <Input
           label="URL da imagem"
-          placeholder="https://..."
+          placeholder="https://... ou envie arquivo abaixo"
           error={errors.imagemUrl?.message}
           className="flex-1"
           {...register("imagemUrl")}
         />
       </div>
+      {onUploadImagem && (
+        <Input
+          label="Enviar imagem (arquivo)"
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/gif"
+          onChange={(e) => handleFileChange(e.target.files?.[0] ?? null)}
+        />
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Input label="SKU" error={errors.sku?.message} {...register("sku")} />

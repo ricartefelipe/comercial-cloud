@@ -7,7 +7,15 @@ import { EmptyState, ErrorMessage, LoadingSpinner, PageHeader } from "@/componen
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { Select } from "@/components/ui/Select";
-import { ajustarEstoque, definirEstoqueMinimo, listEstoques, listMovimentacoes } from "@/lib/api/estoque";
+import {
+  ajustarEstoque,
+  definirEstoqueMinimo,
+  entradaEstoque,
+  inventarioEstoque,
+  listEstoques,
+  listMovimentacoes,
+  saidaEstoque,
+} from "@/lib/api/estoque";
 import { listProdutos } from "@/lib/api/produtos";
 import { getLojaId } from "@/lib/auth/tenant-context";
 import { formatDateTime } from "@/lib/format";
@@ -16,8 +24,18 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle, History, Plus } from "lucide-react";
 import { useState } from "react";
 
+type OperacaoEstoque = "entrada" | "saida" | "inventario" | "ajuste";
+
+const OPERACAO_LABELS: Record<OperacaoEstoque, string> = {
+  entrada: "Entrada de mercadoria",
+  saida: "Saída manual",
+  inventario: "Inventário (contagem)",
+  ajuste: "Ajuste para saldo absoluto",
+};
+
 export default function EstoquePage() {
-  const [adjustOpen, setAdjustOpen] = useState(false);
+  const [operacaoOpen, setOperacaoOpen] = useState(false);
+  const [operacao, setOperacao] = useState<OperacaoEstoque>("entrada");
   const [movementsOpen, setMovementsOpen] = useState(false);
   const [selectedProdutoId, setSelectedProdutoId] = useState("");
   const [quantidade, setQuantidade] = useState("");
@@ -43,11 +61,31 @@ export default function EstoquePage() {
     enabled: !!viewProdutoId && movementsOpen,
   });
 
-  const adjustMutation = useMutation({
-    mutationFn: ajustarEstoque,
+  const operacaoMutation = useMutation({
+    mutationFn: async () => {
+      const lojaId = getLojaId();
+      const payload = {
+        lojaId,
+        produtoId: selectedProdutoId,
+        motivo,
+      };
+      const qty = Number(quantidade);
+      switch (operacao) {
+        case "entrada":
+          return entradaEstoque({ ...payload, quantidade: qty });
+        case "saida":
+          return saidaEstoque({ ...payload, quantidade: qty });
+        case "inventario":
+          return inventarioEstoque({ ...payload, quantidadeContada: qty });
+        case "ajuste":
+          return ajustarEstoque({ ...payload, quantidade: qty });
+        default:
+          throw new Error("Operação inválida");
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["estoques"] });
-      setAdjustOpen(false);
+      setOperacaoOpen(false);
       setSelectedProdutoId("");
       setQuantidade("");
       setMotivo("");
@@ -73,15 +111,20 @@ export default function EstoquePage() {
     label: `${p.sku} - ${p.nome}`,
   }));
 
+  const quantidadeLabel =
+    operacao === "ajuste" || operacao === "inventario"
+      ? "Quantidade contada (saldo final)"
+      : "Quantidade";
+
   return (
     <div>
       <PageHeader
         title="Estoque"
-        description="Controle de estoque por loja"
+        description="Entrada, saída, inventário e ajustes por loja"
         action={
-          <Button onClick={() => setAdjustOpen(true)}>
+          <Button onClick={() => setOperacaoOpen(true)}>
             <Plus className="h-4 w-4" />
-            Ajustar estoque
+            Movimentar estoque
           </Button>
         }
       />
@@ -176,32 +219,31 @@ export default function EstoquePage() {
       )}
 
       <Modal
-        open={adjustOpen}
-        onClose={() => setAdjustOpen(false)}
-        title="Ajustar estoque"
+        open={operacaoOpen}
+        onClose={() => setOperacaoOpen(false)}
+        title="Movimentar estoque"
         footer={
           <>
-            <Button variant="ghost" onClick={() => setAdjustOpen(false)}>
+            <Button variant="ghost" onClick={() => setOperacaoOpen(false)}>
               Cancelar
             </Button>
             <Button
-              loading={adjustMutation.isPending}
-              onClick={() =>
-                adjustMutation.mutate({
-                  lojaId: getLojaId(),
-                  produtoId: selectedProdutoId,
-                  quantidade: Number(quantidade),
-                  motivo,
-                })
-              }
+              loading={operacaoMutation.isPending}
+              onClick={() => operacaoMutation.mutate()}
               disabled={!selectedProdutoId || !quantidade || !motivo}
             >
-              Confirmar ajuste
+              Confirmar
             </Button>
           </>
         }
       >
         <div className="space-y-4">
+          <Select
+            label="Tipo de operação"
+            options={Object.entries(OPERACAO_LABELS).map(([value, label]) => ({ value, label }))}
+            value={operacao}
+            onChange={(e) => setOperacao(e.target.value as OperacaoEstoque)}
+          />
           <Select
             label="Produto"
             options={[{ value: "", label: "Selecione..." }, ...produtoOptions]}
@@ -209,8 +251,10 @@ export default function EstoquePage() {
             onChange={(e) => setSelectedProdutoId(e.target.value)}
           />
           <Input
-            label="Quantidade (positivo = entrada, negativo = saída)"
+            label={quantidadeLabel}
             type="number"
+            min="0"
+            step="1"
             value={quantidade}
             onChange={(e) => setQuantidade(e.target.value)}
           />
@@ -219,8 +263,8 @@ export default function EstoquePage() {
             value={motivo}
             onChange={(e) => setMotivo(e.target.value)}
           />
-          {adjustMutation.error && (
-            <ErrorMessage message={(adjustMutation.error as Error).message} />
+          {operacaoMutation.error && (
+            <ErrorMessage message={(operacaoMutation.error as Error).message} />
           )}
         </div>
       </Modal>

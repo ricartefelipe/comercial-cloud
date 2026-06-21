@@ -1,6 +1,7 @@
 "use client";
 
 import { Package } from "lucide-react";
+import { API_BASE_URL } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 const SIZE_CLASSES = {
@@ -8,6 +9,16 @@ const SIZE_CLASSES = {
   md: "h-14 w-14",
   lg: "h-20 w-20",
 } as const;
+
+function resolveImageSrc(src: string): string {
+  if (src.startsWith("http://") || src.startsWith("https://") || src.startsWith("data:")) {
+    return src;
+  }
+  if (src.startsWith("/")) {
+    return `${API_BASE_URL}${src}`;
+  }
+  return src;
+}
 
 interface ProductImageProps {
   src?: string | null;
@@ -37,7 +48,7 @@ export function ProductImage({ src, alt, size = "md", className }: ProductImageP
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={src}
+      src={resolveImageSrc(src)}
       alt={alt}
       loading="lazy"
       className={cn(

@@ -70,7 +70,10 @@ public class PanacheProdutoRepository implements ProdutoRepository {
         managed.nome = payload.nome;
         managed.descricao = payload.descricao;
         managed.imagemUrl = payload.imagemUrl;
+        managed.categoria = payload.categoria;
         managed.preco = payload.preco;
+        managed.precoCusto = payload.precoCusto;
+        managed.controlaEstoque = payload.controlaEstoque;
         managed.ativo = payload.ativo;
         managed.updatedAt = payload.updatedAt;
         return mapper.toDomain(managed);
@@ -112,5 +115,16 @@ public class PanacheProdutoRepository implements ProdutoRepository {
         return ProdutoEntity.<ProdutoEntity>find("tenantId = ?1 and codigoBarras = ?2", tenantId, codigoBarras)
                 .firstResultOptional()
                 .map(mapper::toDomain);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public List<String> listCategorias(UUID tenantId) {
+        return ProdutoEntity.getEntityManager()
+                .createQuery(
+                        "select distinct p.categoria from ProdutoEntity p where p.tenantId = :tenantId and p.categoria is not null order by p.categoria",
+                        String.class)
+                .setParameter("tenantId", tenantId)
+                .getResultList();
     }
 }

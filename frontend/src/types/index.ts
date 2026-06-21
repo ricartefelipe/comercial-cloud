@@ -13,9 +13,12 @@ export type StatusCaixa = "ABERTO" | "FECHADO";
 export type TipoMovimentacaoEstoque =
   | "ENTRADA"
   | "SAIDA"
+  | "INVENTARIO"
   | "AJUSTE"
   | "VENDA"
   | "CANCELAMENTO_VENDA";
+
+export type TipoMovimentoCaixa = "SANGRIA" | "SUPRIMENTO";
 
 export type StatusContaReceber = "ABERTO" | "PAGO" | "CANCELADO";
 
@@ -243,6 +246,69 @@ export interface CaixaResumo {
   quantidadeVendas: number;
   valorAbertura: number;
   valorCalculado: number;
+  totalSangrias?: number;
+  totalSuprimentos?: number;
+  valorGavetaEsperada?: number;
+}
+
+export interface MovimentoCaixa {
+  id: string;
+  caixaId: string;
+  lojaId: string;
+  usuarioId: string;
+  tipo: TipoMovimentoCaixa;
+  valor: number;
+  motivo?: string;
+  createdAt: string;
+}
+
+export interface MovimentoCaixaRequest {
+  tipo: TipoMovimentoCaixa;
+  valor: number;
+  motivo: string;
+}
+
+export interface AuditoriaRegistro {
+  id: string;
+  tenantId?: string;
+  entidade: string;
+  entidadeId: string;
+  acao: string;
+  usuarioId?: string;
+  detalhes?: string;
+  createdAt: string;
+}
+
+export interface RelatorioAbcItem {
+  produtoId: string;
+  sku?: string;
+  nome?: string;
+  categoria?: string;
+  faturamento: number;
+  quantidadeVendida: number;
+  participacaoPercentual: number;
+  participacaoAcumulada: number;
+  classeAbc: "A" | "B" | "C";
+}
+
+export interface RelatorioMargemItem {
+  produtoId: string;
+  sku?: string;
+  nome?: string;
+  categoria?: string;
+  precoCusto: number;
+  precoVenda: number;
+  quantidadeVendida: number;
+  faturamento: number;
+  custoTotal: number;
+  lucroBruto: number;
+  margemPercentual: number;
+}
+
+export interface ImportacaoProdutoResult {
+  criados: number;
+  ignorados: number;
+  erros: string[];
 }
 
 export interface ContaReceber {
@@ -298,9 +364,15 @@ export const STATUS_CAIXA_LABELS: Record<StatusCaixa, string> = {
 export const TIPO_MOVIMENTACAO_LABELS: Record<TipoMovimentacaoEstoque, string> = {
   ENTRADA: "Entrada",
   SAIDA: "Saída",
+  INVENTARIO: "Inventário",
   AJUSTE: "Ajuste",
   VENDA: "Venda",
   CANCELAMENTO_VENDA: "Cancelamento",
+};
+
+export const TIPO_MOVIMENTO_CAIXA_LABELS: Record<TipoMovimentoCaixa, string> = {
+  SANGRIA: "Sangria",
+  SUPRIMENTO: "Suprimento",
 };
 
 export const STATUS_CONTA_LABELS: Record<StatusContaReceber, string> = {

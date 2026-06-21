@@ -6,11 +6,13 @@ import com.comercialcloud.domain.model.Estoque;
 import com.comercialcloud.domain.model.ItemVenda;
 import com.comercialcloud.domain.model.Loja;
 import com.comercialcloud.domain.model.MovimentacaoEstoque;
+import com.comercialcloud.domain.model.MovimentoCaixa;
 import com.comercialcloud.domain.model.PagamentoVenda;
 import com.comercialcloud.domain.model.Produto;
 import com.comercialcloud.domain.model.StatusCaixa;
 import com.comercialcloud.domain.model.StatusVenda;
 import com.comercialcloud.domain.model.TipoMovimentacaoEstoque;
+import com.comercialcloud.domain.model.TipoMovimentoCaixa;
 import com.comercialcloud.domain.model.FormaPagamento;
 import com.comercialcloud.domain.model.Tenant;
 import com.comercialcloud.domain.model.Usuario;
@@ -21,6 +23,7 @@ import com.comercialcloud.infrastructure.persistence.entity.EstoqueEntity;
 import com.comercialcloud.infrastructure.persistence.entity.ItemVendaEntity;
 import com.comercialcloud.infrastructure.persistence.entity.LojaEntity;
 import com.comercialcloud.infrastructure.persistence.entity.MovimentacaoEstoqueEntity;
+import com.comercialcloud.infrastructure.persistence.entity.MovimentoCaixaEntity;
 import com.comercialcloud.infrastructure.persistence.entity.PagamentoVendaEntity;
 import com.comercialcloud.infrastructure.persistence.entity.ProdutoEntity;
 import com.comercialcloud.infrastructure.persistence.entity.TenantEntity;
@@ -29,6 +32,7 @@ import com.comercialcloud.infrastructure.persistence.entity.VendaEntity;
 
 import jakarta.enterprise.context.ApplicationScoped;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -87,7 +91,10 @@ public class EntityMapper {
                 entity.nome,
                 entity.descricao,
                 entity.imagemUrl,
+                entity.categoria,
                 entity.preco,
+                entity.precoCusto != null ? entity.precoCusto : BigDecimal.ZERO,
+                entity.controlaEstoque,
                 entity.ativo,
                 entity.createdAt,
                 entity.updatedAt);
@@ -102,7 +109,10 @@ public class EntityMapper {
         entity.nome = produto.nome();
         entity.descricao = produto.descricao();
         entity.imagemUrl = produto.imagemUrl();
+        entity.categoria = produto.categoria();
         entity.preco = produto.preco();
+        entity.precoCusto = produto.precoCusto();
+        entity.controlaEstoque = produto.controlaEstoque();
         entity.ativo = produto.ativo();
         entity.createdAt = produto.createdAt();
         entity.updatedAt = produto.updatedAt();
@@ -302,5 +312,32 @@ public class EntityMapper {
         entity.createdAt = venda.createdAt();
         entity.finalizedAt = venda.finalizedAt();
         entity.canceledAt = venda.canceledAt();
+    }
+
+    public MovimentoCaixa toDomain(MovimentoCaixaEntity entity) {
+        return new MovimentoCaixa(
+                entity.id,
+                entity.tenantId,
+                entity.lojaId,
+                entity.caixaId,
+                entity.usuarioId,
+                TipoMovimentoCaixa.valueOf(entity.tipo),
+                entity.valor,
+                entity.motivo,
+                entity.createdAt);
+    }
+
+    public MovimentoCaixaEntity toEntity(MovimentoCaixa movimento) {
+        MovimentoCaixaEntity entity = new MovimentoCaixaEntity();
+        entity.id = movimento.id();
+        entity.tenantId = movimento.tenantId();
+        entity.lojaId = movimento.lojaId();
+        entity.caixaId = movimento.caixaId();
+        entity.usuarioId = movimento.usuarioId();
+        entity.tipo = movimento.tipo().name();
+        entity.valor = movimento.valor();
+        entity.motivo = movimento.motivo();
+        entity.createdAt = movimento.createdAt();
+        return entity;
     }
 }

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ErrorMessage, LoadingSpinner, PageHeader } from "@/components/ui/Common";
 import { Input } from "@/components/ui/Input";
-import { downloadRelatorioCsv, getRelatorioResumo } from "@/lib/api/relatorios";
+import { downloadRelatorioCsv, getRelatorioAbc, getRelatorioMargem, getRelatorioResumo } from "@/lib/api/relatorios";
 import { getLojaId } from "@/lib/auth/tenant-context";
 import { formatCurrency } from "@/lib/format";
 import { useQuery } from "@tanstack/react-query";
@@ -32,6 +32,16 @@ export default function RelatoriosPage() {
   const { data: resumo, isLoading, error } = useQuery({
     queryKey: ["relatorio-resumo", lojaId, dataInicio, dataFim],
     queryFn: () => getRelatorioResumo({ lojaId, dataInicio, dataFim }),
+  });
+
+  const { data: abc, isLoading: loadingAbc } = useQuery({
+    queryKey: ["relatorio-abc", lojaId, dataInicio, dataFim],
+    queryFn: () => getRelatorioAbc({ lojaId, dataInicio, dataFim }),
+  });
+
+  const { data: margem, isLoading: loadingMargem } = useQuery({
+    queryKey: ["relatorio-margem", lojaId, dataInicio, dataFim],
+    queryFn: () => getRelatorioMargem({ lojaId, dataInicio, dataFim }),
   });
 
   const handleDownload = async (tipo: "vendas" | "estoque") => {
@@ -132,6 +142,72 @@ export default function RelatoriosPage() {
           </div>
         </Card>
       </div>
+
+      {(loadingAbc || loadingMargem) && <LoadingSpinner className="mt-6" />}
+
+      {abc && abc.length > 0 && (
+        <Card className="mt-6" padding="none">
+          <div className="border-b border-slate-200 px-6 py-4">
+            <h3 className="font-semibold">Curva ABC (faturamento)</h3>
+          </div>
+          <div className="overflow-x-auto px-6 pb-6">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-200 text-left text-slate-500">
+                  <th className="py-2 font-medium">Classe</th>
+                  <th className="py-2 font-medium">Produto</th>
+                  <th className="py-2 font-medium">Faturamento</th>
+                  <th className="py-2 font-medium">Qtd.</th>
+                  <th className="py-2 font-medium">Participação</th>
+                </tr>
+              </thead>
+              <tbody>
+                {abc.slice(0, 15).map((item) => (
+                  <tr key={item.produtoId} className="border-b border-slate-100">
+                    <td className="py-2 font-semibold">{item.classeAbc}</td>
+                    <td className="py-2">{item.nome ?? item.sku}</td>
+                    <td className="py-2">{formatCurrency(Number(item.faturamento))}</td>
+                    <td className="py-2">{item.quantidadeVendida}</td>
+                    <td className="py-2">{Number(item.participacaoPercentual).toFixed(1)}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
+
+      {margem && margem.length > 0 && (
+        <Card className="mt-6" padding="none">
+          <div className="border-b border-slate-200 px-6 py-4">
+            <h3 className="font-semibold">Margem de lucro por produto</h3>
+          </div>
+          <div className="overflow-x-auto px-6 pb-6">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-200 text-left text-slate-500">
+                  <th className="py-2 font-medium">Produto</th>
+                  <th className="py-2 font-medium">Faturamento</th>
+                  <th className="py-2 font-medium">Custo</th>
+                  <th className="py-2 font-medium">Lucro</th>
+                  <th className="py-2 font-medium">Margem</th>
+                </tr>
+              </thead>
+              <tbody>
+                {margem.slice(0, 15).map((item) => (
+                  <tr key={item.produtoId} className="border-b border-slate-100">
+                    <td className="py-2">{item.nome ?? item.sku}</td>
+                    <td className="py-2">{formatCurrency(Number(item.faturamento))}</td>
+                    <td className="py-2">{formatCurrency(Number(item.custoTotal))}</td>
+                    <td className="py-2">{formatCurrency(Number(item.lucroBruto))}</td>
+                    <td className="py-2">{Number(item.margemPercentual).toFixed(1)}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
     </div>
   );
 }

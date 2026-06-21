@@ -14,14 +14,33 @@ import { useQuery } from "@tanstack/react-query";
 import { CheckCircle2, Store } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { useState, type Dispatch, type SetStateAction } from "react";
+
+const initialFormData = {
+  nomeFantasia: "",
+  razaoSocial: "",
+  cnpj: "",
+  adminNome: "",
+  adminEmail: "",
+  adminSenha: "",
+};
+
+function updateField(
+  setter: Dispatch<SetStateAction<typeof initialFormData>>,
+  field: keyof typeof initialFormData,
+  value: string,
+) {
+  setter((prev) => ({ ...prev, [field]: value }));
+}
 
 export default function CadastroPage() {
   const router = useRouter();
+  const [wizardStep, setWizardStep] = useState(0);
   const [step, setStep] = useState<"form" | "success">("form");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [planoCodigo, setPlanoCodigo] = useState("ESSENCIAL");
+  const [formData, setFormData] = useState(initialFormData);
   const [successInfo, setSuccessInfo] = useState<{
     nomeFantasia: string;
     trialFim?: string;
@@ -41,21 +60,18 @@ export default function CadastroPage() {
     label: `${p.nome} — ${formatCurrency(Number(p.precoMensal))}/mês`,
   }));
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     setLoading(true);
     setError("");
 
-    const form = new FormData(e.currentTarget);
-
     try {
       const result = await criarConta({
-        nomeFantasia: String(form.get("nomeFantasia")),
-        razaoSocial: String(form.get("razaoSocial")),
-        cnpj: String(form.get("cnpj")),
-        adminNome: String(form.get("adminNome")),
-        adminEmail: String(form.get("adminEmail")),
-        adminSenha: String(form.get("adminSenha") || ""),
+        nomeFantasia: formData.nomeFantasia,
+        razaoSocial: formData.razaoSocial,
+        cnpj: formData.cnpj,
+        adminNome: formData.adminNome,
+        adminEmail: formData.adminEmail,
+        adminSenha: formData.adminSenha || "",
         planoCodigo,
         comTrial: true,
         seedDemo: true,
@@ -74,7 +90,7 @@ export default function CadastroPage() {
       }
 
       setSuccessInfo({
-        nomeFantasia: String(form.get("nomeFantasia")),
+        nomeFantasia: formData.nomeFantasia,
         trialFim: result.trialFim,
         produtosDemo: result.produtosDemo,
         loginEmail: result.loginEmail,
@@ -88,6 +104,8 @@ export default function CadastroPage() {
       setLoading(false);
     }
   };
+
+  const wizardLabels = ["Empresa", "Administrador", "Plano"];
 
   if (step === "success" && successInfo) {
     return (
@@ -137,83 +155,137 @@ export default function CadastroPage() {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Input
-              label="Nome fantasia"
-              name="nomeFantasia"
-              required
-              placeholder="Minha Loja"
-            />
-            <Input
-              label="Razão social"
-              name="razaoSocial"
-              required
-              placeholder="Minha Loja LTDA"
-            />
-          </div>
+        <div className="mb-6 flex justify-center gap-2">
+          {wizardLabels.map((label, index) => (
+            <div
+              key={label}
+              className={`rounded-full px-3 py-1 text-xs font-medium ${
+                index === wizardStep
+                  ? "bg-brand-600 text-white"
+                  : index < wizardStep
+                    ? "bg-brand-100 text-brand-700"
+                    : "bg-slate-100 text-slate-500"
+              }`}
+            >
+              {index + 1}. {label}
+            </div>
+          ))}
+        </div>
 
-          <Input
-            label="CNPJ"
-            name="cnpj"
-            required
-            placeholder="00.000.000/0001-00"
-          />
+        <div className="space-y-4">
+          {wizardStep === 0 && (
+            <>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Input
+                  label="Nome fantasia"
+                  required
+                  placeholder="Minha Loja"
+                  value={formData.nomeFantasia}
+                  onChange={(e) => updateField(setFormData, "nomeFantasia", e.target.value)}
+                />
+                <Input
+                  label="Razão social"
+                  required
+                  placeholder="Minha Loja LTDA"
+                  value={formData.razaoSocial}
+                  onChange={(e) => updateField(setFormData, "razaoSocial", e.target.value)}
+                />
+              </div>
+              <Input
+                label="CNPJ"
+                required
+                placeholder="00.000.000/0001-00"
+                value={formData.cnpj}
+                onChange={(e) => updateField(setFormData, "cnpj", e.target.value)}
+              />
+            </>
+          )}
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Input
-              label="Seu nome"
-              name="adminNome"
-              required
-              placeholder="João Silva"
-            />
-            <Input
-              label="E-mail do administrador"
-              name="adminEmail"
-              type="email"
-              required
-              placeholder="admin@minhaloja.com"
-            />
-          </div>
+          {wizardStep === 1 && (
+            <>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Input
+                  label="Seu nome"
+                  required
+                  placeholder="João Silva"
+                  value={formData.adminNome}
+                  onChange={(e) => updateField(setFormData, "adminNome", e.target.value)}
+                />
+                <Input
+                  label="E-mail do administrador"
+                  type="email"
+                  required
+                  placeholder="admin@minhaloja.com"
+                  value={formData.adminEmail}
+                  onChange={(e) => updateField(setFormData, "adminEmail", e.target.value)}
+                />
+              </div>
+              <Input
+                label="Senha de acesso"
+                type="password"
+                minLength={8}
+                placeholder="Mínimo 8 caracteres (Keycloak em produção)"
+                value={formData.adminSenha}
+                onChange={(e) => updateField(setFormData, "adminSenha", e.target.value)}
+              />
+            </>
+          )}
 
-          <Input
-            label="Senha de acesso"
-            name="adminSenha"
-            type="password"
-            minLength={8}
-            placeholder="Mínimo 8 caracteres (Keycloak em produção)"
-          />
-
-          <Select
-            label="Plano"
-            value={planoCodigo}
-            onChange={(e) => setPlanoCodigo(e.target.value)}
-            options={
-              planoOptions.length
-                ? planoOptions
-                : [{ value: "ESSENCIAL", label: "Carregando planos..." }]
-            }
-            disabled={planosLoading}
-          />
+          {wizardStep === 2 && (
+            <>
+              <Select
+                label="Plano"
+                value={planoCodigo}
+                onChange={(e) => setPlanoCodigo(e.target.value)}
+                options={
+                  planoOptions.length
+                    ? planoOptions
+                    : [{ value: "ESSENCIAL", label: "Carregando planos..." }]
+                }
+                disabled={planosLoading}
+              />
+              <p className="text-xs text-slate-500">
+                Ao criar conta, você concorda com os{" "}
+                <Link href="/termos" className="text-brand-600 hover:text-brand-700">
+                  termos de uso
+                </Link>{" "}
+                e a{" "}
+                <Link href="/privacidade" className="text-brand-600 hover:text-brand-700">
+                  política de privacidade
+                </Link>
+                .
+              </p>
+            </>
+          )}
 
           {error && <ErrorMessage message={error} />}
 
-          <p className="text-xs text-slate-500">
-            Ao criar conta, você concorda com os{" "}
-            <Link href="/termos" className="text-brand-600 hover:text-brand-700">
-              termos de uso
-            </Link>{" "}
-            e a{" "}
-            <Link href="/privacidade" className="text-brand-600 hover:text-brand-700">
-              política de privacidade
-            </Link>
-            .
-          </p>
-
-          <Button type="submit" className="w-full" size="lg" loading={loading}>
-            Criar conta e começar trial
-          </Button>
-        </form>
+          <div className="flex gap-3 pt-2">
+            {wizardStep > 0 && (
+              <Button type="button" variant="outline" onClick={() => setWizardStep((s) => s - 1)}>
+                Voltar
+              </Button>
+            )}
+            {wizardStep < 2 ? (
+              <Button
+                type="button"
+                className="flex-1"
+                onClick={() => setWizardStep((s) => s + 1)}
+                disabled={
+                  (wizardStep === 0 &&
+                    (!formData.nomeFantasia || !formData.razaoSocial || !formData.cnpj)) ||
+                  (wizardStep === 1 && (!formData.adminNome || !formData.adminEmail))
+                }
+              >
+                Continuar
+              </Button>
+            ) : (
+              <Button type="button" className="flex-1" size="lg" loading={loading} onClick={handleSubmit}>
+                Criar conta e começar trial
+              </Button>
+            )}
+          </div>
+        </div>
 
         <p className="mt-4 text-center text-sm text-slate-500">
           Já tem conta?{" "}
