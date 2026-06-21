@@ -1,0 +1,40 @@
+name: Sync develop from main
+
+# Após release ou hotfix em main, traz commits para develop (GitFlow).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: sync-develop-from-main
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Merge main into develop
+        run: |
+          set -euo pipefail
+          git fetch origin main develop
+          if git rev-parse origin/develop >/dev/null 2>&1; then
+            git checkout develop
+            git reset --hard origin/develop
+          else
+            git checkout -b develop origin/main
+          fi
+          if git merge-base --is-ancestor HEAD origin/main; then
+            git merge --ff-only origin/main
+          else
+            git merge origin/main -m "chore: sync develop com main"
+          fi
+          git push origin develop

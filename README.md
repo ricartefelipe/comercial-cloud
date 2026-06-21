@@ -184,10 +184,19 @@ comercial-cloud/
 |--------|-----|
 | `main` | Produção estável; recebe merges de `develop` via release |
 | `develop` | Integração contínua; base para novas funcionalidades |
-| `feature/*` | Novas funcionalidades → merge em `develop` |
-| `hotfix/*` | Correções urgentes em produção → merge em `main` e `develop` |
+| `feature/*` | Novas funcionalidades → merge em **`develop`** |
+| `fix/*` | Correções → merge em **`develop`** |
+| `hotfix/*` | Correções urgentes em produção → merge em `main` e sync em `develop` |
 | `release/*` | Preparação de versão (`develop` → `main`) |
 
-Releases são publicadas a partir de `main` com tags semver (`v1.0.0`, `v1.1.0`, …).
+**Guia completo:** [`docs/GITFLOW.md`](docs/GITFLOW.md)
 
-Documentação adicional: [`README-COMERCIAL.md`](README-COMERCIAL.md) · [`docs/DEPLOY-PRODUCAO.md`](docs/DEPLOY-PRODUCAO.md) · [`docs/PILOTO-WHITELABEL.md`](docs/PILOTO-WHITELABEL.md) · [`docs/RELEASE-v1.0.0.md`](docs/RELEASE-v1.0.0.md)
+```bash
+./scripts/gitflow-nova-feature.sh minha-tarefa   # feature → develop
+./scripts/gitflow-release.sh                     # PR develop → main
+```
+
+Releases são publicadas a partir de `main` com tags semver (`v1.0.0`, `v1.1.0`, …).  
+CI bloqueia PR de `feature/*` direto para `main` e trailers de IA nos commits.
+
+Documentação adicional: [`README-COMERCIAL.md`](README-COMERCIAL.md) · [`docs/GITFLOW.md`](docs/GITFLOW.md) · [`docs/DEPLOY-PRODUCAO.md`](docs/DEPLOY-PRODUCAO.md) · [`docs/PILOTO-WHITELABEL.md`](docs/PILOTO-WHITELABEL.md) · [`docs/RELEASE-v1.0.0.md`](docs/RELEASE-v1.0.0.md)

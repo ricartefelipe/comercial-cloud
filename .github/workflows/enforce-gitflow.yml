@@ -1,0 +1,29 @@
+name: Enforce GitFlow
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  block-feature-to-main:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validar branch de origem
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          set -euo pipefail
+          case "$HEAD_REF" in
+            develop|release/*|hotfix/*)
+              echo "OK: PR para main a partir de '$HEAD_REF'"
+              ;;
+            feature/*|fix/*)
+              echo "::error::GitFlow: '$HEAD_REF' deve fazer merge em develop, não em main."
+              echo "Use: feature/* → develop → release → main"
+              exit 1
+              ;;
+            *)
+              echo "::warning::Branch '$HEAD_REF' não segue o padrão GitFlow documentado."
+              echo "Permitidos para main: develop, release/*, hotfix/*"
+              ;;
+          esac
