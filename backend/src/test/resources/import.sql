@@ -8,8 +8,8 @@ INSERT INTO produto (id, tenant_id, sku, codigo_barras, nome, descricao, preco, 
 INSERT INTO produto (id, tenant_id, sku, codigo_barras, nome, descricao, preco, ativo, created_at, updated_at) VALUES ('55555555-5555-5555-5555-555555555553', '11111111-1111-1111-1111-111111111111', 'PROD-INATIVO', '7891000100103', 'Produto Inativo', 'Demo', 5.00, FALSE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 INSERT INTO estoque (id, tenant_id, loja_id, produto_id, quantidade, updated_at) VALUES ('66666666-6666-6666-6666-666666666661', '11111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222', '55555555-5555-5555-5555-555555555551', 100, CURRENT_TIMESTAMP);
 INSERT INTO estoque (id, tenant_id, loja_id, produto_id, quantidade, updated_at) VALUES ('66666666-6666-6666-6666-666666666662', '11111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222', '55555555-5555-5555-5555-555555555552', 50, CURRENT_TIMESTAMP);
-INSERT INTO plano_assinatura (id, codigo, nome, preco_mensal, ativo) VALUES ('a1000000-0000-0000-0000-000000000001', 'ESSENCIAL', 'Essencial', 99.00, TRUE);
-INSERT INTO plano_assinatura (id, codigo, nome, preco_mensal, ativo) VALUES ('a1000000-0000-0000-0000-000000000002', 'PRO', 'Pro', 199.00, TRUE);
-INSERT INTO plano_assinatura (id, codigo, nome, preco_mensal, ativo) VALUES ('a1000000-0000-0000-0000-000000000003', 'PREMIUM', 'Premium', 349.00, TRUE);
+INSERT INTO plano_assinatura (id, codigo, nome, preco_mensal, ativo, max_lojas) VALUES ('a1000000-0000-0000-0000-000000000001', 'ESSENCIAL', 'Essencial', 99.00, TRUE, 1);
+INSERT INTO plano_assinatura (id, codigo, nome, preco_mensal, ativo, max_lojas) VALUES ('a1000000-0000-0000-0000-000000000002', 'PRO', 'Pro', 199.00, TRUE, 3);
+INSERT INTO plano_assinatura (id, codigo, nome, preco_mensal, ativo, max_lojas) VALUES ('a1000000-0000-0000-0000-000000000003', 'PREMIUM', 'Premium', 349.00, TRUE, 10);
 INSERT INTO tenant (id, nome, ativo, created_at) VALUES ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'Tenant Billing', TRUE, CURRENT_TIMESTAMP);
 INSERT INTO tenant (id, nome, ativo, created_at) VALUES ('cccccccc-cccc-cccc-cccc-cccccccccccc', 'Tenant Suspenso', FALSE, CURRENT_TIMESTAMP);

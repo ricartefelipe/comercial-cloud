@@ -1,0 +1,41 @@
+# Exemplo de stack produção — ajuste domínios, secrets e volumes antes de subir.
+# Uso: cp .env.prod.example .env.prod && docker compose -f docker-compose.yml -f docker-compose.prod.example.yml up -d
+
+services:
+  postgres:
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    environment:
+      QUARKUS_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      QUARKUS_HTTP_CORS_ORIGINS: ${APP_URL:?defina APP_URL}
+      QUARKUS_PROFILE: ${QUARKUS_PROFILE:-auth}
+      QUARKUS_OIDC_AUTH_SERVER_URL: ${KEYCLOAK_URL}/realms/comercialcloud
+      COMERCIAL_CLOUD_BILLING_ASAAS_ENABLED: ${COMERCIAL_CLOUD_BILLING_ASAAS_ENABLED:-false}
+      ASAAS_API_KEY: ${ASAAS_API_KEY:-}
+      ASAAS_WEBHOOK_TOKEN: ${ASAAS_WEBHOOK_TOKEN:-}
+      COMERCIAL_CLOUD_FISCAL_FOCUSNFE_ENABLED: ${COMERCIAL_CLOUD_FISCAL_FOCUSNFE_ENABLED:-false}
+      FOCUSNFE_TOKEN: ${FOCUSNFE_TOKEN:-}
+      COMERCIAL_CLOUD_KEYCLOAK_PROVISIONING_ENABLED: ${COMERCIAL_CLOUD_KEYCLOAK_PROVISIONING_ENABLED:-true}
+      COMERCIAL_CLOUD_MAIL_ENABLED: ${COMERCIAL_CLOUD_MAIL_ENABLED:-true}
+      MAIL_HOST: ${MAIL_HOST:-}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_FROM: ${MAIL_FROM:-noreply@example.com}
+      APP_URL: ${APP_URL}
+
+  frontend:
+    environment:
+      NEXT_PUBLIC_API_URL: ${API_URL:?defina API_URL}
+      NEXT_PUBLIC_KEYCLOAK_URL: ${KEYCLOAK_URL:?defina KEYCLOAK_URL}
+      NEXT_PUBLIC_KEYCLOAK_REALM: comercialcloud
+      NEXT_PUBLIC_KEYCLOAK_CLIENT_ID: comercial-cloud-web
+
+  keycloak:
+    profiles:
+      - keycloak
+    environment:
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?defina KEYCLOAK_ADMIN_PASSWORD}

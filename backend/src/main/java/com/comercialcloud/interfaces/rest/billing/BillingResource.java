@@ -116,14 +116,21 @@ public class BillingResource {
         map.put("nome", p.nome);
         map.put("precoMensal", p.precoMensal);
         map.put("ativo", p.ativo);
+        map.put("maxLojas", p.maxLojas);
         return map;
     }
 
-    private static Map<String, Object> assinaturaToMap(AssinaturaTenantEntity a) {
+    private Map<String, Object> assinaturaToMap(AssinaturaTenantEntity a) {
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("id", a.id);
         map.put("tenantId", a.tenantId);
         map.put("planoId", a.planoId);
+        PlanoAssinaturaEntity plano = PlanoAssinaturaEntity.findById(a.planoId);
+        if (plano != null) {
+            map.put("planoCodigo", plano.codigo);
+            map.put("planoNome", plano.nome);
+            map.put("maxLojas", plano.maxLojas);
+        }
         map.put("status", a.status);
         map.put("inicio", a.inicio);
         map.put("proximaCobranca", a.proximaCobranca);

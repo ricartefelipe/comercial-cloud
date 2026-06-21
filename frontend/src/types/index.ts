@@ -445,3 +445,23 @@ export const STATUS_DOCUMENTO_FISCAL_LABELS: Record<StatusDocumentoFiscal, strin
   REJEITADA: "Rejeitada",
   CANCELADA: "Cancelada",
 };
+
+export interface Loja {
+  id: string;
+  tenantId: string;
+  nome: string;
+  ativa: boolean;
+  createdAt?: string;
+}
+
+export interface LojaResumo {
+  limite: number;
+  ativas: number;
+  podeCriar: boolean;
+}
+
+export interface BrandingConfig {
+  nomeExibicao: string;
+  corPrimaria: string;
+  logoUrl?: string;
+}

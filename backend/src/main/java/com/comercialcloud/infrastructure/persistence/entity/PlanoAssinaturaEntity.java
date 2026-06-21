@@ -28,4 +28,7 @@ public class PlanoAssinaturaEntity extends PanacheEntityBase {
 
     @Column(name = "ativo", nullable = false)
     public boolean ativo;
+
+    @Column(name = "max_lojas", nullable = false)
+    public int maxLojas = 1;
 }

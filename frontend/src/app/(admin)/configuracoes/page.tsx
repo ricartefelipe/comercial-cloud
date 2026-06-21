@@ -5,6 +5,8 @@ import { Card, CardHeader } from "@/components/ui/Card";
 import { ErrorMessage, LoadingSpinner, PageHeader } from "@/components/ui/Common";
 import { Input } from "@/components/ui/Input";
 import { listConfiguracoes, upsertConfiguracoes } from "@/lib/api/configuracoes";
+import { saveBranding } from "@/lib/api/branding";
+import { useBranding } from "@/components/branding/BrandingProvider";
 import { getLojaId, getTenantId } from "@/lib/auth/tenant-context";
 import type { ConfiguracaoRequest } from "@/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -44,6 +46,12 @@ function buildInitialValues(): Record<string, string> {
 export default function ConfiguracoesPage() {
   const [values, setValues] = useState<Record<string, string>>(buildInitialValues);
   const [saved, setSaved] = useState(false);
+  const brandingAtual = useBranding();
+  const [branding, setBranding] = useState({
+    nomeExibicao: brandingAtual.nomeExibicao,
+    corPrimaria: brandingAtual.corPrimaria,
+    logoUrl: brandingAtual.logoUrl ?? "",
+  });
   const queryClient = useQueryClient();
 
   const { data, isLoading, error } = useQuery({
@@ -62,10 +70,27 @@ export default function ConfiguracoesPage() {
     });
   }, [data]);
 
+  useEffect(() => {
+    setBranding({
+      nomeExibicao: brandingAtual.nomeExibicao,
+      corPrimaria: brandingAtual.corPrimaria,
+      logoUrl: brandingAtual.logoUrl ?? "",
+    });
+  }, [brandingAtual]);
+
   const saveMutation = useMutation({
     mutationFn: (items: ConfiguracaoRequest[]) => upsertConfiguracoes(items),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["configuracoes", getLojaId()] });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    },
+  });
+
+  const brandingMutation = useMutation({
+    mutationFn: () => saveBranding(branding),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["branding"] });
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     },
@@ -118,7 +143,48 @@ export default function ConfiguracoesPage() {
       )}
 
       {!isLoading && (
-        <form onSubmit={handleSave} className="space-y-6">
+        <>
+          <Card className="mb-6">
+            <CardHeader
+              title="Marca (white-label)"
+              description="Nome, cor e logo exibidos no PDV e retaguarda"
+              action={
+                <Button
+                  type="button"
+                  onClick={() => brandingMutation.mutate()}
+                  loading={brandingMutation.isPending}
+                >
+                  Salvar marca
+                </Button>
+              }
+            />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Input
+                label="Nome exibido"
+                value={branding.nomeExibicao}
+                onChange={(e) => setBranding((b) => ({ ...b, nomeExibicao: e.target.value }))}
+              />
+              <Input
+                label="Cor primária (hex)"
+                value={branding.corPrimaria}
+                onChange={(e) => setBranding((b) => ({ ...b, corPrimaria: e.target.value }))}
+                placeholder="#4f7cff"
+              />
+              <Input
+                label="URL do logo (opcional)"
+                value={branding.logoUrl}
+                onChange={(e) => setBranding((b) => ({ ...b, logoUrl: e.target.value }))}
+                className="sm:col-span-2"
+              />
+            </div>
+            {brandingMutation.error && (
+              <div className="mt-3">
+                <ErrorMessage message={(brandingMutation.error as Error).message} />
+              </div>
+            )}
+          </Card>
+
+          <form onSubmit={handleSave} className="space-y-6">
           {sections.map((section) => (
               <Card key={section.id}>
                 <CardHeader title={section.title} />
@@ -135,6 +201,7 @@ export default function ConfiguracoesPage() {
               </Card>
           ))}
         </form>
+        </>
       )}
     </div>
   );
