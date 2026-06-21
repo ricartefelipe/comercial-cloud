@@ -10,6 +10,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.PATCH;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
@@ -46,6 +47,15 @@ public class EstoqueResource {
         estoqueService.ajustar(request.lojaId(), request.produtoId(), request.quantidade(), request.motivo());
     }
 
+    @PATCH
+    @Path("/minimo")
+    public Map<String, Object> definirMinimo(MinimoBody request) {
+        Estoque estoque =
+                estoqueService.definirQuantidadeMinima(
+                        request.lojaId(), request.produtoId(), request.quantidadeMinima());
+        return toMap(estoque);
+    }
+
     @GET
     @Path("/movimentacoes")
     public List<Map<String, Object>> movimentacoes(
@@ -63,7 +73,7 @@ public class EstoqueResource {
         map.put("lojaId", estoque.lojaId());
         map.put("produtoId", estoque.produtoId());
         map.put("quantidadeAtual", estoque.quantidade());
-        map.put("quantidadeMinima", BigDecimal.ZERO);
+        map.put("quantidadeMinima", estoque.quantidadeMinima());
 
         produtoRepository.find(estoque.tenantId(), estoque.produtoId()).ifPresent(produto -> {
             map.put("produtoNome", produto.nome());
@@ -93,4 +103,9 @@ public class EstoqueResource {
             @NotNull UUID produtoId,
             @NotNull @DecimalMin("0.0") BigDecimal quantidade,
             @NotBlank String motivo) {}
+
+    public record MinimoBody(
+            @NotNull UUID lojaId,
+            @NotNull UUID produtoId,
+            @NotNull @DecimalMin("0.0") BigDecimal quantidadeMinima) {}
 }

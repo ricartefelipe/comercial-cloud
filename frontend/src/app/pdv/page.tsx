@@ -8,6 +8,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Select } from "@/components/ui/Select";
 import { OfflineIndicator, OnlineBadge } from "@/components/pdv/OfflineIndicator";
 import { PdvReceipt } from "@/components/pdv/PdvReceipt";
+import { ProductImage } from "@/components/produtos/ProductImage";
 import { useBranding } from "@/components/branding/BrandingProvider";
 import { abrirCaixa, getCaixaAberto } from "@/lib/api/caixa";
 import { listClientes, consumidorRapido } from "@/lib/api/clientes";
@@ -78,38 +79,56 @@ function ProductTile({
   produto,
   disabled,
   estoqueQty,
+  estoqueMinimo,
   onAdd,
 }: {
   produto: Produto;
   disabled: boolean;
   estoqueQty?: number;
+  estoqueMinimo?: number;
   onAdd: (produto: Produto) => void;
 }) {
+  const semEstoque =
+    produto.controlaEstoque && estoqueQty !== undefined && estoqueQty <= 0;
   const estoqueBaixo =
-    produto.controlaEstoque && estoqueQty !== undefined && estoqueQty <= 10;
+    produto.controlaEstoque &&
+    estoqueQty !== undefined &&
+    estoqueQty > 0 &&
+    estoqueQty <= (estoqueMinimo ?? 10);
 
   return (
     <button
       type="button"
       onClick={() => onAdd(produto)}
-      disabled={disabled}
+      disabled={disabled || semEstoque}
       className="group rounded-xl border border-slate-200 bg-white p-4 text-left transition-all hover:border-brand-400 hover:shadow-md active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
     >
-      <div className="mb-2 flex items-start justify-between gap-2">
-        <p className="font-semibold text-slate-900 group-hover:text-brand-700">
-          {produto.nome}
-        </p>
-        {produto.categoria && (
-          <span className="shrink-0 rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-500">
-            {produto.categoria}
-          </span>
-        )}
+      <div className="mb-3 flex items-start gap-3">
+        <ProductImage src={produto.imagemUrl} alt={produto.nome} size="md" />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-2">
+            <p className="font-semibold text-slate-900 group-hover:text-brand-700">
+              {produto.nome}
+            </p>
+            {produto.categoria && (
+              <span className="shrink-0 rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-500">
+                {produto.categoria}
+              </span>
+            )}
+          </div>
+          <p className="text-xs text-slate-500">{produto.sku}</p>
+        </div>
       </div>
-      <p className="text-xs text-slate-500">{produto.sku}</p>
-      {estoqueBaixo && (
-        <p className="mt-1 text-xs font-medium text-amber-600">Estoque: {estoqueQty} un.</p>
+      {semEstoque && (
+        <p className="mb-1 text-xs font-medium text-red-600">Sem estoque</p>
       )}
-      <p className="mt-2 text-lg font-bold text-brand-600">
+      {!semEstoque && estoqueBaixo && (
+        <p className="mb-1 text-xs font-medium text-amber-600">Estoque: {estoqueQty} un.</p>
+      )}
+      {!semEstoque && produto.controlaEstoque && estoqueQty !== undefined && !estoqueBaixo && (
+        <p className="mb-1 text-xs text-slate-500">{estoqueQty} em estoque</p>
+      )}
+      <p className="mt-1 text-lg font-bold text-brand-600">
         {formatCurrency(produto.precoVenda)}
       </p>
     </button>
@@ -167,9 +186,12 @@ export default function PdvPage() {
   });
 
   const estoquePorProduto = useMemo(() => {
-    const map = new Map<string, number>();
+    const map = new Map<string, { qty: number; minimo: number }>();
     for (const e of estoques ?? []) {
-      map.set(e.produtoId, e.quantidadeAtual);
+      map.set(e.produtoId, {
+        qty: e.quantidadeAtual,
+        minimo: e.quantidadeMinima,
+      });
     }
     return map;
   }, [estoques]);
@@ -284,6 +306,11 @@ export default function PdvPage() {
     if (!caixaPronto) {
       setError("Abra o caixa antes de adicionar produtos.");
       setOpenCaixaModal(true);
+      return;
+    }
+    const estoque = estoquePorProduto.get(produto.id);
+    if (produto.controlaEstoque && estoque !== undefined && estoque.qty <= 0) {
+      setError(`Produto "${produto.nome}" sem estoque disponível.`);
       return;
     }
     setLoading(true);
@@ -649,15 +676,19 @@ export default function PdvPage() {
 
               {searchResults.length > 0 ? (
                 <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-                  {searchResults.map((produto) => (
+                  {searchResults.map((produto) => {
+                    const estoque = estoquePorProduto.get(produto.id);
+                    return (
                     <ProductTile
                       key={produto.id}
                       produto={produto}
                       disabled={loading || !caixaPronto}
-                      estoqueQty={estoquePorProduto.get(produto.id)}
+                      estoqueQty={estoque?.qty}
+                      estoqueMinimo={estoque?.minimo}
                       onAdd={handleAddProduct}
                     />
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="flex flex-1 flex-col">
@@ -670,15 +701,19 @@ export default function PdvPage() {
                     <LoadingSpinner />
                   ) : produtosRapidos.length > 0 ? (
                     <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-                      {produtosRapidos.map((produto) => (
+                      {produtosRapidos.map((produto) => {
+                        const estoque = estoquePorProduto.get(produto.id);
+                        return (
                         <ProductTile
                           key={produto.id}
                           produto={produto}
                           disabled={loading || !caixaPronto}
-                          estoqueQty={estoquePorProduto.get(produto.id)}
+                          estoqueQty={estoque?.qty}
+                          estoqueMinimo={estoque?.minimo}
                           onAdd={handleAddProduct}
                         />
-                      ))}
+                        );
+                      })}
                     </div>
                   ) : (
                     <div className="flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center">

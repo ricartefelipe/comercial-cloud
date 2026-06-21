@@ -69,6 +69,7 @@ public class PanacheProdutoRepository implements ProdutoRepository {
         managed.codigoBarras = payload.codigoBarras;
         managed.nome = payload.nome;
         managed.descricao = payload.descricao;
+        managed.imagemUrl = payload.imagemUrl;
         managed.preco = payload.preco;
         managed.ativo = payload.ativo;
         managed.updatedAt = payload.updatedAt;

@@ -106,6 +106,7 @@ public class LojaService {
                                     novaLojaId,
                                     item.produtoId(),
                                     BigDecimal.ZERO,
+                                    item.quantidadeMinima(),
                                     now));
                 }
             }
@@ -126,6 +127,7 @@ public class LojaService {
                                     novaLojaId,
                                     produto.id(),
                                     BigDecimal.ZERO,
+                                    Estoque.QUANTIDADE_MINIMA_PADRAO,
                                     now));
                 }
             }

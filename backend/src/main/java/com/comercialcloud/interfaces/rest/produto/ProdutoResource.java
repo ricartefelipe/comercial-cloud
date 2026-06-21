@@ -42,6 +42,7 @@ public class ProdutoResource {
                 request.codigoBarras(),
                 request.nome(),
                 request.descricao(),
+                request.imagemUrl(),
                 request.resolverPreco());
         return Response.status(Response.Status.CREATED).entity(toMap(produto)).build();
     }
@@ -87,6 +88,7 @@ public class ProdutoResource {
                 request.codigoBarras(),
                 request.nome(),
                 request.descricao(),
+                request.imagemUrl(),
                 request.resolverPreco()));
     }
 
@@ -110,6 +112,7 @@ public class ProdutoResource {
         map.put("codigoBarras", produto.codigoBarras());
         map.put("nome", produto.nome());
         map.put("descricao", produto.descricao());
+        map.put("imagemUrl", produto.imagemUrl());
         map.put("unidadeMedida", "UN");
         map.put("precoVenda", produto.preco());
         map.put("preco", produto.preco());
@@ -126,6 +129,7 @@ public class ProdutoResource {
             String codigoBarras,
             @NotBlank String nome,
             String descricao,
+            String imagemUrl,
             String unidadeMedida,
             @DecimalMin("0.0") BigDecimal precoVenda,
             @DecimalMin("0.0") BigDecimal preco) {

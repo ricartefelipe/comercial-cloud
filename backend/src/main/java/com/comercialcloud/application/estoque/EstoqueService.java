@@ -61,14 +61,7 @@ public class EstoqueService {
         BigDecimal saldoAnterior = estoque.quantidade();
         BigDecimal diferenca = novaQuantidade.subtract(saldoAnterior);
 
-        Estoque atualizado =
-                new Estoque(
-                        estoque.id(),
-                        estoque.tenantId(),
-                        estoque.lojaId(),
-                        estoque.produtoId(),
-                        novaQuantidade,
-                        Instant.now());
+        Estoque atualizado = comQuantidade(estoque, novaQuantidade);
         estoqueRepository.save(atualizado);
 
         registrarMovimentacao(
@@ -82,6 +75,31 @@ public class EstoqueService {
                 motivo,
                 null);
         auditService.registrar("Estoque", estoque.id(), "AJUSTE", motivo);
+    }
+
+    @Transactional
+    public Estoque definirQuantidadeMinima(UUID lojaId, UUID produtoId, BigDecimal quantidadeMinima) {
+        UUID tenantId = tenantContext.getTenantId();
+        validarLoja(tenantId, lojaId);
+        validarProduto(tenantId, produtoId);
+
+        if (quantidadeMinima == null || quantidadeMinima.compareTo(BigDecimal.ZERO) < 0) {
+            throw new BusinessException("QUANTIDADE_MINIMA_INVALIDA", "Quantidade mínima inválida");
+        }
+
+        Estoque estoque = obterOuCriar(tenantId, lojaId, produtoId);
+        Estoque atualizado =
+                new Estoque(
+                        estoque.id(),
+                        estoque.tenantId(),
+                        estoque.lojaId(),
+                        estoque.produtoId(),
+                        estoque.quantidade(),
+                        quantidadeMinima,
+                        Instant.now());
+        Estoque salvo = estoqueRepository.save(atualizado);
+        auditService.registrar("Estoque", estoque.id(), "DEFINIR_MINIMO", quantidadeMinima.toPlainString());
+        return salvo;
     }
 
     @Transactional
@@ -102,14 +120,7 @@ public class EstoqueService {
             throw new BusinessException("ESTOQUE_INSUFICIENTE", "Estoque insuficiente para a operação");
         }
 
-        Estoque atualizado =
-                new Estoque(
-                        estoque.id(),
-                        estoque.tenantId(),
-                        estoque.lojaId(),
-                        estoque.produtoId(),
-                        saldoPosterior,
-                        Instant.now());
+        Estoque atualizado = comQuantidade(estoque, saldoPosterior);
         estoqueRepository.save(atualizado);
 
         registrarMovimentacao(
@@ -138,14 +149,7 @@ public class EstoqueService {
         BigDecimal saldoAnterior = estoque.quantidade();
         BigDecimal saldoPosterior = saldoAnterior.add(quantidade);
 
-        Estoque atualizado =
-                new Estoque(
-                        estoque.id(),
-                        estoque.tenantId(),
-                        estoque.lojaId(),
-                        estoque.produtoId(),
-                        saldoPosterior,
-                        Instant.now());
+        Estoque atualizado = comQuantidade(estoque, saldoPosterior);
         estoqueRepository.save(atualizado);
 
         registrarMovimentacao(
@@ -160,16 +164,29 @@ public class EstoqueService {
                 referenciaId);
     }
 
+    private Estoque comQuantidade(Estoque estoque, BigDecimal quantidade) {
+        return new Estoque(
+                estoque.id(),
+                estoque.tenantId(),
+                estoque.lojaId(),
+                estoque.produtoId(),
+                quantidade,
+                estoque.quantidadeMinima(),
+                Instant.now());
+    }
+
     private Estoque obterOuCriar(UUID tenantId, UUID lojaId, UUID produtoId) {
         return estoqueRepository.findPorLojaProduto(tenantId, lojaId, produtoId).orElseGet(
                 () ->
-                        estoqueRepository.save(new Estoque(
-                                UUID.randomUUID(),
-                                tenantId,
-                                lojaId,
-                                produtoId,
-                                BigDecimal.ZERO,
-                                Instant.now())));
+                        estoqueRepository.save(
+                                new Estoque(
+                                        UUID.randomUUID(),
+                                        tenantId,
+                                        lojaId,
+                                        produtoId,
+                                        BigDecimal.ZERO,
+                                        Estoque.QUANTIDADE_MINIMA_PADRAO,
+                                        Instant.now())));
     }
 
     private void registrarMovimentacao(

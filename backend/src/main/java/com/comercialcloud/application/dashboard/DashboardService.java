@@ -25,8 +25,6 @@ import java.util.UUID;
 @ApplicationScoped
 public class DashboardService {
 
-    private static final BigDecimal ESTOQUE_BAIXO_LIMITE = new BigDecimal("10");
-
     @Inject TenantContext tenantContext;
 
     @Inject VendaRepository vendaRepository;
@@ -76,8 +74,7 @@ public class DashboardService {
             }
         }
 
-        List<Estoque> estoqueBaixo =
-                estoqueRepository.listPorQuantidadeMax(tenantId, lojaId, ESTOQUE_BAIXO_LIMITE);
+        List<Estoque> estoqueBaixo = estoqueRepository.listEstoqueBaixo(tenantId, lojaId);
 
         Map<UUID, Produto> produtosPorId = new HashMap<>();
         for (Estoque estoque : estoqueBaixo) {

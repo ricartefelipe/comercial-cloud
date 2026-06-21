@@ -21,6 +21,9 @@ public class EstoqueEntity extends TenantScopedEntity {
     @Column(name = "quantidade", nullable = false, precision = 15, scale = 3)
     public BigDecimal quantidade;
 
+    @Column(name = "quantidade_minima", nullable = false, precision = 15, scale = 3)
+    public BigDecimal quantidadeMinima;
+
     @Column(name = "updated_at", nullable = false)
     public Instant updatedAt;
 }

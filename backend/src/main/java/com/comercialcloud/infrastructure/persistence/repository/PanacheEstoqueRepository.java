@@ -59,4 +59,16 @@ public class PanacheEstoqueRepository implements EstoqueRepository {
                 .map(ee -> mapper.toDomain(ee))
                 .toList();
     }
+
+    @Override
+    public List<Estoque> listEstoqueBaixo(UUID tenantId, UUID lojaId) {
+        return EstoqueEntity.<EstoqueEntity>find(
+                        "tenantId = ?1 and lojaId = ?2 and quantidade <= quantidadeMinima order by quantidade",
+                        tenantId,
+                        lojaId)
+                .list()
+                .stream()
+                .map(ee -> mapper.toDomain(ee))
+                .toList();
+    }
 }

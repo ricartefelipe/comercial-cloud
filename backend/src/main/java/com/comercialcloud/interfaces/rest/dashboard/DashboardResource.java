@@ -72,7 +72,7 @@ public class DashboardResource {
         map.put("lojaId", estoque.lojaId());
         map.put("produtoId", estoque.produtoId());
         map.put("quantidadeAtual", estoque.quantidade());
-        map.put("quantidadeMinima", 10);
+        map.put("quantidadeMinima", estoque.quantidadeMinima());
         Produto produto = produtosPorId.get(estoque.produtoId());
         if (produto != null) {
             map.put("produtoNome", produto.nome());

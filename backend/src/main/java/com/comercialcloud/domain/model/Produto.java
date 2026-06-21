@@ -11,6 +11,7 @@ public record Produto(
         String codigoBarras,
         String nome,
         String descricao,
+        String imagemUrl,
         BigDecimal preco,
         boolean ativo,
         Instant createdAt,

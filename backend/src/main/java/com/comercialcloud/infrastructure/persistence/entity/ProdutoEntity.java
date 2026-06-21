@@ -23,6 +23,9 @@ public class ProdutoEntity extends TenantScopedEntity {
     @Column(name = "descricao")
     public String descricao;
 
+    @Column(name = "imagem_url", length = 500)
+    public String imagemUrl;
+
     @Column(name = "preco", nullable = false, precision = 15, scale = 2)
     public BigDecimal preco;
 

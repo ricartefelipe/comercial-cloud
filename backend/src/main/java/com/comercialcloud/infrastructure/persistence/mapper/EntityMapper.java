@@ -86,6 +86,7 @@ public class EntityMapper {
                 entity.codigoBarras,
                 entity.nome,
                 entity.descricao,
+                entity.imagemUrl,
                 entity.preco,
                 entity.ativo,
                 entity.createdAt,
@@ -100,6 +101,7 @@ public class EntityMapper {
         entity.codigoBarras = produto.codigoBarras();
         entity.nome = produto.nome();
         entity.descricao = produto.descricao();
+        entity.imagemUrl = produto.imagemUrl();
         entity.preco = produto.preco();
         entity.ativo = produto.ativo();
         entity.createdAt = produto.createdAt();
@@ -133,7 +135,14 @@ public class EntityMapper {
     }
 
     public Estoque toDomain(EstoqueEntity entity) {
-        return new Estoque(entity.id, entity.tenantId, entity.lojaId, entity.produtoId, entity.quantidade, entity.updatedAt);
+        return new Estoque(
+                entity.id,
+                entity.tenantId,
+                entity.lojaId,
+                entity.produtoId,
+                entity.quantidade,
+                entity.quantidadeMinima,
+                entity.updatedAt);
     }
 
     public EstoqueEntity toEntity(Estoque estoque) {
@@ -143,6 +152,7 @@ public class EntityMapper {
         entity.lojaId = estoque.lojaId();
         entity.produtoId = estoque.produtoId();
         entity.quantidade = estoque.quantidade();
+        entity.quantidadeMinima = estoque.quantidadeMinima();
         entity.updatedAt = estoque.updatedAt();
         return entity;
     }
