@@ -17,7 +17,7 @@ test.describe("ComercialCloud smoke", () => {
     await page.goto("/login");
     await page.getByRole("button", { name: /entrar em modo demo/i }).click();
     await page.goto("/relatorios");
-    await expect(page.getByText("Relatórios")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Relatórios" })).toBeVisible();
   });
 
   test("página de auditoria carrega", async ({ page }) => {
