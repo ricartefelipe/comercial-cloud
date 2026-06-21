@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { ErrorMessage, LoadingSpinner, PageHeader } from "@/components/ui/Common";
 import { ConfirmModal } from "@/components/ui/Modal";
-import { formatCurrency, formatDateTime } from "@/lib/format";
+import { formatCurrency, formatDateTime, itemVendaLineTotal } from "@/lib/format";
 import { cancelarVenda, getVenda } from "@/lib/api/vendas";
 import { getDocumentoFiscalPorVenda } from "@/lib/api/fiscal";
 import { FORMA_PAGAMENTO_LABELS, STATUS_DOCUMENTO_FISCAL_LABELS, STATUS_VENDA_LABELS } from "@/types";
@@ -111,8 +111,8 @@ export default function VendaDetalhePage() {
                         </td>
                         <td className="py-2">{item.quantidade}</td>
                         <td className="py-2">{formatCurrency(item.precoUnitario)}</td>
-                        <td className="py-2">{formatCurrency(item.desconto)}</td>
-                        <td className="py-2 font-medium">{formatCurrency(item.total)}</td>
+                        <td className="py-2">{formatCurrency(item.desconto ?? 0)}</td>
+                        <td className="py-2 font-medium">{formatCurrency(itemVendaLineTotal(item))}</td>
                       </tr>
                     ))}
                   </tbody>

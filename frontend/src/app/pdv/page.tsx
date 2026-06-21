@@ -2,13 +2,13 @@
 
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
-import { ErrorMessage } from "@/components/ui/Common";
+import { ErrorMessage, LoadingSpinner } from "@/components/ui/Common";
 import { Input } from "@/components/ui/Input";
+import { Modal } from "@/components/ui/Modal";
 import { Select } from "@/components/ui/Select";
-import { getCaixaAberto } from "@/lib/api/caixa";
+import { abrirCaixa, getCaixaAberto } from "@/lib/api/caixa";
 import { listClientes } from "@/lib/api/clientes";
-import { buscarProdutos } from "@/lib/api/produtos";
+import { buscarProdutos, listProdutos } from "@/lib/api/produtos";
 import {
   addItemVenda,
   addPagamentoVenda,
@@ -16,14 +16,17 @@ import {
   finalizarVenda,
   removeItemVenda,
 } from "@/lib/api/vendas";
-import { getLojaId, getUserId } from "@/lib/auth/tenant-context";
-import { formatCurrency } from "@/lib/format";
+import { getLojaId, getOperatorLabel } from "@/lib/auth/tenant-context";
+import { formatCurrency, itemVendaLineTotal } from "@/lib/format";
 import type { FormaPagamento, ItemVenda, Produto, Venda } from "@/types";
 import { FORMA_PAGAMENTO_LABELS } from "@/types";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
+  Keyboard,
+  LockOpen,
   Minus,
+  Package,
   Plus,
   Receipt,
   Search,
@@ -43,7 +46,42 @@ const FORMAS_PAGAMENTO: FormaPagamento[] = [
   "OUTROS",
 ];
 
+function ProductTile({
+  produto,
+  disabled,
+  onAdd,
+}: {
+  produto: Produto;
+  disabled: boolean;
+  onAdd: (produto: Produto) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onAdd(produto)}
+      disabled={disabled}
+      className="group rounded-xl border border-slate-200 bg-white p-4 text-left transition-all hover:border-brand-400 hover:shadow-md active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+    >
+      <div className="mb-2 flex items-start justify-between gap-2">
+        <p className="font-semibold text-slate-900 group-hover:text-brand-700">
+          {produto.nome}
+        </p>
+        {produto.categoria && (
+          <span className="shrink-0 rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-500">
+            {produto.categoria}
+          </span>
+        )}
+      </div>
+      <p className="text-xs text-slate-500">{produto.sku}</p>
+      <p className="mt-2 text-lg font-bold text-brand-600">
+        {formatCurrency(produto.precoVenda)}
+      </p>
+    </button>
+  );
+}
+
 export default function PdvPage() {
+  const queryClient = useQueryClient();
   const searchRef = useRef<HTMLInputElement>(null);
   const [termo, setTermo] = useState("");
   const [searchResults, setSearchResults] = useState<Produto[]>([]);
@@ -57,6 +95,8 @@ export default function PdvPage() {
   const [valorRecebido, setValorRecebido] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [openCaixaModal, setOpenCaixaModal] = useState(false);
+  const [valorAbertura, setValorAbertura] = useState("100");
 
   const { data: clientes } = useQuery({
     queryKey: ["clientes-pdv"],
@@ -66,6 +106,30 @@ export default function PdvPage() {
   const { data: caixaAberto, isLoading: caixaLoading } = useQuery({
     queryKey: ["caixa-aberto-pdv"],
     queryFn: () => getCaixaAberto(),
+  });
+
+  const { data: catalogo, isLoading: catalogoLoading } = useQuery({
+    queryKey: ["produtos-pdv"],
+    queryFn: () => listProdutos(0, 24),
+  });
+
+  const produtosRapidos = (catalogo?.content ?? []).filter((p) => p.ativo);
+  const caixaPronto = !caixaLoading && !!caixaAberto;
+  const operadorLabel = getOperatorLabel();
+
+  const abrirCaixaMutation = useMutation({
+    mutationFn: () =>
+      abrirCaixa({
+        lojaId: getLojaId(),
+        valorAbertura: Number(valorAbertura) || 0,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["caixa-aberto-pdv"] });
+      queryClient.invalidateQueries({ queryKey: ["caixa-aberto"] });
+      setOpenCaixaModal(false);
+      setError("");
+    },
+    onError: (err) => setError((err as Error).message),
   });
 
   const clienteOptions = [
@@ -101,6 +165,11 @@ export default function PdvPage() {
   };
 
   const handleAddProduct = async (produto: Produto) => {
+    if (!caixaPronto) {
+      setError("Abra o caixa antes de adicionar produtos.");
+      setOpenCaixaModal(true);
+      return;
+    }
     setLoading(true);
     setError("");
     try {
@@ -134,7 +203,7 @@ export default function PdvPage() {
       const updated = await addItemVenda(venda.id, {
         produtoId: item.produtoId,
         quantidade: newQty,
-        desconto: item.desconto,
+        desconto: item.desconto ?? 0,
       });
       setVenda(updated);
     } catch (err) {
@@ -206,7 +275,7 @@ export default function PdvPage() {
         e.preventDefault();
         searchRef.current?.focus();
       }
-      if (e.key === "F4" && venda && venda.itens?.length) {
+      if (e.key === "F4" && venda && venda.itens?.length && caixaPronto) {
         e.preventDefault();
         setStep("payment");
         setPagamentos([{ forma: "DINHEIRO", valor: String(venda.total) }]);
@@ -214,7 +283,7 @@ export default function PdvPage() {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [venda]);
+  }, [venda, caixaPronto]);
 
   if (step === "receipt" && venda) {
     return (
@@ -242,7 +311,7 @@ export default function PdvPage() {
                   <span>
                     {item.quantidade}x {item.produtoNome ?? item.produtoSku}
                   </span>
-                  <span>{formatCurrency(item.total)}</span>
+                  <span>{formatCurrency(itemVendaLineTotal(item))}</span>
                 </div>
               ))}
             </div>
@@ -311,25 +380,48 @@ export default function PdvPage() {
             <h1 className="text-lg font-bold">PDV</h1>
           </div>
         </div>
-        <div className="text-right">
-          <p className="text-xs text-slate-400">Operador caixa</p>
-          <p className="text-xs text-slate-500">{getUserId().slice(0, 8)}...</p>
-          <p className="text-xs text-slate-400">Total</p>
-          <p className="text-2xl font-bold text-brand-400">
-            {formatCurrency(totalVenda)}
-          </p>
+        <div className="flex items-center gap-4">
+          <div className="hidden text-right sm:block">
+            <p className="text-xs text-slate-400">Operador</p>
+            <p className="max-w-[160px] truncate text-sm font-medium">{operadorLabel}</p>
+          </div>
+          <div className="text-right">
+            {!caixaLoading && (
+              <Badge variant={caixaAberto ? "success" : "warning"} className="mb-1">
+                {caixaAberto ? "Caixa aberto" : "Caixa fechado"}
+              </Badge>
+            )}
+            <p className="text-xs text-slate-400">Total da venda</p>
+            <p className="text-2xl font-bold text-brand-400">
+              {formatCurrency(totalVenda)}
+            </p>
+          </div>
         </div>
       </header>
 
       {!caixaLoading && !caixaAberto && (
-        <div className="border-b border-amber-200 bg-amber-50 px-4 py-3 text-center text-sm text-amber-900 lg:px-6">
-          Caixa fechado.{" "}
-          <Link href="/caixa" className="font-medium underline">
-            Abra o caixa na retaguarda
-          </Link>{" "}
-          antes de registrar vendas.
+        <div className="flex flex-wrap items-center justify-center gap-3 border-b border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 lg:px-6">
+          <span>Abra o caixa para registrar vendas.</span>
+          <Button size="sm" onClick={() => setOpenCaixaModal(true)}>
+            <LockOpen className="h-4 w-4" />
+            Abrir caixa
+          </Button>
+          <Link href="/caixa" className="text-xs font-medium underline">
+            Gerenciar na retaguarda
+          </Link>
         </div>
       )}
+
+      <div className="hidden border-b border-slate-200 bg-white px-4 py-2 text-xs text-slate-500 lg:flex lg:px-6">
+        <Keyboard className="mr-2 h-4 w-4 shrink-0" />
+        <span>
+          <kbd className="rounded bg-slate-100 px-1.5 py-0.5 font-mono">F2</kbd> buscar produto
+          {" · "}
+          <kbd className="rounded bg-slate-100 px-1.5 py-0.5 font-mono">F4</kbd> ir para pagamento
+          {" · "}
+          <kbd className="rounded bg-slate-100 px-1.5 py-0.5 font-mono">Enter</kbd> na busca
+        </span>
+      </div>
 
       <div className="flex flex-1 flex-col lg:flex-row">
         {/* Left: Search & Products */}
@@ -363,27 +455,53 @@ export default function PdvPage() {
                 />
               </div>
 
-              {searchResults.length > 0 && (
+              {searchResults.length > 0 ? (
                 <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
                   {searchResults.map((produto) => (
-                    <button
+                    <ProductTile
                       key={produto.id}
-                      onClick={() => handleAddProduct(produto)}
-                      disabled={loading}
-                      className="rounded-xl border border-slate-200 bg-white p-4 text-left transition-all hover:border-brand-400 hover:shadow-md active:scale-[0.98]"
-                    >
-                      <p className="font-semibold text-slate-900">{produto.nome}</p>
-                      <p className="text-xs text-slate-500">{produto.sku}</p>
-                      <p className="mt-2 text-lg font-bold text-brand-600">
-                        {formatCurrency(produto.precoVenda)}
-                      </p>
-                    </button>
+                      produto={produto}
+                      disabled={loading || !caixaPronto}
+                      onAdd={handleAddProduct}
+                    />
                   ))}
                 </div>
-              )}
+              ) : (
+                <div className="flex flex-1 flex-col">
+                  <div className="mb-3 flex items-center gap-2 text-sm font-medium text-slate-700">
+                    <Package className="h-4 w-4 text-brand-500" />
+                    Produtos rápidos
+                  </div>
 
-              {termo && !searching && searchResults.length === 0 && (
-                <p className="text-center text-slate-500">Nenhum produto encontrado.</p>
+                  {catalogoLoading ? (
+                    <LoadingSpinner />
+                  ) : produtosRapidos.length > 0 ? (
+                    <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                      {produtosRapidos.map((produto) => (
+                        <ProductTile
+                          key={produto.id}
+                          produto={produto}
+                          disabled={loading || !caixaPronto}
+                          onAdd={handleAddProduct}
+                        />
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center">
+                      <Search className="mb-3 h-10 w-10 text-slate-300" />
+                      <p className="font-medium text-slate-700">Nenhum produto cadastrado</p>
+                      <p className="mt-1 max-w-sm text-sm text-slate-500">
+                        Use a busca acima ou cadastre produtos na retaguarda.
+                      </p>
+                    </div>
+                  )}
+
+                  {termo && !searching && searchResults.length === 0 && (
+                    <p className="mt-4 text-center text-slate-500">
+                      Nenhum produto encontrado para &quot;{termo}&quot;.
+                    </p>
+                  )}
+                </div>
               )}
             </>
           )}
@@ -543,7 +661,7 @@ export default function PdvPage() {
                           </button>
                         </div>
                         <span className="font-semibold text-brand-600">
-                          {formatCurrency(item.total)}
+                          {formatCurrency(itemVendaLineTotal(item))}
                         </span>
                       </div>
                     </div>
@@ -577,8 +695,12 @@ export default function PdvPage() {
                 <Button
                   className="w-full"
                   size="lg"
-                  disabled={!venda?.itens?.length}
+                  disabled={!venda?.itens?.length || !caixaPronto}
                   onClick={() => {
+                    if (!caixaPronto) {
+                      setOpenCaixaModal(true);
+                      return;
+                    }
                     setStep("payment");
                     setPagamentos([{ forma: "DINHEIRO", valor: String(totalVenda) }]);
                   }}
@@ -590,6 +712,38 @@ export default function PdvPage() {
           </div>
         </aside>
       </div>
+
+      <Modal
+        open={openCaixaModal}
+        onClose={() => setOpenCaixaModal(false)}
+        title="Abrir caixa"
+        footer={
+          <>
+            <Button variant="outline" onClick={() => setOpenCaixaModal(false)}>
+              Cancelar
+            </Button>
+            <Button
+              loading={abrirCaixaMutation.isPending}
+              onClick={() => abrirCaixaMutation.mutate()}
+            >
+              <LockOpen className="h-4 w-4" />
+              Confirmar abertura
+            </Button>
+          </>
+        }
+      >
+        <p className="mb-4 text-sm text-slate-600">
+          Informe o valor inicial em dinheiro no caixa para começar a vender.
+        </p>
+        <Input
+          label="Valor de abertura (R$)"
+          type="number"
+          step="0.01"
+          min="0"
+          value={valorAbertura}
+          onChange={(e) => setValorAbertura(e.target.value)}
+        />
+      </Modal>
     </div>
   );
 }

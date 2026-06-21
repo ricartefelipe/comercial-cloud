@@ -158,8 +158,11 @@ export interface ItemVenda {
   produtoSku?: string;
   quantidade: number;
   precoUnitario: number;
-  desconto: number;
-  total: number;
+  /** Valor da linha retornado pela API. */
+  subtotal: number;
+  /** Legado — preferir `subtotal`. */
+  total?: number;
+  desconto?: number;
 }
 
 export interface PagamentoVenda {
