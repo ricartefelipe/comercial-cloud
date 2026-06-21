@@ -7,5 +7,19 @@
   "background_color": "#0f172a",
   "theme_color": "#4f7cff",
   "lang": "pt-BR",
-  "orientation": "any"
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/apple-touch-icon.svg",
+      "sizes": "180x180",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
 }
