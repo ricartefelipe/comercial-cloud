@@ -17,12 +17,14 @@ import {
   removeItemVenda,
 } from "@/lib/api/vendas";
 import { getLojaId, getOperatorLabel } from "@/lib/auth/tenant-context";
-import { formatCurrency, itemVendaLineTotal } from "@/lib/format";
+import { formatCurrency, itemVendaLineTotal, toNumber } from "@/lib/format";
 import type { FormaPagamento, ItemVenda, Produto, Venda } from "@/types";
 import { FORMA_PAGAMENTO_LABELS } from "@/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
+  Banknote,
+  CreditCard,
   Keyboard,
   LockOpen,
   Minus,
@@ -31,9 +33,13 @@ import {
   Receipt,
   Search,
   ShoppingCart,
+  Smartphone,
+  Ticket,
   Trash2,
+  Wallet,
   X,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -45,6 +51,19 @@ const FORMAS_PAGAMENTO: FormaPagamento[] = [
   "VALE",
   "OUTROS",
 ];
+
+const FORMA_PAGAMENTO_ICONS: Record<FormaPagamento, LucideIcon> = {
+  DINHEIRO: Banknote,
+  PIX: Smartphone,
+  CARTAO_DEBITO: CreditCard,
+  CARTAO_CREDITO: CreditCard,
+  VALE: Ticket,
+  OUTROS: Wallet,
+};
+
+function roundMoney(value: number): number {
+  return Math.round(value * 100) / 100;
+}
 
 function ProductTile({
   produto,
@@ -92,6 +111,8 @@ export default function PdvPage() {
   const [pagamentos, setPagamentos] = useState<{ forma: FormaPagamento; valor: string }[]>([
     { forma: "DINHEIRO", valor: "" },
   ]);
+  const [formaPrincipal, setFormaPrincipal] = useState<FormaPagamento>("DINHEIRO");
+  const [pagamentoMisto, setPagamentoMisto] = useState(false);
   const [valorRecebido, setValorRecebido] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -226,18 +247,93 @@ export default function PdvPage() {
     }
   };
 
-  const totalPago = pagamentos.reduce((sum, p) => sum + (Number(p.valor) || 0), 0);
-  const totalVenda = venda?.total ?? 0;
-  const troco = Number(valorRecebido) - totalVenda;
-  const faltaPagar = Math.max(0, totalVenda - totalPago);
+  const totalVenda = roundMoney(toNumber(venda?.total));
+  const pagamentosEfetivos = pagamentoMisto
+    ? pagamentos
+    : [{ forma: formaPrincipal, valor: String(totalVenda) }];
+  const totalPago = roundMoney(
+    pagamentosEfetivos.reduce((sum, p) => sum + toNumber(p.valor), 0),
+  );
+  const valorDinheiro = roundMoney(
+    pagamentosEfetivos
+      .filter((p) => p.forma === "DINHEIRO")
+      .reduce((sum, p) => sum + toNumber(p.valor), 0),
+  );
+  const diferencaPagamento = roundMoney(totalVenda - totalPago);
+  const faltaPagar = Math.max(0, diferencaPagamento);
+  const troco =
+    valorDinheiro > 0 && toNumber(valorRecebido) > 0
+      ? Math.max(0, roundMoney(toNumber(valorRecebido) - valorDinheiro))
+      : 0;
+  const pagamentoValido = Math.abs(diferencaPagamento) <= 0.01 && totalPago > 0;
+
+  const iniciarPagamento = useCallback(() => {
+    if (!caixaPronto) {
+      setOpenCaixaModal(true);
+      return;
+    }
+    setFormaPrincipal("DINHEIRO");
+    setPagamentoMisto(false);
+    setPagamentos([{ forma: "DINHEIRO", valor: String(totalVenda) }]);
+    setValorRecebido("");
+    setError("");
+    setStep("payment");
+  }, [caixaPronto, totalVenda]);
+
+  const selecionarForma = (forma: FormaPagamento) => {
+    setFormaPrincipal(forma);
+    setError("");
+    if (!pagamentoMisto) {
+      setValorRecebido("");
+    }
+  };
+
+  const ativarPagamentoMisto = () => {
+    setPagamentoMisto(true);
+    setPagamentos([{ forma: formaPrincipal, valor: String(totalVenda) }]);
+    setValorRecebido("");
+    setError("");
+  };
+
+  const desativarPagamentoMisto = () => {
+    setPagamentoMisto(false);
+    setPagamentos([{ forma: formaPrincipal, valor: String(totalVenda) }]);
+    setValorRecebido("");
+    setError("");
+  };
+
+  const adicionarLinhaPagamento = () => {
+    const restante = roundMoney(totalVenda - totalPago);
+    setPagamentos([
+      ...pagamentos,
+      {
+        forma: pagamentos.some((p) => p.forma === "PIX") ? "CARTAO_DEBITO" : "PIX",
+        valor: restante > 0 ? String(restante) : "",
+      },
+    ]);
+  };
+
+  const atualizarLinhaPagamento = (
+    idx: number,
+    patch: Partial<{ forma: FormaPagamento; valor: string }>,
+  ) => {
+    setPagamentos(
+      pagamentos.map((pag, i) => (i === idx ? { ...pag, ...patch } : pag)),
+    );
+    setError("");
+  };
 
   const handleFinalize = async () => {
     if (!venda) return;
+    if (!pagamentoValido) {
+      setError("A soma dos pagamentos deve ser igual ao total da venda.");
+      return;
+    }
     setLoading(true);
     setError("");
     try {
-      for (const pag of pagamentos) {
-        const valor = Number(pag.valor);
+      for (const pag of pagamentosEfetivos) {
+        const valor = roundMoney(toNumber(pag.valor));
         if (valor > 0) {
           await addPagamentoVenda(venda.id, {
             formaPagamento: pag.forma,
@@ -258,6 +354,8 @@ export default function PdvPage() {
   const handleNovaVenda = () => {
     setVenda(null);
     setStep("cart");
+    setFormaPrincipal("DINHEIRO");
+    setPagamentoMisto(false);
     setPagamentos([{ forma: "DINHEIRO", valor: "" }]);
     setValorRecebido("");
     setClienteId("");
@@ -277,13 +375,12 @@ export default function PdvPage() {
       }
       if (e.key === "F4" && venda && venda.itens?.length && caixaPronto) {
         e.preventDefault();
-        setStep("payment");
-        setPagamentos([{ forma: "DINHEIRO", valor: String(venda.total) }]);
+        iniciarPagamento();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [venda, caixaPronto]);
+  }, [venda, caixaPronto, iniciarPagamento]);
 
   if (step === "receipt" && venda) {
     return (
@@ -507,85 +604,224 @@ export default function PdvPage() {
           )}
 
           {step === "payment" && (
-            <div className="mx-auto w-full max-w-lg space-y-4">
-              <h2 className="text-xl font-bold text-slate-900">Pagamento</h2>
-              <p className="text-3xl font-bold text-brand-600">
-                {formatCurrency(totalVenda)}
-              </p>
+            <div className="mx-auto w-full max-w-2xl space-y-5">
+              <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                <p className="text-sm font-medium text-slate-500">Total a receber</p>
+                <p className="mt-1 text-4xl font-bold text-brand-600">
+                  {formatCurrency(totalVenda)}
+                </p>
+              </div>
 
-              {pagamentos.map((pag, idx) => (
-                <div key={idx} className="flex gap-2">
-                  <Select
-                    options={FORMAS_PAGAMENTO.map((f) => ({
-                      value: f,
-                      label: FORMA_PAGAMENTO_LABELS[f],
-                    }))}
-                    value={pag.forma}
-                    onChange={(e) => {
-                      const updated = [...pagamentos];
-                      updated[idx] = { ...updated[idx], forma: e.target.value as FormaPagamento };
-                      setPagamentos(updated);
-                    }}
-                    className="flex-1"
-                  />
-                  <Input
-                    type="number"
-                    step="0.01"
-                    placeholder="Valor"
-                    value={pag.valor}
-                    onChange={(e) => {
-                      const updated = [...pagamentos];
-                      updated[idx] = { ...updated[idx], valor: e.target.value };
-                      setPagamentos(updated);
-                    }}
-                    className="w-32"
-                  />
-                  {pagamentos.length > 1 && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setPagamentos(pagamentos.filter((_, i) => i !== idx))}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
+              {!pagamentoMisto ? (
+                <>
+                  <div>
+                    <p className="mb-3 text-sm font-medium text-slate-700">
+                      Forma de pagamento
+                    </p>
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                      {FORMAS_PAGAMENTO.map((forma) => {
+                        const Icon = FORMA_PAGAMENTO_ICONS[forma];
+                        const selected = formaPrincipal === forma;
+                        return (
+                          <button
+                            key={forma}
+                            type="button"
+                            onClick={() => selecionarForma(forma)}
+                            className={`flex flex-col items-center gap-2 rounded-xl border-2 px-3 py-4 text-sm font-medium transition-all ${
+                              selected
+                                ? "border-brand-500 bg-brand-50 text-brand-700 shadow-sm"
+                                : "border-slate-200 bg-white text-slate-700 hover:border-brand-300 hover:bg-slate-50"
+                            }`}
+                          >
+                            <Icon className="h-6 w-6" />
+                            {FORMA_PAGAMENTO_LABELS[forma]}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {formaPrincipal === "DINHEIRO" && (
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
+                      <Input
+                        label="Valor entregue pelo cliente"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        placeholder={String(totalVenda)}
+                        value={valorRecebido}
+                        onChange={(e) => setValorRecebido(e.target.value)}
+                      />
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setValorRecebido(String(totalVenda))}
+                        >
+                          Valor exato
+                        </Button>
+                        {[20, 50, 100, 200].map((nota) => (
+                          <Button
+                            key={nota}
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            disabled={nota < totalVenda}
+                            onClick={() => setValorRecebido(String(nota))}
+                          >
+                            R$ {nota}
+                          </Button>
+                        ))}
+                      </div>
+                      {toNumber(valorRecebido) > 0 && (
+                        <div
+                          className={`rounded-lg px-4 py-3 text-sm ${
+                            troco > 0
+                              ? "bg-emerald-50 text-emerald-800"
+                              : "bg-slate-100 text-slate-600"
+                          }`}
+                        >
+                          {troco > 0 ? (
+                            <>
+                              Troco:{" "}
+                              <span className="text-xl font-bold">{formatCurrency(troco)}</span>
+                            </>
+                          ) : (
+                            "Sem troco — valor exato ou falta completar."
+                          )}
+                        </div>
+                      )}
+                    </div>
                   )}
-                </div>
-              ))}
 
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPagamentos([...pagamentos, { forma: "PIX", valor: "" }])}
+                  <button
+                    type="button"
+                    onClick={ativarPagamentoMisto}
+                    className="text-sm font-medium text-brand-600 hover:text-brand-700"
+                  >
+                    Dividir em mais de uma forma de pagamento
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-slate-700">Pagamento misto</p>
+                    <button
+                      type="button"
+                      onClick={desativarPagamentoMisto}
+                      className="text-sm text-slate-500 hover:text-slate-700"
+                    >
+                      Voltar ao pagamento simples
+                    </button>
+                  </div>
+
+                  <div className="space-y-2">
+                    {pagamentos.map((pag, idx) => (
+                      <div
+                        key={idx}
+                        className="flex gap-2 rounded-xl border border-slate-200 bg-white p-3"
+                      >
+                        <Select
+                          options={FORMAS_PAGAMENTO.map((f) => ({
+                            value: f,
+                            label: FORMA_PAGAMENTO_LABELS[f],
+                          }))}
+                          value={pag.forma}
+                          onChange={(e) =>
+                            atualizarLinhaPagamento(idx, {
+                              forma: e.target.value as FormaPagamento,
+                            })
+                          }
+                          className="flex-1"
+                        />
+                        <Input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          placeholder="0,00"
+                          value={pag.valor}
+                          onChange={(e) =>
+                            atualizarLinhaPagamento(idx, { valor: e.target.value })
+                          }
+                          className="w-36"
+                        />
+                        {pagamentos.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              setPagamentos(pagamentos.filter((_, i) => i !== idx))
+                            }
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  <Button type="button" variant="outline" size="sm" onClick={adicionarLinhaPagamento}>
+                    <Plus className="h-4 w-4" />
+                    Adicionar forma de pagamento
+                  </Button>
+
+                  {valorDinheiro > 0 && (
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
+                      <Input
+                        label="Valor entregue em dinheiro"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={valorRecebido}
+                        onChange={(e) => setValorRecebido(e.target.value)}
+                      />
+                      {toNumber(valorRecebido) > 0 && troco > 0 && (
+                        <p className="text-sm text-emerald-700">
+                          Troco: <span className="text-xl font-bold">{formatCurrency(troco)}</span>
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
+
+              <div
+                className={`rounded-xl px-4 py-3 text-sm ${
+                  pagamentoValido
+                    ? "bg-emerald-50 text-emerald-800"
+                    : faltaPagar > 0
+                      ? "bg-amber-50 text-amber-800"
+                      : "bg-red-50 text-red-800"
+                }`}
               >
-                <Plus className="h-4 w-4" />
-                Adicionar forma de pagamento
-              </Button>
-
-              {pagamentos.some((p) => p.forma === "DINHEIRO") && (
-                <Input
-                  label="Valor recebido (dinheiro)"
-                  type="number"
-                  step="0.01"
-                  value={valorRecebido}
-                  onChange={(e) => setValorRecebido(e.target.value)}
-                />
-              )}
-
-              {Number(valorRecebido) > 0 && troco >= 0 && (
-                <div className="rounded-lg bg-emerald-50 px-4 py-3">
-                  <p className="text-sm text-emerald-700">
-                    Troco: <span className="text-xl font-bold">{formatCurrency(troco)}</span>
-                  </p>
+                <div className="flex justify-between">
+                  <span>Informado</span>
+                  <span className="font-semibold">{formatCurrency(totalPago)}</span>
                 </div>
-              )}
+                {!pagamentoValido && faltaPagar > 0 && (
+                  <div className="mt-1 flex justify-between">
+                    <span>Falta</span>
+                    <span className="font-semibold">{formatCurrency(faltaPagar)}</span>
+                  </div>
+                )}
+                {!pagamentoValido && diferencaPagamento < -0.01 && (
+                  <div className="mt-1 flex justify-between">
+                    <span>Excedente</span>
+                    <span className="font-semibold">
+                      {formatCurrency(Math.abs(diferencaPagamento))}
+                    </span>
+                  </div>
+                )}
+                {pagamentoValido && (
+                  <p className="mt-1 font-medium">Pagamento completo — pronto para finalizar.</p>
+                )}
+              </div>
 
-              {faltaPagar > 0 && (
-                <div className="rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-700">
-                  Falta pagar: {formatCurrency(faltaPagar)}
-                </div>
-              )}
+              {error && <ErrorMessage message={error} />}
 
-              <div className="flex gap-3 pt-4">
+              <div className="flex gap-3 pt-2">
                 <Button variant="outline" onClick={() => setStep("cart")}>
                   Voltar
                 </Button>
@@ -593,7 +829,7 @@ export default function PdvPage() {
                   className="flex-1"
                   size="lg"
                   loading={loading}
-                  disabled={faltaPagar > 0.01}
+                  disabled={!pagamentoValido}
                   onClick={handleFinalize}
                 >
                   Finalizar venda
@@ -602,7 +838,7 @@ export default function PdvPage() {
             </div>
           )}
 
-          {error && (
+          {error && step !== "payment" && (
             <div className="mt-4">
               <ErrorMessage message={error} />
             </div>
@@ -696,14 +932,7 @@ export default function PdvPage() {
                   className="w-full"
                   size="lg"
                   disabled={!venda?.itens?.length || !caixaPronto}
-                  onClick={() => {
-                    if (!caixaPronto) {
-                      setOpenCaixaModal(true);
-                      return;
-                    }
-                    setStep("payment");
-                    setPagamentos([{ forma: "DINHEIRO", valor: String(totalVenda) }]);
-                  }}
+                  onClick={iniciarPagamento}
                 >
                   Ir para pagamento (F4)
                 </Button>
