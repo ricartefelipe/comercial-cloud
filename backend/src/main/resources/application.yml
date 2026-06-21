@@ -109,6 +109,15 @@ comercial-cloud:
       client-id: comercial-cloud-api
     smallrye-jwt:
       enabled: true
+    http:
+      auth:
+        permission:
+          health:
+            paths: /health,/health/*
+            policy: permit
+          metrics:
+            paths: /metrics
+            policy: permit
   mp:
     jwt:
       verify:
