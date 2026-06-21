@@ -27,10 +27,10 @@ Itens que **dependem de você** (credenciais, domínio, contrato ou acesso exter
 
 ## Infraestrutura
 
-- [ ] VPS ou cloud com Docker Compose de produção (`docker-compose.prod.example.yml`)
-- [ ] DNS: `app.`, `api.`, `auth.` + certificados HTTPS
-- [ ] Cron de backup (`scripts/backup-db.sh`) e restore de teste
-- [ ] Variáveis em `.env.prod` (nunca commitar secrets)
+- [ ] **AWS EC2 dedicada** — ver [`DEPLOY-AWS-EC2.md`](./DEPLOY-AWS-EC2.md) (`aws-provision-comercial-ec2.sh` → deploy → TLS)
+- [ ] DNS definitivo (Route 53 / Registro.br) substituindo sslip.io piloto
+- [ ] Cron de backup (`scripts/backup-postgres.sh`) na EC2
+- [ ] Variáveis em `.env.aws-pilot` / `.env.prod` (nunca commitar secrets)
 
 ## Comercial / jurídico
 

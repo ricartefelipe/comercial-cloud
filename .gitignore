@@ -20,6 +20,11 @@ Thumbs.db
 .env
 .env.local
 .env*.local
+.env.aws-pilot
+.aws-deploy/
+
+# AWS / Keycloak gerados localmente
+infra/keycloak/realm-prod.json
 
 # E2E
 e2e/node_modules/
