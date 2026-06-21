@@ -105,19 +105,20 @@ comercial-cloud:
     oidc:
       auth-server-url: http://localhost:8180/realms/comercialcloud
       client-id: comercial-cloud-api
+      credentials:
+        secret: comercial-cloud-api-secret
+      application-type: service
     smallrye-jwt:
       enabled: true
     http:
       auth:
         permission:
+          public-api:
+            paths: /api/v1/public/*
+            policy: permit
           health:
             paths: /q/health,/q/health/*
             policy: permit
           metrics:
             paths: /metrics
             policy: permit
-  mp:
-    jwt:
-      verify:
-        publickey:
-          location: META-INF/resources/publicKey.pem
