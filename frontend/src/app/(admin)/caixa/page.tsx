@@ -12,12 +12,13 @@ import {
   fecharCaixa,
   getCaixaAberto,
   getCaixaResumo,
+  listHistoricoCaixas,
 } from "@/lib/api/caixa";
 import { getLojaId } from "@/lib/auth/tenant-context";
 import { STATUS_CAIXA_LABELS } from "@/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Lock, LockOpen, Wallet } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 export default function CaixaPage() {
   const [openModal, setOpenModal] = useState(false);
@@ -37,6 +38,11 @@ export default function CaixaPage() {
     enabled: !!caixa?.id,
   });
 
+  const { data: historico } = useQuery({
+    queryKey: ["caixa-historico"],
+    queryFn: () => listHistoricoCaixas(),
+  });
+
   const abrirMutation = useMutation({
     mutationFn: abrirCaixa,
     onSuccess: () => {
@@ -50,9 +56,18 @@ export default function CaixaPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["caixa-aberto"] });
       queryClient.invalidateQueries({ queryKey: ["caixa-resumo"] });
+      queryClient.invalidateQueries({ queryKey: ["caixa-historico"] });
       setCloseModal(false);
+      setValorFechamento("");
     },
   });
+
+  const valorCalculadoFechamento = resumo?.valorCalculado ?? 0;
+  const diferencaPreview = useMemo(() => {
+    const informado = Number(valorFechamento);
+    if (!valorFechamento || Number.isNaN(informado)) return null;
+    return Math.round((informado - valorCalculadoFechamento) * 100) / 100;
+  }, [valorFechamento, valorCalculadoFechamento]);
 
   if (isLoading) return <LoadingSpinner />;
 
@@ -60,7 +75,7 @@ export default function CaixaPage() {
     <div>
       <PageHeader
         title="Caixa"
-        description="Abertura e fechamento de caixa"
+        description="Abertura, fechamento e conciliação"
         action={
           caixa ? (
             <Button variant="danger" onClick={() => setCloseModal(true)}>
@@ -103,18 +118,9 @@ export default function CaixaPage() {
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <StatCard
-              title="Valor abertura"
-              value={formatCurrency(caixa.valorAbertura)}
-            />
-            <StatCard
-              title="Total vendas"
-              value={formatCurrency(resumo?.totalVendas ?? 0)}
-            />
-            <StatCard
-              title="Qtd. vendas"
-              value={String(resumo?.quantidadeVendas ?? 0)}
-            />
+            <StatCard title="Valor abertura" value={formatCurrency(caixa.valorAbertura)} />
+            <StatCard title="Total vendas" value={formatCurrency(resumo?.totalVendas ?? 0)} />
+            <StatCard title="Qtd. vendas" value={String(resumo?.quantidadeVendas ?? 0)} />
             <StatCard
               title="Valor calculado"
               value={formatCurrency(resumo?.valorCalculado ?? caixa.valorCalculado ?? 0)}
@@ -145,6 +151,58 @@ export default function CaixaPage() {
             </Card>
           )}
         </>
+      )}
+
+      {historico && historico.length > 0 && (
+        <Card className="mt-6" padding="none">
+          <CardHeader title="Histórico de fechamentos" />
+          <div className="px-6 pb-6 overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-200 bg-slate-50 text-left text-slate-500">
+                  <th className="px-6 py-3 font-medium">Fechado em</th>
+                  <th className="px-6 py-3 font-medium">Abertura</th>
+                  <th className="px-6 py-3 font-medium">Calculado</th>
+                  <th className="px-6 py-3 font-medium">Informado</th>
+                  <th className="px-6 py-3 font-medium">Diferença</th>
+                </tr>
+              </thead>
+              <tbody>
+                {historico.map((item) => (
+                  <tr key={item.id} className="border-b border-slate-100">
+                    <td className="px-6 py-3">
+                      {item.closedAt ? formatDateTime(item.closedAt) : "—"}
+                    </td>
+                    <td className="px-6 py-3">{formatCurrency(item.valorAbertura)}</td>
+                    <td className="px-6 py-3">
+                      {formatCurrency(item.valorCalculado ?? item.valorAbertura)}
+                    </td>
+                    <td className="px-6 py-3">
+                      {formatCurrency(item.valorFechamentoInformado ?? 0)}
+                    </td>
+                    <td className="px-6 py-3">
+                      {item.diferenca !== undefined ? (
+                        <span
+                          className={
+                            item.diferenca === 0
+                              ? "text-emerald-600"
+                              : item.diferenca > 0
+                                ? "text-amber-600"
+                                : "text-red-600"
+                          }
+                        >
+                          {formatCurrency(item.diferenca)}
+                        </span>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
       )}
 
       <Modal
@@ -214,6 +272,20 @@ export default function CaixaPage() {
         {resumo && (
           <p className="mt-2 text-sm text-slate-500">
             Valor calculado: {formatCurrency(resumo.valorCalculado)}
+          </p>
+        )}
+        {diferencaPreview !== null && (
+          <p
+            className={`mt-2 text-sm font-medium ${
+              diferencaPreview === 0
+                ? "text-emerald-600"
+                : diferencaPreview > 0
+                  ? "text-amber-600"
+                  : "text-red-600"
+            }`}
+          >
+            Diferença: {formatCurrency(diferencaPreview)}
+            {diferencaPreview > 0 ? " (sobra)" : diferencaPreview < 0 ? " (falta)" : ""}
           </p>
         )}
         {fecharMutation.error && (

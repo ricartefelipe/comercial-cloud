@@ -7,7 +7,7 @@ import { EmptyState, ErrorMessage, LoadingSpinner, PageHeader } from "@/componen
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { Select } from "@/components/ui/Select";
-import { ajustarEstoque, listEstoques, listMovimentacoes } from "@/lib/api/estoque";
+import { ajustarEstoque, definirEstoqueMinimo, listEstoques, listMovimentacoes } from "@/lib/api/estoque";
 import { listProdutos } from "@/lib/api/produtos";
 import { getLojaId } from "@/lib/auth/tenant-context";
 import { formatDateTime } from "@/lib/format";
@@ -23,6 +23,8 @@ export default function EstoquePage() {
   const [quantidade, setQuantidade] = useState("");
   const [motivo, setMotivo] = useState("");
   const [viewProdutoId, setViewProdutoId] = useState("");
+  const [minimoTarget, setMinimoTarget] = useState<{ produtoId: string; nome: string; minimo: number } | null>(null);
+  const [novoMinimo, setNovoMinimo] = useState("");
   const queryClient = useQueryClient();
 
   const { data: estoques, isLoading, error } = useQuery({
@@ -49,6 +51,16 @@ export default function EstoquePage() {
       setSelectedProdutoId("");
       setQuantidade("");
       setMotivo("");
+    },
+  });
+
+  const minimoMutation = useMutation({
+    mutationFn: () =>
+      definirEstoqueMinimo(getLojaId(), minimoTarget!.produtoId, Number(novoMinimo)),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["estoques"] });
+      setMinimoTarget(null);
+      setNovoMinimo("");
     },
   });
 
@@ -116,7 +128,22 @@ export default function EstoquePage() {
                             {item.produtoSku ?? "-"}
                           </td>
                           <td className="px-6 py-4">{item.quantidadeAtual}</td>
-                          <td className="px-6 py-4 text-slate-500">{item.quantidadeMinima}</td>
+                          <td className="px-6 py-4 text-slate-500">
+                            <button
+                              type="button"
+                              className="hover:text-brand-600 hover:underline"
+                              onClick={() => {
+                                setMinimoTarget({
+                                  produtoId: item.produtoId,
+                                  nome: item.produtoNome ?? item.produtoId.slice(0, 8),
+                                  minimo: item.quantidadeMinima,
+                                });
+                                setNovoMinimo(String(item.quantidadeMinima));
+                              }}
+                            >
+                              {item.quantidadeMinima}
+                            </button>
+                          </td>
                           <td className="px-6 py-4">
                             <Badge variant={isLow ? "danger" : "success"}>
                               {isLow ? "Baixo" : "OK"}
@@ -236,6 +263,43 @@ export default function EstoquePage() {
           </div>
         ) : (
           !loadingMov && <p className="text-sm text-slate-500">Nenhuma movimentação.</p>
+        )}
+      </Modal>
+
+      <Modal
+        open={!!minimoTarget}
+        onClose={() => setMinimoTarget(null)}
+        title="Estoque mínimo"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setMinimoTarget(null)}>
+              Cancelar
+            </Button>
+            <Button
+              loading={minimoMutation.isPending}
+              onClick={() => minimoMutation.mutate()}
+              disabled={!novoMinimo}
+            >
+              Salvar
+            </Button>
+          </>
+        }
+      >
+        {minimoTarget && (
+          <div className="space-y-4">
+            <p className="text-sm text-slate-600">Produto: {minimoTarget.nome}</p>
+            <Input
+              label="Quantidade mínima"
+              type="number"
+              min="0"
+              step="1"
+              value={novoMinimo}
+              onChange={(e) => setNovoMinimo(e.target.value)}
+            />
+            {minimoMutation.error && (
+              <ErrorMessage message={(minimoMutation.error as Error).message} />
+            )}
+          </div>
         )}
       </Modal>
     </div>

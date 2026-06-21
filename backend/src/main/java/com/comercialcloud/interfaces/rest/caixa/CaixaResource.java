@@ -8,6 +8,7 @@ import jakarta.inject.Inject;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -20,6 +21,7 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import java.math.BigDecimal;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -76,6 +78,13 @@ public class CaixaResource {
         map.put("valorAbertura", resumo.valorAbertura());
         map.put("valorCalculado", resumo.valorCalculado());
         return map;
+    }
+
+    @GET
+    @Path("/historico")
+    public List<Map<String, Object>> historico(
+            @QueryParam("lojaId") UUID lojaId, @QueryParam("limit") @DefaultValue("20") int limit) {
+        return caixaService.listarHistorico(lojaId, limit).stream().map(CaixaResource::toMap).toList();
     }
 
     static Map<String, Object> toMap(Caixa caixa) {

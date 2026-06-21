@@ -67,7 +67,7 @@ comercial-cloud:
     asaas:
       enabled: false
       api-key: ${ASAAS_API_KEY:}
-      base-url: https://api-sandbox.asaas.com/v3
+      base-url: ${COMERCIAL_CLOUD_BILLING_ASAAS_BASE_URL:https://api-sandbox.asaas.com/v3}
       webhook-token: ${ASAAS_WEBHOOK_TOKEN:}
     plano-padrao: ESSENCIAL
     trial-dias: 14
@@ -89,6 +89,9 @@ comercial-cloud:
     enabled: false
     from: ${MAIL_FROM:noreply@comercialcloud.local}
     app-url: ${APP_URL:http://localhost:3000}
+  pdv:
+    pix:
+      enabled: true
 
 "%test":
   quarkus:

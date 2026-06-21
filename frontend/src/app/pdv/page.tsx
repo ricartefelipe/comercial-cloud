@@ -14,6 +14,8 @@ import { abrirCaixa, getCaixaAberto } from "@/lib/api/caixa";
 import { listClientes, consumidorRapido } from "@/lib/api/clientes";
 import { getDashboardResumo } from "@/lib/api/dashboard";
 import { listEstoques } from "@/lib/api/estoque";
+import { getCapacidadesSistema } from "@/lib/api/sistema";
+import { PixPaymentModal } from "@/components/pdv/PixPaymentModal";
 import { buscarProdutos, getProdutoByCodigoBarras, listProdutos } from "@/lib/api/produtos";
 import {
   addItemVenda,
@@ -162,6 +164,9 @@ export default function PdvPage() {
   const [cpfNota, setCpfNota] = useState("");
   const [descontoVenda, setDescontoVenda] = useState("");
   const [kioskMode, setKioskMode] = useState(false);
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [pixModalOpen, setPixModalOpen] = useState(false);
+  const [pixValor, setPixValor] = useState(0);
 
   const { data: clientes } = useQuery({
     queryKey: ["clientes-pdv"],
@@ -187,6 +192,12 @@ export default function PdvPage() {
     queryKey: ["dashboard-pdv"],
     queryFn: () => getDashboardResumo(),
     staleTime: 60_000,
+  });
+
+  const { data: capacidades } = useQuery({
+    queryKey: ["sistema-capacidades"],
+    queryFn: () => getCapacidadesSistema(),
+    staleTime: 120_000,
   });
 
   const estoquePorProduto = useMemo(() => {
@@ -582,6 +593,35 @@ export default function PdvPage() {
   };
 
   useEffect(() => {
+    const first = venda?.itens?.[0]?.id ?? null;
+    setSelectedItemId(first);
+  }, [venda?.itens]);
+
+  const handlePixPago = async () => {
+    if (!venda) return;
+    try {
+      const updated = await addPagamentoVenda(venda.id, {
+        formaPagamento: "PIX",
+        valor: pixValor,
+      });
+      setVenda(updated);
+      setPixModalOpen(false);
+      if (!pagamentoMisto) {
+        setPagamentos([{ forma: "PIX", valor: String(pixValor) }]);
+        setFormaPrincipal("PIX");
+      }
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  };
+
+  const openPixModal = (valor: number) => {
+    if (!venda) return;
+    setPixValor(valor);
+    setPixModalOpen(true);
+  };
+
+  useEffect(() => {
     searchRef.current?.focus();
   }, []);
 
@@ -595,10 +635,39 @@ export default function PdvPage() {
         e.preventDefault();
         iniciarPagamento();
       }
+      if (e.key === "Escape") {
+        if (step === "payment") {
+          e.preventDefault();
+          setStep("cart");
+        } else if (termo) {
+          setTermo("");
+          setSearchResults([]);
+        }
+      }
+      if (step === "cart" && venda?.itens?.length && selectedItemId) {
+        const item = venda.itens.find((i) => i.id === selectedItemId);
+        if (!item) return;
+        if (e.key === "+" || e.key === "=") {
+          e.preventDefault();
+          void handleUpdateQty(item, 1);
+        }
+        if (e.key === "-") {
+          e.preventDefault();
+          void handleUpdateQty(item, -1);
+        }
+        if (e.key === "Delete" || e.key === "Backspace") {
+          const target = e.target as HTMLElement;
+          if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") return;
+          e.preventDefault();
+          void handleRemoveItem(item.id);
+        }
+      }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [venda, caixaPronto, iniciarPagamento]);
+    // handleUpdateQty/handleRemoveItem estáveis o suficiente para atalhos
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [venda, caixaPronto, iniciarPagamento, step, termo, selectedItemId]);
 
   if (step === "receipt" && venda) {
     return (
@@ -677,6 +746,8 @@ export default function PdvPage() {
           <kbd className="rounded bg-slate-100 px-1.5 py-0.5 font-mono">F4</kbd> ir para pagamento
           {" · "}
           digite para filtrar · <kbd className="rounded bg-slate-100 px-1.5 py-0.5 font-mono">Enter</kbd> confirma
+          {" · "}
+          <kbd className="rounded bg-slate-100 px-1.5 py-0.5 font-mono">+/-</kbd> qty · <kbd className="rounded bg-slate-100 px-1.5 py-0.5 font-mono">Esc</kbd> voltar
         </span>
       </div>
 
@@ -901,6 +972,21 @@ export default function PdvPage() {
                     </div>
                   )}
 
+                  {formaPrincipal === "PIX" && capacidades?.pixPdvDisponivel && (
+                    <div className="rounded-xl border border-brand-200 bg-brand-50 p-4">
+                      <p className="mb-3 text-sm text-brand-800">
+                        Gere um QR Code PIX dinâmico via Asaas para esta venda.
+                      </p>
+                      <Button
+                        type="button"
+                        onClick={() => openPixModal(totalVenda)}
+                        disabled={!venda}
+                      >
+                        Gerar QR Code PIX
+                      </Button>
+                    </div>
+                  )}
+
                   <button
                     type="button"
                     onClick={ativarPagamentoMisto}
@@ -1066,7 +1152,12 @@ export default function PdvPage() {
                   {venda.itens.map((item) => (
                     <div
                       key={item.id}
-                      className="rounded-lg border border-slate-200 p-3"
+                      onClick={() => setSelectedItemId(item.id)}
+                      className={`rounded-lg border p-3 cursor-pointer transition-colors ${
+                        selectedItemId === item.id
+                          ? "border-brand-400 bg-brand-50/50"
+                          : "border-slate-200"
+                      }`}
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
@@ -1180,6 +1271,16 @@ export default function PdvPage() {
           onChange={(e) => setValorAbertura(e.target.value)}
         />
       </Modal>
+
+      {venda && (
+        <PixPaymentModal
+          open={pixModalOpen}
+          onClose={() => setPixModalOpen(false)}
+          vendaId={venda.id}
+          valor={pixValor}
+          onPago={() => void handlePixPago()}
+        />
+      )}
     </div>
   );
 }

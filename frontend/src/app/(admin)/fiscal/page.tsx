@@ -7,10 +7,12 @@ import { ErrorMessage, LoadingSpinner, PageHeader } from "@/components/ui/Common
 import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import {
+  cancelarDocumentoFiscal,
   getConfiguracaoFiscal,
   listDocumentosFiscais,
   salvarConfiguracaoFiscal,
 } from "@/lib/api/fiscal";
+import { getCapacidadesSistema } from "@/lib/api/sistema";
 import { getLojaId } from "@/lib/auth/tenant-context";
 import { formatDateTime } from "@/lib/format";
 import {
@@ -20,7 +22,8 @@ import {
   type StatusDocumentoFiscal,
 } from "@/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ExternalLink, FileText } from "lucide-react";
+import { Modal } from "@/components/ui/Modal";
+import { ExternalLink, FileText, XCircle } from "lucide-react";
 import { FormEvent, useEffect, useState } from "react";
 
 function docVariant(status: StatusDocumentoFiscal) {
@@ -41,6 +44,8 @@ export default function FiscalPage() {
   const lojaId = getLojaId();
   const queryClient = useQueryClient();
   const [saved, setSaved] = useState(false);
+  const [cancelTarget, setCancelTarget] = useState<{ id: string; numero?: number } | null>(null);
+  const [justificativa, setJustificativa] = useState("");
   const [form, setForm] = useState({
     cnpj: "",
     inscricaoEstadual: "",
@@ -62,6 +67,11 @@ export default function FiscalPage() {
   const { data: documentos, isLoading: docsLoading } = useQuery({
     queryKey: ["fiscal-documentos", lojaId],
     queryFn: () => listDocumentosFiscais(lojaId),
+  });
+
+  const { data: capacidades } = useQuery({
+    queryKey: ["sistema-capacidades"],
+    queryFn: () => getCapacidadesSistema(),
   });
 
   useEffect(() => {
@@ -101,6 +111,20 @@ export default function FiscalPage() {
       setTimeout(() => setSaved(false), 3000);
     },
   });
+
+  const cancelMutation = useMutation({
+    mutationFn: () => cancelarDocumentoFiscal(cancelTarget!.id, justificativa),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["fiscal-documentos", lojaId] });
+      setCancelTarget(null);
+      setJustificativa("");
+    },
+  });
+
+  const providerLabel =
+    capacidades?.fiscalProvider === "focusnfe"
+      ? "Focus NFe (produção/homologação conforme configuração da loja)"
+      : "Sandbox — notas simuladas para demonstração";
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -215,8 +239,8 @@ export default function FiscalPage() {
               Salvar configuração
             </Button>
           </form>
-          <p className="mt-4 text-xs text-slate-400">
-            Modo sandbox ativo: notas são simuladas. Substitua o provider fiscal em produção.
+          <p className="mt-4 text-xs text-slate-500">
+            Provedor ativo: <strong>{providerLabel}</strong>
           </p>
         </Card>
 
@@ -245,6 +269,9 @@ export default function FiscalPage() {
                   {doc.chaveAcesso && (
                     <p className="mt-1 break-all text-xs text-slate-500">{doc.chaveAcesso}</p>
                   )}
+                  {doc.motivoRejeicao && (
+                    <p className="mt-2 text-xs text-red-600">{doc.motivoRejeicao}</p>
+                  )}
                   {doc.urlDanfe && (
                     <a
                       href={doc.urlDanfe}
@@ -260,6 +287,19 @@ export default function FiscalPage() {
                       {formatDateTime(doc.createdAt)}
                     </p>
                   )}
+                  {doc.status === "AUTORIZADO" && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-2"
+                      onClick={() =>
+                        setCancelTarget({ id: doc.id, numero: doc.numero })
+                      }
+                    >
+                      <XCircle className="h-4 w-4" />
+                      Cancelar NFC-e
+                    </Button>
+                  )}
                 </div>
               ))}
             </div>
@@ -270,6 +310,39 @@ export default function FiscalPage() {
           )}
         </Card>
       </div>
+
+      <Modal
+        open={!!cancelTarget}
+        onClose={() => setCancelTarget(null)}
+        title="Cancelar NFC-e"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setCancelTarget(null)}>
+              Cancelar
+            </Button>
+            <Button
+              variant="danger"
+              loading={cancelMutation.isPending}
+              disabled={justificativa.trim().length < 15}
+              onClick={() => cancelMutation.mutate()}
+            >
+              Confirmar cancelamento
+            </Button>
+          </>
+        }
+      >
+        <p className="mb-4 text-sm text-slate-600">
+          Justificativa para cancelar documento #{cancelTarget?.numero ?? ""} (mín. 15 caracteres).
+        </p>
+        <Input
+          label="Justificativa"
+          value={justificativa}
+          onChange={(e) => setJustificativa(e.target.value)}
+        />
+        {cancelMutation.error && (
+          <ErrorMessage message={(cancelMutation.error as Error).message} />
+        )}
+      </Modal>
     </div>
   );
 }

@@ -37,7 +37,7 @@ export default function ProdutosPage() {
   });
 
   const estoquePorProduto = new Map(
-    (estoques ?? []).map((e) => [e.produtoId, e.quantidadeAtual]),
+    (estoques ?? []).map((e) => [e.produtoId, e]),
   );
 
   const toggleMutation = useMutation({
@@ -104,7 +104,12 @@ export default function ProdutosPage() {
                   </thead>
                   <tbody>
                     {filtered.map((produto) => {
-                      const qty = estoquePorProduto.get(produto.id);
+                      const estoque = estoquePorProduto.get(produto.id);
+                      const qty = estoque?.quantidadeAtual;
+                      const isLow =
+                        estoque !== undefined &&
+                        qty !== undefined &&
+                        qty <= estoque.quantidadeMinima;
                       return (
                       <tr key={produto.id} className="border-b border-slate-100 hover:bg-slate-50">
                         <td className="px-6 py-4">
@@ -117,8 +122,16 @@ export default function ProdutosPage() {
                         <td className="px-6 py-4">
                           {produto.controlaEstoque ? (
                             qty !== undefined ? (
-                              <span className={qty <= 0 ? "font-medium text-red-600" : "text-slate-700"}>
-                                {qty} un.
+                              <span
+                                className={
+                                  qty <= 0
+                                    ? "font-medium text-red-600"
+                                    : isLow
+                                      ? "font-medium text-amber-600"
+                                      : "text-slate-700"
+                                }
+                              >
+                                {qty} un.{isLow && qty > 0 ? " (baixo)" : ""}
                               </span>
                             ) : (
                               <span className="text-slate-400">—</span>

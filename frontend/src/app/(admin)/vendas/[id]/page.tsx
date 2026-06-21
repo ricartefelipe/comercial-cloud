@@ -4,13 +4,15 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { ErrorMessage, LoadingSpinner, PageHeader } from "@/components/ui/Common";
-import { ConfirmModal } from "@/components/ui/Modal";
+import { ConfirmModal, Modal } from "@/components/ui/Modal";
 import { formatCurrency, formatDateTime, itemVendaLineTotal } from "@/lib/format";
 import { cancelarVenda, getVenda } from "@/lib/api/vendas";
 import { getDocumentoFiscalPorVenda } from "@/lib/api/fiscal";
+import { useBranding } from "@/components/branding/BrandingProvider";
+import { ReceiptContent } from "@/components/pdv/ReceiptContent";
 import { FORMA_PAGAMENTO_LABELS, STATUS_DOCUMENTO_FISCAL_LABELS, STATUS_VENDA_LABELS } from "@/types";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Printer } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
@@ -29,7 +31,9 @@ function statusVariant(status: string) {
 export default function VendaDetalhePage() {
   const params = useParams();
   const id = params.id as string;
+  const branding = useBranding();
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [printOpen, setPrintOpen] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: venda, isLoading, error } = useQuery({
@@ -69,6 +73,12 @@ export default function VendaDetalhePage() {
                 Voltar
               </Button>
             </Link>
+            {venda.status === "FINALIZADA" && (
+              <Button variant="outline" onClick={() => setPrintOpen(true)}>
+                <Printer className="h-4 w-4" />
+                Reimprimir
+              </Button>
+            )}
             {venda.status !== "CANCELADA" && venda.status !== "FINALIZADA" && (
               <Button variant="danger" onClick={() => setCancelOpen(true)}>
                 Cancelar venda
@@ -205,6 +215,30 @@ export default function VendaDetalhePage() {
         confirmLabel="Cancelar venda"
         loading={cancelMutation.isPending}
       />
+
+      <Modal
+        open={printOpen}
+        onClose={() => setPrintOpen(false)}
+        title="Comprovante de venda"
+        size="md"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setPrintOpen(false)}>
+              Fechar
+            </Button>
+            <Button onClick={() => window.print()}>
+              <Printer className="h-4 w-4" />
+              Imprimir
+            </Button>
+          </>
+        }
+      >
+        <ReceiptContent
+          venda={venda}
+          brandName={branding.nomeExibicao}
+          documento={documentoFiscal}
+        />
+      </Modal>
     </div>
   );
 }

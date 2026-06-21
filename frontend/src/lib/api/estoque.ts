@@ -25,3 +25,14 @@ export async function listMovimentacoes(
     { includeUserId: false },
   );
 }
+
+export async function definirEstoqueMinimo(
+  lojaId: string,
+  produtoId: string,
+  quantidadeMinima: number,
+): Promise<Estoque> {
+  return apiClient<Estoque>("/api/v1/estoques/minimo", {
+    method: "PATCH",
+    body: { lojaId, produtoId, quantidadeMinima },
+  });
+}
