@@ -18,7 +18,7 @@ public class FiscalEmissaoScheduler {
     FiscalService fiscalService;
 
     @Scheduled(
-            every = "{comercial-cloud.fiscal.scheduler.every}",
+            every = "${comercial-cloud.fiscal.scheduler.every}",
             concurrentExecution = Scheduled.ConcurrentExecution.SKIP)
     void processarPendentes() {
         List<UUID> ids = fiscalService.idsPendentes();
