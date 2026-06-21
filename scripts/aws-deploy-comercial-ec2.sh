@@ -114,8 +114,9 @@ cp -f deploy/nginx/conf.d/default-pilot.conf deploy/nginx/conf.d/default-pilot-a
 COMPOSE="\$(command -v docker-compose || echo docker-compose)"
 CF="--env-file .env.aws-pilot -f docker-compose.prod.yml"
 DOMAIN="\$(grep '^DOMAIN=' .env.aws-pilot | cut -d= -f2- || true)"
-CERT_VOL="\$(sudo \$COMPOSE \$CF config --volumes 2>/dev/null | grep certbot_conf || true)"
-if [[ -n "\$DOMAIN" && -n "\$CERT_VOL" ]]; then
+PROJECT="\$(basename "\$(pwd)")"
+CERT_VOL="\${PROJECT}_certbot_conf"
+if [[ -n "\$DOMAIN" ]] && sudo docker volume inspect "\$CERT_VOL" >/dev/null 2>&1; then
   if sudo docker run --rm -v "\${CERT_VOL}:/etc/letsencrypt:ro" alpine \
     test -f "/etc/letsencrypt/live/\${DOMAIN}/fullchain.pem"; then
     sed "s/__COMERCIAL_DOMAIN__/\${DOMAIN}/g" \
