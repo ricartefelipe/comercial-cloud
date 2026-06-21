@@ -17,9 +17,7 @@ public class FiscalEmissaoScheduler {
     @Inject
     FiscalService fiscalService;
 
-    @Scheduled(
-            every = "${comercial-cloud.fiscal.scheduler.every}",
-            concurrentExecution = Scheduled.ConcurrentExecution.SKIP)
+    @Scheduled(every = "10s", concurrentExecution = Scheduled.ConcurrentExecution.SKIP)
     void processarPendentes() {
         List<UUID> ids = fiscalService.idsPendentes();
         if (ids.isEmpty()) {
