@@ -1,0 +1,11 @@
+{
+  "name": "ComercialCloud PDV",
+  "short_name": "PDV",
+  "description": "Ponto de venda web ComercialCloud",
+  "start_url": "/pdv",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#4f7cff",
+  "lang": "pt-BR",
+  "orientation": "any"
+}

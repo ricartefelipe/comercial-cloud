@@ -1,5 +1,6 @@
 package com.comercialcloud.application.cliente;
 
+import com.comercialcloud.domain.exception.BusinessException;
 import com.comercialcloud.domain.exception.NotFoundException;
 import com.comercialcloud.domain.model.Cliente;
 import com.comercialcloud.domain.repository.ClienteRepository;
@@ -56,6 +57,32 @@ public class ClienteService {
 
     public PageResult<Cliente> listar(int page, int size) {
         return clienteRepository.list(tenantContext.getTenantId(), page, size);
+    }
+
+    @Transactional
+    public Cliente consumidorRapido(String cpfCnpj) {
+        UUID tenantId = tenantContext.getTenantId();
+        String digits = normalizarDocumento(cpfCnpj);
+        if (digits.length() != 11 && digits.length() != 14) {
+            throw new BusinessException(
+                    "DOCUMENTO_INVALIDO", "Informe um CPF (11 dígitos) ou CNPJ (14 dígitos) válido");
+        }
+        return clienteRepository
+                .findByCpfCnpj(tenantId, digits)
+                .orElseGet(
+                        () ->
+                                criar(
+                                        "Consumidor " + digits,
+                                        digits,
+                                        null,
+                                        null));
+    }
+
+    private static String normalizarDocumento(String cpfCnpj) {
+        if (cpfCnpj == null) {
+            return "";
+        }
+        return cpfCnpj.replaceAll("\\D", "");
     }
 
     @Transactional

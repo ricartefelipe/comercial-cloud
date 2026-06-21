@@ -79,6 +79,25 @@ public record Venda(
                 pagamentos);
     }
 
+    public Venda withClienteId(UUID novoClienteId) {
+        return new Venda(
+                id,
+                tenantId,
+                lojaId,
+                novoClienteId,
+                usuarioId,
+                caixaId,
+                status,
+                subtotal,
+                desconto,
+                total,
+                createdAt,
+                finalizedAt,
+                canceledAt,
+                itens,
+                pagamentos);
+    }
+
     public Venda withStatusEHorarios(
             StatusVenda novoStatus, Instant novoFinalizedAt, Instant novoCanceledAt) {
         return new Venda(

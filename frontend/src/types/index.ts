@@ -261,7 +261,16 @@ export interface DashboardResumo {
   ticketMedio: number;
   produtosEstoqueBaixo: Estoque[];
   ultimasVendas: Venda[];
-  vendasPorFormaPagamento?: Record<FormaPagamento, number>;
+  vendasPorFormaPagamento?: Record<string, number>;
+  topProdutos?: TopProdutoResumo[];
+}
+
+export interface TopProdutoResumo {
+  produtoId: string;
+  produtoNome: string;
+  produtoSku: string;
+  quantidadeVendida: number;
+  faturamento: number;
 }
 
 export const FORMA_PAGAMENTO_LABELS: Record<FormaPagamento, string> = {
@@ -309,10 +318,10 @@ export type StatusFatura = "PENDENTE" | "PAGA" | "VENCIDA" | "FALHA" | "CANCELAD
 
 export type StatusDocumentoFiscal =
   | "PENDENTE"
-  | "PROCESSANDO"
-  | "AUTORIZADA"
-  | "REJEITADA"
-  | "CANCELADA";
+  | "AUTORIZADO"
+  | "REJEITADO"
+  | "CANCELADO"
+  | "ERRO";
 
 export type AmbienteFiscal = "HOMOLOGACAO" | "PRODUCAO";
 export type RegimeTributario = "SIMPLES_NACIONAL" | "LUCRO_PRESUMIDO" | "LUCRO_REAL";
@@ -443,10 +452,10 @@ export const STATUS_FATURA_LABELS: Record<StatusFatura, string> = {
 
 export const STATUS_DOCUMENTO_FISCAL_LABELS: Record<StatusDocumentoFiscal, string> = {
   PENDENTE: "Pendente",
-  PROCESSANDO: "Processando",
-  AUTORIZADA: "Autorizada",
-  REJEITADA: "Rejeitada",
-  CANCELADA: "Cancelada",
+  AUTORIZADO: "Autorizada",
+  REJEITADO: "Rejeitada",
+  CANCELADO: "Cancelada",
+  ERRO: "Erro",
 };
 
 export interface Loja {

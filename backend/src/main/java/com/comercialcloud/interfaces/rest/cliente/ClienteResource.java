@@ -33,6 +33,12 @@ public class ClienteResource {
     ClienteService clienteService;
 
     @POST
+    @Path("/consumidor-rapido")
+    public Map<String, Object> consumidorRapido(ConsumidorRapidoBody request) {
+        return toMap(clienteService.consumidorRapido(request.cpfCnpj()));
+    }
+
+    @POST
     public Response criar(ClienteBody request) {
         var cliente = clienteService.criar(
                 request.nome(), request.cpfCnpj(), request.email(), request.telefone());
@@ -91,4 +97,6 @@ public class ClienteResource {
             String cpfCnpj,
             String email,
             String telefone) {}
+
+    public record ConsumidorRapidoBody(@NotBlank String cpfCnpj) {}
 }

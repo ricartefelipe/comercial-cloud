@@ -13,6 +13,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.PATCH;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -81,6 +82,20 @@ public class VendaResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public Map<String, Object> adicionarPagamento(@PathParam("id") UUID id, PagamentoBody request) {
         return toMapResposta(vendaService.adicionarPagamento(id, request.formaPagamento(), request.valor()));
+    }
+
+    @PATCH
+    @Path("/{id}/desconto")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Map<String, Object> aplicarDesconto(@PathParam("id") UUID id, DescontoBody request) {
+        return toMapResposta(vendaService.aplicarDesconto(id, request.descontoTotal()));
+    }
+
+    @PATCH
+    @Path("/{id}/cliente")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Map<String, Object> vincularCliente(@PathParam("id") UUID id, ClienteVendaBody request) {
+        return toMapResposta(vendaService.vincularCliente(id, request.clienteId()));
     }
 
     @POST
@@ -171,4 +186,8 @@ public class VendaResource {
 
     public record PagamentoBody(
             @NotBlank String formaPagamento, @NotNull @DecimalMin("0.0") BigDecimal valor) {}
+
+    public record DescontoBody(@NotNull @DecimalMin("0.0") BigDecimal descontoTotal) {}
+
+    public record ClienteVendaBody(UUID clienteId) {}
 }

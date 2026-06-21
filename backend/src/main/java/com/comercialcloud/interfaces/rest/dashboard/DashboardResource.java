@@ -48,6 +48,20 @@ public class DashboardResource {
         payload.put("produtosEstoqueBaixo", estoqueBaixo);
         payload.put("ultimasVendas", ultimas);
         payload.put("vendasPorFormaPagamento", result.vendasPorFormaPagamento());
+        payload.put(
+                "topProdutos",
+                result.topProdutos().stream()
+                        .map(
+                                tp -> {
+                                    Map<String, Object> map = new LinkedHashMap<>();
+                                    map.put("produtoId", tp.produtoId());
+                                    map.put("produtoNome", tp.produtoNome());
+                                    map.put("produtoSku", tp.produtoSku());
+                                    map.put("quantidadeVendida", tp.quantidadeVendida());
+                                    map.put("faturamento", tp.faturamento());
+                                    return map;
+                                })
+                        .toList());
         return payload;
     }
 

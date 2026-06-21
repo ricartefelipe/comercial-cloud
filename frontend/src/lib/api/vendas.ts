@@ -64,6 +64,26 @@ export async function finalizarVenda(vendaId: string): Promise<Venda> {
   });
 }
 
+export async function aplicarDescontoVenda(
+  vendaId: string,
+  descontoTotal: number,
+): Promise<Venda> {
+  return apiClient<Venda>(`/api/v1/vendas/${vendaId}/desconto`, {
+    method: "PATCH",
+    body: { descontoTotal },
+  });
+}
+
+export async function vincularClienteVenda(
+  vendaId: string,
+  clienteId: string | null,
+): Promise<Venda> {
+  return apiClient<Venda>(`/api/v1/vendas/${vendaId}/cliente`, {
+    method: "PATCH",
+    body: { clienteId },
+  });
+}
+
 export async function cancelarVenda(vendaId: string, motivo?: string): Promise<Venda> {
   return apiClient<Venda>(`/api/v1/vendas/${vendaId}/cancelar`, {
     method: "POST",

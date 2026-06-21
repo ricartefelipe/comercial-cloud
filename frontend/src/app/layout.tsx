@@ -8,6 +8,11 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "ComercialCloud",
   description: "Sistema de gestão comercial e PDV",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    title: "ComercialCloud PDV",
+  },
 };
 
 export default function RootLayout({

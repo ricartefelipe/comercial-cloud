@@ -152,6 +152,34 @@ public class VendaService {
     }
 
     @Transactional
+    public Venda aplicarDesconto(UUID vendaId, BigDecimal descontoTotal) {
+        UUID tenantId = tenantContext.getTenantId();
+        Venda venda = assertVendaAberta(tenantId, vendaId);
+        BigDecimal desconto = descontoTotal != null ? descontoTotal : BigDecimal.ZERO;
+        if (desconto.compareTo(BigDecimal.ZERO) < 0) {
+            throw new BusinessException("DESCONTO_INVALIDO", "Desconto não pode ser negativo");
+        }
+        Venda comDesconto =
+                recalcularTotais(
+                        venda.withValoresMercadorias(venda.subtotal(), desconto, venda.total()));
+        auditService.registrar("Venda", vendaId, "APLICAR_DESCONTO", desconto.toPlainString());
+        return vendaRepository.save(comDesconto);
+    }
+
+    @Transactional
+    public Venda vincularCliente(UUID vendaId, UUID clienteId) {
+        UUID tenantId = tenantContext.getTenantId();
+        Venda venda = assertVendaAberta(tenantId, vendaId);
+        if (clienteId != null) {
+            clienteRepository.find(tenantId, clienteId).orElseThrow(
+                    () -> new NotFoundException("CLIENTE_NOT_FOUND", "Cliente não encontrado"));
+        }
+        Venda atualizada = venda.withClienteId(clienteId);
+        auditService.registrar("Venda", vendaId, "VINCULAR_CLIENTE", String.valueOf(clienteId));
+        return vendaRepository.save(atualizada);
+    }
+
+    @Transactional
     public Venda adicionarPagamento(UUID vendaId, String formaPagamentoStr, BigDecimal valor) {
         UUID tenantId = tenantContext.getTenantId();
         Venda venda = assertVendaAberta(tenantId, vendaId);

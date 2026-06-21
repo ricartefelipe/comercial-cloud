@@ -17,3 +17,31 @@
     scrollbar-width: thin;
   }
 }
+
+@media print {
+  @page {
+    margin: 4mm;
+    size: 80mm auto;
+  }
+
+  body {
+    background: white !important;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  #pdv-receipt,
+  #pdv-receipt * {
+    visibility: visible;
+  }
+
+  #pdv-receipt {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 72mm;
+    font-size: 12px;
+  }
+}
