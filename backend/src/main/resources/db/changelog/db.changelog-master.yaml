@@ -45,3 +45,5 @@ databaseChangeLog:
       file: db/changelog/022-plano-max-lojas.yaml
   - include:
       file: db/changelog/023-convite-usuario.yaml
+  - include:
+      file: db/changelog/024-seed-demo-operacional.yaml

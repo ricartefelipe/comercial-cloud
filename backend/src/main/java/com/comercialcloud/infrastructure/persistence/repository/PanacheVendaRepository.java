@@ -14,6 +14,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -52,18 +53,25 @@ public class PanacheVendaRepository implements VendaRepository {
 
     @Override
     public List<Venda> listar(UUID tenantId, UUID lojaId, Instant dataInicio, Instant dataFim) {
-        return VendaEntity.<VendaEntity>find(
-                        "tenantId = ?1 and lojaId = ?2"
-                                + " and (?3 is null or createdAt >= ?3)"
-                                + " and (?4 is null or createdAt < ?4)"
-                                + " order by createdAt desc",
-                        tenantId,
-                        lojaId,
-                        dataInicio,
-                        dataFim)
+        StringBuilder jpql = new StringBuilder("tenantId = ?1 and lojaId = ?2");
+        List<Object> params = new ArrayList<>();
+        params.add(tenantId);
+        params.add(lojaId);
+        int paramIndex = 3;
+        if (dataInicio != null) {
+            jpql.append(" and createdAt >= ?").append(paramIndex++);
+            params.add(dataInicio);
+        }
+        if (dataFim != null) {
+            jpql.append(" and createdAt < ?").append(paramIndex);
+            params.add(dataFim);
+        }
+        jpql.append(" order by createdAt desc");
+
+        return VendaEntity.<VendaEntity>find(jpql.toString(), params.toArray())
                 .list()
                 .stream()
-                .map(ve -> mapper.toDomain(ve))
+                .map(mapper::toDomain)
                 .toList();
     }
 

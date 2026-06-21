@@ -1,0 +1,261 @@
+databaseChangeLog:
+  - changeSet:
+      id: 024-seed-demo-operacional
+      author: comercialcloud
+      changes:
+        - insert:
+            tableName: cliente
+            columns:
+              - column: { name: id, value: 77777777-7777-7777-7777-777777777771 }
+              - column: { name: tenant_id, value: 11111111-1111-1111-1111-111111111111 }
+              - column: { name: nome, value: João Silva }
+              - column: { name: cpf_cnpj, value: "529.982.247-25" }
+              - column: { name: email, value: joao.silva@email.com }
+              - column: { name: telefone, value: "(11) 98765-4321" }
+              - column: { name: ativo, valueBoolean: true }
+        - insert:
+            tableName: cliente
+            columns:
+              - column: { name: id, value: 77777777-7777-7777-7777-777777777772 }
+              - column: { name: tenant_id, value: 11111111-1111-1111-1111-111111111111 }
+              - column: { name: nome, value: Maria Souza }
+              - column: { name: cpf_cnpj, value: "390.533.447-05" }
+              - column: { name: email, value: maria.souza@email.com }
+              - column: { name: telefone, value: "(11) 91234-5678" }
+              - column: { name: ativo, valueBoolean: true }
+        - insert:
+            tableName: cliente
+            columns:
+              - column: { name: id, value: 77777777-7777-7777-7777-777777777773 }
+              - column: { name: tenant_id, value: 11111111-1111-1111-1111-111111111111 }
+              - column: { name: nome, value: Empresa ABC Ltda }
+              - column: { name: cpf_cnpj, value: "12.345.678/0001-90" }
+              - column: { name: email, value: contato@abc.com.br }
+              - column: { name: telefone, value: "(11) 3333-4444" }
+              - column: { name: ativo, valueBoolean: true }
+        - insert:
+            tableName: produto
+            columns:
+              - column: { name: id, value: 55555555-5555-5555-5555-555555555554 }
+              - column: { name: tenant_id, value: 11111111-1111-1111-1111-111111111111 }
+              - column: { name: sku, value: PROD-003 }
+              - column: { name: codigo_barras, value: "7891000100104" }
+              - column: { name: nome, value: Café Premium 500g }
+              - column: { name: descricao, value: Café torrado e moído }
+              - column: { name: preco, valueNumeric: 18.90 }
+              - column: { name: ativo, valueBoolean: true }
+        - insert:
+            tableName: produto
+            columns:
+              - column: { name: id, value: 55555555-5555-5555-5555-555555555555 }
+              - column: { name: tenant_id, value: 11111111-1111-1111-1111-111111111111 }
+              - column: { name: sku, value: PROD-004 }
+              - column: { name: codigo_barras, value: "7891000100105" }
+              - column: { name: nome, value: Detergente Neutro 5L }
+              - column: { name: descricao, value: Limpeza geral }
+              - column: { name: preco, valueNumeric: 32.00 }
+              - column: { name: ativo, valueBoolean: true }
+        - insert:
+            tableName: estoque
+            columns:
+              - column: { name: id, value: 66666666-6666-6666-6666-666666666664 }
+              - column: { name: tenant_id, value: 11111111-1111-1111-1111-111111111111 }
+              - column: { name: loja_id, value: 22222222-2222-2222-2222-222222222222 }
+              - column: { name: produto_id, value: 55555555-5555-5555-5555-555555555554 }
+              - column: { name: quantidade, valueNumeric: 80 }
+        - insert:
+            tableName: estoque
+            columns:
+              - column: { name: id, value: 66666666-6666-6666-6666-666666666665 }
+              - column: { name: tenant_id, value: 11111111-1111-1111-1111-111111111111 }
+              - column: { name: loja_id, value: 22222222-2222-2222-2222-222222222222 }
+              - column: { name: produto_id, value: 55555555-5555-5555-5555-555555555555 }
+              - column: { name: quantidade, valueNumeric: 40 }
+        - insert:
+            tableName: caixa
+            columns:
+              - column: { name: id, value: 88888888-8888-8888-8888-888888888881 }
+              - column: { name: tenant_id, value: 11111111-1111-1111-1111-111111111111 }
+              - column: { name: loja_id, value: 22222222-2222-2222-2222-222222222222 }
+              - column: { name: usuario_id, value: 44444444-4444-4444-4444-444444444444 }
+              - column: { name: status, value: FECHADO }
+              - column: { name: valor_abertura, valueNumeric: 100.00 }
+              - column: { name: valor_fechamento, valueNumeric: 222.90 }
+              - column: { name: total_vendas, valueNumeric: 122.90 }
+              - column: { name: aberto_em, value: "2026-06-20T08:00:00Z" }
+              - column: { name: fechado_em, value: "2026-06-20T22:00:00Z" }
+        - insert:
+            tableName: caixa
+            columns:
+              - column: { name: id, value: 88888888-8888-8888-8888-888888888882 }
+              - column: { name: tenant_id, value: 11111111-1111-1111-1111-111111111111 }
+              - column: { name: loja_id, value: 22222222-2222-2222-2222-222222222222 }
+              - column: { name: usuario_id, value: 44444444-4444-4444-4444-444444444444 }
+              - column: { name: status, value: ABERTO }
+              - column: { name: valor_abertura, valueNumeric: 150.00 }
+              - column: { name: total_vendas, valueNumeric: 50.90 }
+              - column: { name: aberto_em, value: "2026-06-21T08:00:00Z" }
+        - insert:
+            tableName: venda
+            columns:
+              - column: { name: id, value: 99999999-9999-9999-9999-999999999901 }
+              - column: { name: tenant_id, value: 11111111-1111-1111-1111-111111111111 }
+              - column: { name: loja_id, value: 22222222-2222-2222-2222-222222222222 }
+              - column: { name: cliente_id, value: 77777777-7777-7777-7777-777777777771 }
+              - column: { name: usuario_id, value: 44444444-4444-4444-4444-444444444444 }
+              - column: { name: caixa_id, value: 88888888-8888-8888-8888-888888888881 }
+              - column: { name: status, value: FINALIZADA }
+              - column: { name: subtotal, valueNumeric: 38.90 }
+              - column: { name: desconto, valueNumeric: 0 }
+              - column: { name: total, valueNumeric: 38.90 }
+              - column: { name: created_at, value: "2026-06-20T14:30:00Z" }
+              - column: { name: finalized_at, value: "2026-06-20T14:32:00Z" }
+        - insert:
+            tableName: venda
+            columns:
+              - column: { name: id, value: 99999999-9999-9999-9999-999999999902 }
+              - column: { name: tenant_id, value: 11111111-1111-1111-1111-111111111111 }
+              - column: { name: loja_id, value: 22222222-2222-2222-2222-222222222222 }
+              - column: { name: cliente_id, value: 77777777-7777-7777-7777-777777777772 }
+              - column: { name: usuario_id, value: 44444444-4444-4444-4444-444444444444 }
+              - column: { name: caixa_id, value: 88888888-8888-8888-8888-888888888881 }
+              - column: { name: status, value: FINALIZADA }
+              - column: { name: subtotal, valueNumeric: 84.00 }
+              - column: { name: desconto, valueNumeric: 0 }
+              - column: { name: total, valueNumeric: 84.00 }
+              - column: { name: created_at, value: "2026-06-20T16:15:00Z" }
+              - column: { name: finalized_at, value: "2026-06-20T16:18:00Z" }
+        - insert:
+            tableName: venda
+            columns:
+              - column: { name: id, value: 99999999-9999-9999-9999-999999999903 }
+              - column: { name: tenant_id, value: 11111111-1111-1111-1111-111111111111 }
+              - column: { name: loja_id, value: 22222222-2222-2222-2222-222222222222 }
+              - column: { name: cliente_id, value: 77777777-7777-7777-7777-777777777773 }
+              - column: { name: usuario_id, value: 33333333-3333-3333-3333-333333333333 }
+              - column: { name: caixa_id, value: 88888888-8888-8888-8888-888888888882 }
+              - column: { name: status, value: FINALIZADA }
+              - column: { name: subtotal, valueNumeric: 50.90 }
+              - column: { name: desconto, valueNumeric: 0 }
+              - column: { name: total, valueNumeric: 50.90 }
+              - column: { name: created_at, value: "2026-06-21T10:05:00Z" }
+              - column: { name: finalized_at, value: "2026-06-21T10:08:00Z" }
+        - insert:
+            tableName: venda
+            columns:
+              - column: { name: id, value: 99999999-9999-9999-9999-999999999904 }
+              - column: { name: tenant_id, value: 11111111-1111-1111-1111-111111111111 }
+              - column: { name: loja_id, value: 22222222-2222-2222-2222-222222222222 }
+              - column: { name: usuario_id, value: 44444444-4444-4444-4444-444444444444 }
+              - column: { name: caixa_id, value: 88888888-8888-8888-8888-888888888882 }
+              - column: { name: status, value: CANCELADA }
+              - column: { name: subtotal, valueNumeric: 25.50 }
+              - column: { name: desconto, valueNumeric: 0 }
+              - column: { name: total, valueNumeric: 25.50 }
+              - column: { name: created_at, value: "2026-06-21T09:00:00Z" }
+              - column: { name: canceled_at, value: "2026-06-21T09:05:00Z" }
+        - insert:
+            tableName: item_venda
+            columns:
+              - column: { name: id, value: aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1 }
+              - column: { name: tenant_id, value: 11111111-1111-1111-1111-111111111111 }
+              - column: { name: venda_id, value: 99999999-9999-9999-9999-999999999901 }
+              - column: { name: produto_id, value: 55555555-5555-5555-5555-555555555551 }
+              - column: { name: quantidade, valueNumeric: 2 }
+              - column: { name: preco_unitario, valueNumeric: 10.00 }
+              - column: { name: subtotal, valueNumeric: 20.00 }
+        - insert:
+            tableName: item_venda
+            columns:
+              - column: { name: id, value: aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2 }
+              - column: { name: tenant_id, value: 11111111-1111-1111-1111-111111111111 }
+              - column: { name: venda_id, value: 99999999-9999-9999-9999-999999999901 }
+              - column: { name: produto_id, value: 55555555-5555-5555-5555-555555555554 }
+              - column: { name: quantidade, valueNumeric: 1 }
+              - column: { name: preco_unitario, valueNumeric: 18.90 }
+              - column: { name: subtotal, valueNumeric: 18.90 }
+        - insert:
+            tableName: item_venda
+            columns:
+              - column: { name: id, value: aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3 }
+              - column: { name: tenant_id, value: 11111111-1111-1111-1111-111111111111 }
+              - column: { name: venda_id, value: 99999999-9999-9999-9999-999999999902 }
+              - column: { name: produto_id, value: 55555555-5555-5555-5555-555555555555 }
+              - column: { name: quantidade, valueNumeric: 2 }
+              - column: { name: preco_unitario, valueNumeric: 32.00 }
+              - column: { name: subtotal, valueNumeric: 64.00 }
+        - insert:
+            tableName: item_venda
+            columns:
+              - column: { name: id, value: aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa4 }
+              - column: { name: tenant_id, value: 11111111-1111-1111-1111-111111111111 }
+              - column: { name: venda_id, value: 99999999-9999-9999-9999-999999999902 }
+              - column: { name: produto_id, value: 55555555-5555-5555-5555-555555555551 }
+              - column: { name: quantidade, valueNumeric: 2 }
+              - column: { name: preco_unitario, valueNumeric: 10.00 }
+              - column: { name: subtotal, valueNumeric: 20.00 }
+        - insert:
+            tableName: item_venda
+            columns:
+              - column: { name: id, value: aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa5 }
+              - column: { name: tenant_id, value: 11111111-1111-1111-1111-111111111111 }
+              - column: { name: venda_id, value: 99999999-9999-9999-9999-999999999903 }
+              - column: { name: produto_id, value: 55555555-5555-5555-5555-555555555554 }
+              - column: { name: quantidade, valueNumeric: 1 }
+              - column: { name: preco_unitario, valueNumeric: 18.90 }
+              - column: { name: subtotal, valueNumeric: 18.90 }
+        - insert:
+            tableName: item_venda
+            columns:
+              - column: { name: id, value: aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa6 }
+              - column: { name: tenant_id, value: 11111111-1111-1111-1111-111111111111 }
+              - column: { name: venda_id, value: 99999999-9999-9999-9999-999999999903 }
+              - column: { name: produto_id, value: 55555555-5555-5555-5555-555555555555 }
+              - column: { name: quantidade, valueNumeric: 1 }
+              - column: { name: preco_unitario, valueNumeric: 32.00 }
+              - column: { name: subtotal, valueNumeric: 32.00 }
+        - insert:
+            tableName: item_venda
+            columns:
+              - column: { name: id, value: aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa7 }
+              - column: { name: tenant_id, value: 11111111-1111-1111-1111-111111111111 }
+              - column: { name: venda_id, value: 99999999-9999-9999-9999-999999999904 }
+              - column: { name: produto_id, value: 55555555-5555-5555-5555-555555555552 }
+              - column: { name: quantidade, valueNumeric: 1 }
+              - column: { name: preco_unitario, valueNumeric: 25.50 }
+              - column: { name: subtotal, valueNumeric: 25.50 }
+        - insert:
+            tableName: pagamento_venda
+            columns:
+              - column: { name: id, value: bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb1 }
+              - column: { name: tenant_id, value: 11111111-1111-1111-1111-111111111111 }
+              - column: { name: venda_id, value: 99999999-9999-9999-9999-999999999901 }
+              - column: { name: forma_pagamento, value: DINHEIRO }
+              - column: { name: valor, valueNumeric: 38.90 }
+        - insert:
+            tableName: pagamento_venda
+            columns:
+              - column: { name: id, value: bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb2 }
+              - column: { name: tenant_id, value: 11111111-1111-1111-1111-111111111111 }
+              - column: { name: venda_id, value: 99999999-9999-9999-9999-999999999902 }
+              - column: { name: forma_pagamento, value: PIX }
+              - column: { name: valor, valueNumeric: 84.00 }
+        - insert:
+            tableName: pagamento_venda
+            columns:
+              - column: { name: id, value: bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb3 }
+              - column: { name: tenant_id, value: 11111111-1111-1111-1111-111111111111 }
+              - column: { name: venda_id, value: 99999999-9999-9999-9999-999999999903 }
+              - column: { name: forma_pagamento, value: CARTAO_CREDITO }
+              - column: { name: valor, valueNumeric: 50.90 }
+        - insert:
+            tableName: conta_receber
+            columns:
+              - column: { name: id, value: cccccccc-cccc-cccc-cccc-ccccccccccc1 }
+              - column: { name: tenant_id, value: 11111111-1111-1111-1111-111111111111 }
+              - column: { name: venda_id, value: 99999999-9999-9999-9999-999999999903 }
+              - column: { name: cliente_id, value: 77777777-7777-7777-7777-777777777773 }
+              - column: { name: valor, valueNumeric: 150.00 }
+              - column: { name: vencimento, value: "2026-07-15" }
+              - column: { name: status, value: ABERTO }
+              - column: { name: created_at, value: "2026-06-21T10:08:00Z" }
