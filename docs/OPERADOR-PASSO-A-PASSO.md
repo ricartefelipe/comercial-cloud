@@ -1,6 +1,6 @@
 # Operador — passo a passo (ordem recomendada)
 
-Piloto atual: **https://56-124-36-136.sslip.io**  
+Piloto atual: **https://56-125-12-61.sslip.io**  
 Scripts auxiliares: `./scripts/operador-passo.sh <etapa>`
 
 Marque cada bloco em `docs/PENDENCIAS-OPERADOR.md` ao concluir.
@@ -28,7 +28,7 @@ ASAAS_WEBHOOK_TOKEN=$(openssl rand -hex 24)   # gere uma vez e guarde
 
 | Campo | Valor (piloto) |
 |-------|----------------|
-| URL | `https://56-124-36-136.sslip.io/api/v1/public/webhooks/asaas` |
+| URL | `https://56-125-12-61.sslip.io/api/v1/public/webhooks/asaas` |
 | Método | POST |
 | Eventos | Pagamento confirmado / recebido |
 | Token (se o Asaas pedir) | mesmo valor de `ASAAS_WEBHOOK_TOKEN` |
@@ -84,7 +84,7 @@ Keycloak já roda em `/auth` no piloto. Falta alinhar realm e provisioning:
 
 ```bash
 source .aws-deploy/last-ec2.env
-./scripts/generate-keycloak-realm-prod.sh https://56-124-36-136.sslip.io
+./scripts/generate-keycloak-realm-prod.sh https://56-125-12-61.sslip.io
 ./scripts/operador-passo.sh keycloak-apply
 ```
 
@@ -92,14 +92,14 @@ Variáveis (já no `.env.aws-pilot` após deploy):
 
 ```bash
 COMERCIAL_CLOUD_KEYCLOAK_PROVISIONING_ENABLED=true
-KEYCLOAK_PUBLIC_URL=https://56-124-36-136.sslip.io/auth
-KEYCLOAK_ISSUER_URL=https://56-124-36-136.sslip.io/auth/realms/comercialcloud
+KEYCLOAK_PUBLIC_URL=https://56-125-12-61.sslip.io/auth
+KEYCLOAK_ISSUER_URL=https://56-125-12-61.sslip.io/auth/realms/comercialcloud
 ```
 
 **Checklist painel Keycloak** (`/auth/admin`):
 
 - [ ] Realm `comercialcloud` importado/atualizado
-- [ ] Client `comercial-cloud-web` com redirect `https://56-124-36-136.sslip.io/*`
+- [ ] Client `comercial-cloud-web` com redirect `https://56-125-12-61.sslip.io/*`
 - [ ] Client `comercial-cloud-api` para backend OIDC
 - [ ] Mapper `tenant_id` / `app_user_id` nos tokens (ver `infra/keycloak/`)
 
@@ -113,7 +113,7 @@ Exemplo Amazon SES (sa-east-1):
 
 ```bash
 COMERCIAL_CLOUD_MAIL_ENABLED=true
-COMERCIAL_CLOUD_MAIL_APP_URL=https://56-124-36-136.sslip.io
+COMERCIAL_CLOUD_MAIL_APP_URL=https://56-125-12-61.sslip.io
 MAIL_HOST=email-smtp.sa-east-1.amazonaws.com
 MAIL_PORT=587
 MAIL_STARTTLS=REQUIRED
@@ -190,5 +190,5 @@ Template de checklist: `docs/CHECKLIST-JURIDICO.md`
 
 ```bash
 source .aws-deploy/last-ec2.env
-APP_URL=https://56-124-36-136.sslip.io API_URL=https://56-124-36-136.sslip.io ./scripts/verify-operador-piloto.sh
+APP_URL=https://56-125-12-61.sslip.io API_URL=https://56-125-12-61.sslip.io ./scripts/verify-operador-piloto.sh
 ```
