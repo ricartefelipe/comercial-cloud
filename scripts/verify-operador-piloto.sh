@@ -10,7 +10,7 @@ if [[ -f "$ROOT/.aws-deploy/last-ec2.env" ]]; then
   source "$ROOT/.aws-deploy/last-ec2.env"
 fi
 
-APP_URL="${APP_URL:-https://${PILOT_DOMAIN:-56-125-12-61.sslip.io}}"
+APP_URL="${APP_URL:-https://${PILOT_DOMAIN:-56-124-36-136.sslip.io}}"
 API_URL="${API_URL:-$APP_URL}"
 AUTH_URL="${AUTH_URL:-${APP_URL}/auth}"
 

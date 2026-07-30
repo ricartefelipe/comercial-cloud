@@ -18,13 +18,13 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 ENV_FILE="${ENV_FILE:-$ROOT/.env.aws-pilot}"
 EXAMPLE="$ROOT/.env.aws-pilot.example"
-PILOT_DOMAIN="${PILOT_DOMAIN:-56-125-12-61.sslip.io}"
+PILOT_DOMAIN="${PILOT_DOMAIN:-56-124-36-136.sslip.io}"
 APP_URL="${APP_URL:-https://${PILOT_DOMAIN}}"
 
 if [[ -f "$ROOT/.aws-deploy/last-ec2.env" ]]; then
   # shellcheck disable=SC1091
   source "$ROOT/.aws-deploy/last-ec2.env"
-  PILOT_DOMAIN="${PILOT_DOMAIN:-56-125-12-61.sslip.io}"
+  PILOT_DOMAIN="${PILOT_DOMAIN:-56-124-36-136.sslip.io}"
   APP_URL="https://${PILOT_DOMAIN}"
 fi
 
