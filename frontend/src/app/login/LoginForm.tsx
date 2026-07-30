@@ -11,6 +11,7 @@ import {
   KEYCLOAK_REALM,
   KEYCLOAK_URL,
 } from "@/lib/constants";
+import { loginTotalRecall } from "@/lib/totalrecall";
 import { Store } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -38,6 +39,13 @@ export default function LoginForm() {
     setError("");
 
     try {
+      const tr = await loginTotalRecall(email, password, "comercial-cloud");
+      if (tr?.valid) {
+        enableDemoMode();
+        router.push(redirectTo);
+        return;
+      }
+
       const tokenUrl = `${KEYCLOAK_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/token`;
       const body = new URLSearchParams({
         grant_type: "password",
