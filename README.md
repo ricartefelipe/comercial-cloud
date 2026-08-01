@@ -83,6 +83,8 @@ Acesse:
 - Fiscal NFC-e: `http://localhost:3000/fiscal`
 - PDV: `http://localhost:3000/pdv`
 
+O login da retaguarda aceita e-mail/senha TotalRecall com o slug `comercial-cloud`; configure `NEXT_PUBLIC_TOTALRECALL_URL=https://54.94.163.136.sslip.io`.
+
 ### 4. Keycloak (opcional)
 
 ```bash
