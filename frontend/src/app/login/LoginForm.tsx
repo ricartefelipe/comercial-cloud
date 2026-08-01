@@ -89,7 +89,7 @@ export default function LoginForm() {
             <Store className="h-8 w-8 text-brand-600" />
           </div>
           <h1 className="text-2xl font-bold text-slate-900">ComercialCloud</h1>
-          <p className="mt-1 text-sm text-slate-500">Entre na retaguarda</p>
+          <p className="mt-1 text-sm text-slate-500">Entre com e-mail/senha TotalRecall ou sua conta da retaguarda</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -102,7 +102,7 @@ export default function LoginForm() {
             required
           />
           <Input
-            label="Senha"
+            label="Senha TotalRecall"
             type="password"
             autoComplete="current-password"
             value={password}
