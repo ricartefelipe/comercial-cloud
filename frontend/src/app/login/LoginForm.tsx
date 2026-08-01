@@ -11,7 +11,6 @@ import {
   KEYCLOAK_REALM,
   KEYCLOAK_URL,
 } from "@/lib/constants";
-import { loginTotalRecall } from "@/lib/totalrecall";
 import { Store } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -39,13 +38,6 @@ export default function LoginForm() {
     setError("");
 
     try {
-      const tr = await loginTotalRecall(email, password, "comercial-cloud");
-      if (tr?.valid) {
-        enableDemoMode();
-        router.push(redirectTo);
-        return;
-      }
-
       const tokenUrl = `${KEYCLOAK_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/token`;
       const body = new URLSearchParams({
         grant_type: "password",
@@ -89,7 +81,7 @@ export default function LoginForm() {
             <Store className="h-8 w-8 text-brand-600" />
           </div>
           <h1 className="text-2xl font-bold text-slate-900">ComercialCloud</h1>
-          <p className="mt-1 text-sm text-slate-500">Entre com e-mail/senha TotalRecall ou sua conta da retaguarda</p>
+          <p className="mt-1 text-sm text-slate-500">Entre com sua conta da retaguarda (Keycloak)</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -102,7 +94,7 @@ export default function LoginForm() {
             required
           />
           <Input
-            label="Senha TotalRecall"
+            label="Senha"
             type="password"
             autoComplete="current-password"
             value={password}
