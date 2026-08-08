@@ -62,7 +62,7 @@ Após merge em `main`, o workflow sincroniza `develop` automaticamente.
 ## O que o CI bloqueia
 
 - PR de `feature/*` ou `fix/*` **direto para `main`** (workflow `enforce-gitflow`)
-- Trailers de IA nos commits (`Co-authored-by: Cursor`, `Made-with: Cursor`, etc.)
+- Trailers de co-autoria de ferramentas de IA nos commits
 
 ## Deploy
 
