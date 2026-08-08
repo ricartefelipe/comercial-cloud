@@ -16,7 +16,7 @@
 
 ## Git / qualidade
 
-- [ ] Sem `Co-authored-by: Cursor`, `Made-with: Cursor` ou menções a ferramentas de IA nos commits
+- [ ] Sem trailers de co-autoria nem menções a ferramentas de IA nos commits
 - [ ] Base correta (`develop` para features; `main` só para release/hotfix)
 
 Ver `docs/GITFLOW.md`.
