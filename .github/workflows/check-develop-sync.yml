@@ -1,0 +1,27 @@
+name: Check develop sync
+
+# Após release ou hotfix em main, relata se develop ficou atrás (GitFlow).
+# Verificação somente leitura: não promove, não mescla, não cria branch e não
+# escreve no remoto. A decisão de sincronizar permanece com quem opera o repositório.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: check-develop-sync
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Compare develop with main
+        run: ./scripts/check-develop-sync.sh origin main develop

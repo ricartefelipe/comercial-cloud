@@ -40,7 +40,7 @@ git checkout develop && git pull origin develop
 Isso abre PR **`develop` → `main`**. Após merge:
 
 1. CI roda em `main`
-2. Workflow `sync-develop-from-main` alinha `develop` (se necessário)
+2. Workflow `check-develop-sync` relata se `develop` ficou atrás (não altera branches)
 3. Deploy piloto: `SCHEME=https ./scripts/aws-deploy-comercial-ec2.sh`
 4. Tag semver (opcional): `git tag v1.4.0 && git push origin v1.4.0`
 
@@ -57,7 +57,9 @@ git push -u origin hotfix/descricao-curta
 gh pr create --base main --title "fix: ..."
 ```
 
-Após merge em `main`, o workflow sincroniza `develop` automaticamente.
+Após merge em `main`, o workflow `check-develop-sync` apenas **relata** se `develop` ficou atrás.
+A sincronização é manual, por PR de `main` para `develop`: nenhuma automação promove, mescla ou
+reescreve branches.
 
 ## O que o CI bloqueia
 
@@ -73,4 +75,19 @@ Após merge em `main`, o workflow sincroniza `develop` automaticamente.
 
 ## Histórico (correção jun/2026)
 
-PRs #26–#30 foram mergeados direto em `main` por exceção operacional. `develop` foi realinhada em `a7ed33d`. O workflow antigo `sync-main-with-develop` (que **resetava main** para develop) foi **removido** e substituído por `sync-develop-from-main`.
+PRs #26–#30 foram mergeados direto em `main` por exceção operacional. `develop` foi realinhada em `a7ed33d`. O workflow antigo `sync-main-with-develop` (que **resetava main** para develop) foi **removido**.
+
+## Histórico (correção out/2026)
+
+O repositório passou a operar somente com `main`: a branch `develop` **não existe** no remoto. O
+workflow `sync-develop-from-main` fazia `git fetch origin main develop` e falhava em todo push para
+`main` (`fatal: couldn't find remote ref develop`); quando não falhava, criava a branch e publicava
+com `git reset --hard`. Ele foi substituído por `check-develop-sync`, que é **somente leitura**:
+compara as refs publicadas e informa o resultado (branch ausente, em sincronia ou divergente) sem
+`reset`, `push`, criação de branch, abertura de PR ou auto-merge. A lógica fica em
+`scripts/check-develop-sync.sh`, executável localmente.
+
+As tags `v1.0.0`–`v1.3.0` ainda carregam o workflow `sync-main-with-develop`, que fazia
+`git reset --hard origin/develop` em `main` seguido de `git push origin main --force-with-lease`.
+Ele não está mais em `main` e não dispara por push, mas um `workflow_dispatch` apontado para uma
+dessas tags ainda o executaria. Remover ou reescrever tags publicadas é decisão do proprietário.
