@@ -7,7 +7,9 @@ import com.comercialcloud.domain.exception.PaymentRequiredException;
 import com.comercialcloud.infrastructure.observability.CorrelationId;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
+import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 import jakarta.ws.rs.ext.ExceptionMapper;
@@ -58,8 +60,49 @@ public class GlobalExceptionMapper implements ExceptionMapper<Exception> {
         if (exception instanceof jakarta.ws.rs.ForbiddenException fe) {
             return json(Response.Status.FORBIDDEN, "FORBIDDEN", fe.getMessage(), corr, ts, path);
         }
+        if (exception instanceof WebApplicationException wae && wae.getResponse().getStatus() < 500) {
+            return clientError(wae, corr, ts, path);
+        }
         LOG.error("Erro não tratado", exception);
         return json(Response.Status.INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", "Erro interno do servidor", corr, ts, path);
+    }
+
+    /** Erros do próprio JAX-RS, como rota ou método inexistente: mantém o status original em vez de virar 500. */
+    private static Response clientError(WebApplicationException exception, String corr, Instant ts, String path) {
+        Response original = exception.getResponse();
+        Response.StatusType status = original.getStatusInfo();
+        String code =
+                switch (status.getStatusCode()) {
+                    case 400 -> "BAD_REQUEST";
+                    case 401 -> "UNAUTHORIZED";
+                    case 404 -> "NOT_FOUND";
+                    case 405 -> "METHOD_NOT_ALLOWED";
+                    case 406 -> "NOT_ACCEPTABLE";
+                    case 415 -> "UNSUPPORTED_MEDIA_TYPE";
+                    default -> "CLIENT_ERROR";
+                };
+        String message =
+                switch (status.getStatusCode()) {
+                    case 400 -> "Requisição inválida";
+                    case 401 -> "Autenticação necessária";
+                    case 404 -> "Recurso não encontrado";
+                    case 405 -> "Método não permitido para este recurso";
+                    case 406 -> "Formato de resposta não disponível";
+                    case 415 -> "Formato de requisição não aceito";
+                    default -> "Requisição não atendida";
+                };
+        return Response.fromResponse(original)
+                .type(MediaType.APPLICATION_JSON)
+                .entity(new ErrorResponse(
+                        ts,
+                        status.getStatusCode(),
+                        status.getReasonPhrase(),
+                        message,
+                        path,
+                        corr,
+                        null,
+                        code))
+                .build();
     }
 
     private static Response json(
