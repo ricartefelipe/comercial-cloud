@@ -118,7 +118,7 @@ export default function LoginForm() {
             Entrar em modo demo
           </button>
           <p className="text-xs text-slate-400">
-            Usa headers X-Tenant-Id e X-User-Id sem token JWT
+            Abre a loja fictícia de demonstração, sem cadastro
           </p>
           <Link href="/cadastro" className="block text-sm font-medium text-brand-600 hover:text-brand-700">
             Criar conta grátis (14 dias)

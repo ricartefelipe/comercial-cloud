@@ -47,6 +47,7 @@ services:
       QUARKUS_DATASOURCE_USERNAME: comercialcloud
       QUARKUS_DATASOURCE_PASSWORD: comercialcloud
       QUARKUS_HTTP_PORT: 8080
+      COMERCIAL_CLOUD_TENANT_RESOLUTION: header
     ports:
       - "8080:8080"
     depends_on:
