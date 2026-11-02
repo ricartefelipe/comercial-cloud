@@ -53,3 +53,5 @@ databaseChangeLog:
       file: db/changelog/026-pix-cobranca-pdv.yaml
   - include:
       file: db/changelog/027-produto-categoria-movimento-caixa.yaml
+  - include:
+      file: db/changelog/028-corrige-imagens-demo.yaml

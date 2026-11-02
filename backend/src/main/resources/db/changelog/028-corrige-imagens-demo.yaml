@@ -1,0 +1,20 @@
+databaseChangeLog:
+  - changeSet:
+      id: 028-corrige-imagens-demo
+      author: comercialcloud
+      comment: "Duas URLs da carga 025 respondem 404; só muda produto que ainda usa a URL antiga"
+      changes:
+        - update:
+            tableName: produto
+            columns:
+              - column:
+                  name: imagem_url
+                  value: https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=200&h=200&fit=crop
+            where: id = '55555555-5555-5555-5555-555555555551' AND imagem_url = 'https://images.unsplash.com/photo-1505744386214-51dba16bd1fb?w=200&h=200&fit=crop'
+        - update:
+            tableName: produto
+            columns:
+              - column:
+                  name: imagem_url
+                  value: https://images.unsplash.com/photo-1585421514284-efb74c2b69ba?w=200&h=200&fit=crop
+            where: id = '55555555-5555-5555-5555-555555555555' AND imagem_url = 'https://images.unsplash.com/photo-1585421514284-efb74c2d69e7?w=200&h=200&fit=crop'
