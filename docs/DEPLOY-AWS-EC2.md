@@ -93,7 +93,8 @@ Abrir no browser:
 
 ## Keycloak (igual Fluxe prod)
 
-- Imagem `quay.io/keycloak/keycloak:26.0`
+- Imagem `quay.io/keycloak/keycloak:26.8.1`, fixada por digest
+- Postgres e Nginx construídos a partir de `infra/images/`: o Postgres sem o `gosu` da imagem oficial (compilado com Go antigo) e iniciando como `postgres`; o Nginx com as correções do Alpine aplicadas no build
 - Postgres dedicado (`keycloak` DB)
 - `KC_HTTP_RELATIVE_PATH=/auth` + Nginx reverse proxy
 - Realm `comercialcloud` com clients `comercial-cloud-web` e `comercial-cloud-api`
