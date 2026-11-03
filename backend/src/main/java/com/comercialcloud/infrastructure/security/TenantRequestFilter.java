@@ -3,13 +3,16 @@ package com.comercialcloud.infrastructure.security;
 import com.comercialcloud.domain.exception.BusinessException;
 import com.comercialcloud.domain.exception.PaymentRequiredException;
 import com.comercialcloud.domain.repository.UsuarioRepository;
+import com.comercialcloud.domain.shared.DemoConstants;
 import com.comercialcloud.infrastructure.persistence.entity.TenantEntity;
 import jakarta.annotation.Priority;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.NotAuthorizedException;
 import jakarta.ws.rs.Priorities;
 import jakarta.ws.rs.container.ContainerRequestContext;
 import jakarta.ws.rs.container.ContainerRequestFilter;
 import jakarta.ws.rs.ext.Provider;
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 
 import java.util.Set;
@@ -29,6 +32,10 @@ public class TenantRequestFilter implements ContainerRequestFilter {
 
     public static final String TENANT_HEADER = "X-Tenant-Id";
     public static final String USER_HEADER = "X-User-Id";
+
+    /** {@code jwt}: só o token validado identifica. {@code demo}: locatário fictício fixo. {@code header}: só desenvolvimento. */
+    @ConfigProperty(name = "comercial-cloud.tenant.resolution", defaultValue = "jwt")
+    String resolution;
 
     @Inject
     TenantContext tenantContext;
@@ -72,7 +79,18 @@ public class TenantRequestFilter implements ContainerRequestFilter {
         }
     }
 
+    private boolean modoDemo() {
+        return "demo".equalsIgnoreCase(resolution);
+    }
+
+    private boolean aceitaCabecalho() {
+        return "header".equalsIgnoreCase(resolution);
+    }
+
     private UUID resolveTenantId(ContainerRequestContext ctx) {
+        if (modoDemo()) {
+            return DemoConstants.TENANT_DEMO;
+        }
         if (jwt.isResolvable()) {
             JsonWebToken token = jwt.get();
             Object claim = token.getClaim("tenant_id");
@@ -83,6 +101,10 @@ public class TenantRequestFilter implements ContainerRequestFilter {
                     throw new BusinessException("TENANT_INVALID", "Claim tenant_id deve ser um UUID válido");
                 }
             }
+        }
+
+        if (!aceitaCabecalho()) {
+            throw new NotAuthorizedException("Bearer");
         }
 
         String tenantHeader = ctx.getHeaderString(TENANT_HEADER);
@@ -97,6 +119,9 @@ public class TenantRequestFilter implements ContainerRequestFilter {
     }
 
     private UUID resolveUserId(ContainerRequestContext ctx) {
+        if (modoDemo()) {
+            return DemoConstants.USER_ADMIN;
+        }
         if (jwt.isResolvable()) {
             JsonWebToken token = jwt.get();
             Object claim = token.getClaim("app_user_id");
@@ -107,6 +132,10 @@ public class TenantRequestFilter implements ContainerRequestFilter {
                     throw new BusinessException("USER_INVALID", "Claim app_user_id deve ser um UUID válido");
                 }
             }
+        }
+
+        if (!aceitaCabecalho()) {
+            return null;
         }
 
         String userHeader = ctx.getHeaderString(USER_HEADER);
