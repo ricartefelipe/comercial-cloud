@@ -13,8 +13,8 @@ Plataforma SaaS multitenant para **PDV (ponto de venda)** e **retaguarda web**, 
 
 | Camada | Tecnologias |
 |--------|-------------|
-| Backend | Java 21, Quarkus 3.17, RESTEasy Reactive, Hibernate Panache, PostgreSQL, Liquibase YAML, Bean Validation, OpenAPI |
-| Frontend | Next.js 14, TypeScript, TailwindCSS, React Hook Form, Zod, TanStack Query |
+| Backend | Java 21, Quarkus 3.33, RESTEasy Reactive, Hibernate Panache, PostgreSQL, Liquibase YAML, Bean Validation, OpenAPI |
+| Frontend | Next.js 15, React 19, TypeScript, TailwindCSS, React Hook Form, Zod, TanStack Query |
 | Infra | Docker Compose (PostgreSQL, backend, frontend; Keycloak opcional) |
 
 ## Arquitetura backend

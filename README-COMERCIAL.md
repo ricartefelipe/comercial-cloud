@@ -35,7 +35,7 @@ Sem isso, software houses gastam **6–12 meses** montando PDV, tenant, billing 
 | 8 | Testes | Integração backend (`ComercialCloudIT`, `FiscalBillingIT`) + smoke E2E Playwright |
 | 9 | Infra | Docker Compose (Postgres, backend Quarkus, frontend Next.js, Keycloak opcional) |
 
-**Stack:** Java 21 · Quarkus 3 · PostgreSQL · Liquibase · Next.js 14 · TypeScript · TailwindCSS · Keycloak (opcional).
+**Stack:** Java 21 · Quarkus 3 · PostgreSQL · Liquibase · Next.js 15 · TypeScript · TailwindCSS · Keycloak (opcional).
 
 ---
 
