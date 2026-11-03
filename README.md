@@ -6,7 +6,7 @@ Plataforma SaaS multitenant para **PDV (ponto de venda)** e **retaguarda web**, 
 
 - Vendas no balcão via PDV web (busca rápida, carrinho, pagamentos, comprovante)
 - Retaguarda administrativa (produtos, estoque, clientes, vendas, caixa, financeiro, dashboard)
-- Isolamento lógico por tenant (`X-Tenant-Id` ou claim JWT `tenant_id`)
+- Isolamento lógico por tenant (claim JWT `tenant_id`; ver "Identificação do locatário")
 - Autenticação via Keycloak (OIDC/JWT) ou modo demo local para desenvolvimento
 
 ## Stack
@@ -120,7 +120,17 @@ cd e2e && npm install && npx playwright install chromium && npm test
 - UI: [http://localhost:8080/q/swagger-ui](http://localhost:8080/q/swagger-ui)
 - OpenAPI JSON: [http://localhost:8080/q/openapi](http://localhost:8080/q/openapi)
 
-## Headers obrigatórios (v1 demo)
+## Identificação do locatário
+
+`COMERCIAL_CLOUD_TENANT_RESOLUTION` define de onde vêm locatário e usuário:
+
+| Valor | Uso | Origem |
+|-------|-----|--------|
+| `jwt` | Padrão, inclusive em produção | Claims `tenant_id` e `app_user_id` do token validado. Sem token, responde 401 |
+| `demo` | Demonstração pública | Locatário e usuário fictícios fixos no servidor, ignorando o que o cliente enviar |
+| `header` | Só desenvolvimento e testes | Cabeçalhos abaixo, que qualquer cliente pode forjar |
+
+## Headers no modo `header`
 
 | Header | Descrição |
 |--------|-----------|
