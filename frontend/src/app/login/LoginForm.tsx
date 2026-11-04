@@ -4,9 +4,13 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ErrorMessage } from "@/components/ui/Common";
 import { Input } from "@/components/ui/Input";
+import { entrarNaDemonstracao } from "@/lib/auth/demo";
 import { enableDemoMode, saveToken } from "@/lib/auth/session";
 import { applyJwtWorkspaceClaims } from "@/lib/auth/tenant-context";
 import {
+  AUTH_MODE,
+  DEMO_EMAIL,
+  DEMO_SENHA,
   KEYCLOAK_CLIENT_ID,
   KEYCLOAK_REALM,
   KEYCLOAK_URL,
@@ -32,18 +36,27 @@ export default function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
+  const demonstracao = AUTH_MODE === "demo";
+
+  const entrar = async (emailInformado: string, senhaInformada: string) => {
     setLoading(true);
     setError("");
 
     try {
+      if (demonstracao) {
+        const token = await entrarNaDemonstracao(emailInformado.trim(), senhaInformada);
+        saveToken(token);
+        applyJwtWorkspaceClaims(token);
+        router.push(redirectTo);
+        return;
+      }
+
       const tokenUrl = `${KEYCLOAK_URL}/realms/${KEYCLOAK_REALM}/protocol/openid-connect/token`;
       const body = new URLSearchParams({
         grant_type: "password",
         client_id: KEYCLOAK_CLIENT_ID,
-        username: email,
-        password,
+        username: emailInformado,
+        password: senhaInformada,
       });
 
       const response = await fetch(tokenUrl, {
@@ -68,6 +81,19 @@ export default function LoginForm() {
     }
   };
 
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    void entrar(email, password);
+  };
+
+  /** Demonstração: preenche a conta pública e entra por ela, pelo mesmo caminho do formulário. */
+  const handleContaDemonstracao = () => {
+    setEmail(DEMO_EMAIL);
+    setPassword(DEMO_SENHA);
+    void entrar(DEMO_EMAIL, DEMO_SENHA);
+  };
+
+  /** Só no desenvolvimento local por cabeçalho, sem Keycloak. */
   const handleDemoLogin = () => {
     enableDemoMode();
     router.push(redirectTo);
@@ -81,8 +107,26 @@ export default function LoginForm() {
             <Store className="h-8 w-8 text-brand-600" />
           </div>
           <h1 className="text-2xl font-bold text-slate-900">ComercialCloud</h1>
-          <p className="mt-1 text-sm text-slate-500">Entre com sua conta da retaguarda (Keycloak)</p>
+          <p className="mt-1 text-sm text-slate-500">
+            {demonstracao
+              ? "Demonstração: loja fictícia, dados apagados todos os dias"
+              : "Entre com sua conta da retaguarda (Keycloak)"}
+          </p>
         </div>
+
+        {demonstracao && (
+          <div className="mb-4 rounded-lg border border-brand-100 bg-brand-50 p-3 text-sm text-slate-700">
+            <p className="font-medium text-slate-900">Conta de demonstração</p>
+            <p className="mt-1">
+              E-mail: <span className="font-mono">{DEMO_EMAIL}</span>
+            </p>
+            {DEMO_SENHA && (
+              <p>
+                Senha: <span className="font-mono">{DEMO_SENHA}</span>
+              </p>
+            )}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input
@@ -110,19 +154,35 @@ export default function LoginForm() {
         </form>
 
         <div className="mt-4 border-t border-slate-200 pt-4 text-center space-y-2">
-          <button
-            type="button"
-            onClick={handleDemoLogin}
-            className="text-sm font-medium text-brand-600 hover:text-brand-700"
-          >
-            Entrar em modo demo
-          </button>
-          <p className="text-xs text-slate-400">
-            Abre a loja fictícia de demonstração, sem cadastro
-          </p>
-          <Link href="/cadastro" className="block text-sm font-medium text-brand-600 hover:text-brand-700">
-            Criar conta grátis (14 dias)
-          </Link>
+          {demonstracao && DEMO_SENHA && (
+            <button
+              type="button"
+              onClick={handleContaDemonstracao}
+              disabled={loading}
+              className="text-sm font-medium text-brand-600 hover:text-brand-700 disabled:opacity-60"
+            >
+              Entrar com a conta de demonstração
+            </button>
+          )}
+          {AUTH_MODE === "header" && (
+            <>
+              <button
+                type="button"
+                onClick={handleDemoLogin}
+                className="text-sm font-medium text-brand-600 hover:text-brand-700"
+              >
+                Entrar em modo demo
+              </button>
+              <p className="text-xs text-slate-400">
+                Desenvolvimento local: abre a loja fictícia, sem Keycloak
+              </p>
+            </>
+          )}
+          {!demonstracao && (
+            <Link href="/cadastro" className="block text-sm font-medium text-brand-600 hover:text-brand-700">
+              Criar conta grátis (14 dias)
+            </Link>
+          )}
         </div>
 
         <div className="mt-4 text-center">
