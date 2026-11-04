@@ -1,21 +1,21 @@
-# Overlay Docker Compose — homologação com MailHog (SMTP de teste).
+# Overlay Docker Compose — homologação com Mailpit (SMTP de teste; substitui o MailHog, abandonado).
 # Uso: docker compose -f docker-compose.yml -f docker-compose.homolog.yml up -d
 
 services:
-  mailhog:
-    image: mailhog/mailhog:v1.0.1
-    container_name: comercialcloud-mailhog
+  mailpit:
+    image: axllent/mailpit:v1.33.0@sha256:9b3a463be15354c0f0eba91697d80e3e0d8a5623ef0e627cacc836bc17fd5231
+    container_name: comercialcloud-mailpit
     ports:
       - "1025:1025"
       - "8025:8025"
 
   backend:
     environment:
-      MAIL_HOST: mailhog
+      MAIL_HOST: mailpit
       MAIL_PORT: 1025
       COMERCIAL_CLOUD_MAIL_ENABLED: "true"
       MAIL_FROM: homolog@comercialcloud.local
       APP_URL: http://localhost:3000
     depends_on:
-      mailhog:
+      mailpit:
         condition: service_started

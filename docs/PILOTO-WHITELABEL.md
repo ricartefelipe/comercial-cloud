@@ -44,7 +44,7 @@ docker compose -f docker-compose.yml -f docker-compose.homolog.yml --profile key
 
 Validar manualmente:
 
-- [ ] Cadastro trial + e-mail boas-vindas (MailHog :8025)
+- [ ] Cadastro trial + e-mail boas-vindas (Mailpit :8025)
 - [ ] Fatura + checkout Asaas sandbox + webhook
 - [ ] NFC-e homologação Focus + cancelamento
 - [ ] Login Keycloak pós-onboarding
