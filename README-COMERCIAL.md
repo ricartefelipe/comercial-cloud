@@ -74,7 +74,7 @@ cd backend && ./mvnw quarkus:dev
 - Cadastro trial: `http://localhost:3000/cadastro`
 - Swagger: `http://localhost:8080/q/swagger-ui`
 
-Demo rápido: login → **Entrar em modo demo** (tenant seed) ou **Criar conta grátis**.
+Demo rápido, no ambiente local (`NEXT_PUBLIC_AUTH_MODE=header`): login → **Entrar em modo demo** (tenant seed) ou **Criar conta grátis**. Na demonstração pública, o login mostra a conta de demonstração e entra por ela: a API não responde sem a sessão.
 
 ---
 

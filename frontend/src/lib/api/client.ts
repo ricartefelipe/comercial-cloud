@@ -1,6 +1,6 @@
 import { getTenantId, getUserId } from "@/lib/auth/tenant-context";
-import { getToken } from "@/lib/auth/session";
-import { API_BASE_URL } from "@/lib/constants";
+import { clearSession, getToken } from "@/lib/auth/session";
+import { API_BASE_URL, AUTH_MODE, SESSAO_DEMO_HEADER } from "@/lib/constants";
 import type { ApiError } from "@/types";
 
 export class ApiClientError extends Error {
@@ -67,10 +67,7 @@ export async function apiClient<T>(
     ...(headers as Record<string, string>),
   };
 
-  const token = getToken();
-  if (token) {
-    requestHeaders.Authorization = `Bearer ${token}`;
-  }
+  Object.assign(requestHeaders, cabecalhosDeSessao());
 
   if (body !== undefined) {
     requestHeaders["Content-Type"] = "application/json";
@@ -103,6 +100,10 @@ export async function apiClient<T>(
 
     const apiError = new ApiClientError(errorMessage, response.status, code, details);
 
+    if (response.status === 401) {
+      redirecionarParaLogin();
+    }
+
     if (
       response.status === 402 &&
       typeof window !== "undefined" &&
@@ -124,6 +125,23 @@ export async function apiClient<T>(
   }
 
   return undefined as T;
+}
+
+/** Credencial da sessão atual: token do Keycloak em `Authorization`, ou a sessão da demonstração no cabeçalho dela. */
+export function cabecalhosDeSessao(): Record<string, string> {
+  const token = getToken();
+  if (!token) return {};
+  return AUTH_MODE === "demo" ? { [SESSAO_DEMO_HEADER]: token } : { Authorization: `Bearer ${token}` };
+}
+
+/** Sessão vencida ou inexistente: limpa o que restou no navegador e volta ao login, lembrando a página. */
+function redirecionarParaLogin(): void {
+  if (typeof window === "undefined") return;
+  const { pathname, search } = window.location;
+  if (pathname.startsWith("/login")) return;
+  clearSession();
+  const destino = encodeURIComponent(`${pathname}${search}`);
+  window.location.href = `/login?redirect=${destino}`;
 }
 
 export function buildQuery(params: Record<string, string | number | undefined>): string {

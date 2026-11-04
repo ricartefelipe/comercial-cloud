@@ -13,7 +13,7 @@ services:
       - certbot_www:/var/www/certbot:ro
 
   certbot:
-    image: certbot/certbot:latest
+    image: certbot/certbot:v5.9.0@sha256:bc93cb710b413e6b456d622f9b0133b3e109c0a78c2ed9976af43d209b0a1805
     profiles: ["tls-tools"]
     volumes:
       - certbot_conf:/etc/letsencrypt
@@ -21,7 +21,7 @@ services:
     entrypoint: ["certbot"]
 
   certbot-renew:
-    image: certbot/certbot:latest
+    image: certbot/certbot:v5.9.0@sha256:bc93cb710b413e6b456d622f9b0133b3e109c0a78c2ed9976af43d209b0a1805
     restart: unless-stopped
     volumes:
       - certbot_conf:/etc/letsencrypt

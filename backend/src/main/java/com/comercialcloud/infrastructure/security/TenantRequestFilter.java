@@ -3,7 +3,6 @@ package com.comercialcloud.infrastructure.security;
 import com.comercialcloud.domain.exception.BusinessException;
 import com.comercialcloud.domain.exception.PaymentRequiredException;
 import com.comercialcloud.domain.repository.UsuarioRepository;
-import com.comercialcloud.domain.shared.DemoConstants;
 import com.comercialcloud.infrastructure.persistence.entity.TenantEntity;
 import jakarta.annotation.Priority;
 import jakarta.inject.Inject;
@@ -32,8 +31,16 @@ public class TenantRequestFilter implements ContainerRequestFilter {
 
     public static final String TENANT_HEADER = "X-Tenant-Id";
     public static final String USER_HEADER = "X-User-Id";
+    /**
+     * Sessão da demonstração. Não vai em {@code Authorization}: o mecanismo de JWT do Quarkus intercepta todo
+     * {@code Bearer} antes deste filtro e recusaria o token, que não é do Keycloak.
+     */
+    public static final String SESSAO_DEMO_HEADER = "X-Sessao-Demo";
 
-    /** {@code jwt}: só o token validado identifica. {@code demo}: locatário fictício fixo. {@code header}: só desenvolvimento. */
+    /**
+     * {@code jwt}: só o token validado identifica. {@code demo}: só a sessão emitida pelo servidor à conta de
+     * demonstração ({@link SessaoDemonstracao}), sempre no locatário fictício. {@code header}: só desenvolvimento.
+     */
     @ConfigProperty(name = "comercial-cloud.tenant.resolution", defaultValue = "jwt")
     String resolution;
 
@@ -42,6 +49,9 @@ public class TenantRequestFilter implements ContainerRequestFilter {
 
     @Inject
     UsuarioRepository usuarioRepository;
+
+    @Inject
+    SessaoDemonstracao sessaoDemonstracao;
 
     @Inject
     jakarta.enterprise.inject.Instance<JsonWebToken> jwt;
@@ -57,7 +67,8 @@ public class TenantRequestFilter implements ContainerRequestFilter {
             return;
         }
 
-        UUID tenantId = resolveTenantId(ctx);
+        SessaoDemonstracao.Sessao sessao = modoDemo() ? sessaoDemonstracao(ctx) : null;
+        UUID tenantId = sessao != null ? sessao.tenantId() : resolveTenantId(ctx);
         tenantContext.setTenantId(tenantId);
 
         boolean isentoSuspensao = BILLING_PREFIXES.stream().anyMatch(normalizedPath::startsWith);
@@ -70,7 +81,7 @@ public class TenantRequestFilter implements ContainerRequestFilter {
             }
         }
 
-        UUID userId = resolveUserId(ctx);
+        UUID userId = sessao != null ? sessao.userId() : resolveUserId(ctx);
         if (userId != null) {
             tenantContext.setUserId(userId);
             usuarioRepository
@@ -87,10 +98,13 @@ public class TenantRequestFilter implements ContainerRequestFilter {
         return "header".equalsIgnoreCase(resolution);
     }
 
+    /** Na demonstração, cabeçalhos de locatário e usuário enviados pelo cliente não valem: só a sessão assinada. */
+    private SessaoDemonstracao.Sessao sessaoDemonstracao(ContainerRequestContext ctx) {
+        return sessaoDemonstracao.validar(ctx.getHeaderString(SESSAO_DEMO_HEADER))
+                .orElseThrow(() -> new NotAuthorizedException("Bearer"));
+    }
+
     private UUID resolveTenantId(ContainerRequestContext ctx) {
-        if (modoDemo()) {
-            return DemoConstants.TENANT_DEMO;
-        }
         if (jwt.isResolvable()) {
             JsonWebToken token = jwt.get();
             Object claim = token.getClaim("tenant_id");
@@ -119,9 +133,6 @@ public class TenantRequestFilter implements ContainerRequestFilter {
     }
 
     private UUID resolveUserId(ContainerRequestContext ctx) {
-        if (modoDemo()) {
-            return DemoConstants.USER_ADMIN;
-        }
         if (jwt.isResolvable()) {
             JsonWebToken token = jwt.get();
             Object claim = token.getClaim("app_user_id");

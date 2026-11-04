@@ -14,6 +14,7 @@ import {
   reativarAssinatura,
   trocarPlano,
 } from "@/lib/api/billing";
+import { getCapacidadesSistema } from "@/lib/api/sistema";
 import { formatCurrency, formatDate } from "@/lib/format";
 import {
   STATUS_ASSINATURA_LABELS,
@@ -71,6 +72,13 @@ export default function AssinaturaContent() {
     queryKey: ["faturas"],
     queryFn: listFaturas,
   });
+
+  const { data: capacidades } = useQuery({
+    queryKey: ["sistema-capacidades"],
+    queryFn: getCapacidadesSistema,
+  });
+  // Pagamento manual só existe com o gateway de simulação: com gateway real, a fatura fica paga pela confirmação dele.
+  const pagamentoSimulado = capacidades?.billingGateway === "sandbox";
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["assinatura"] });
@@ -191,18 +199,28 @@ export default function AssinaturaContent() {
         <Card>
           <CardHeader title="Como funciona o pagamento" />
           <div className="space-y-3 text-sm text-slate-600">
-            <p className="flex items-start gap-2">
-              <CreditCard className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
-              No ambiente atual, a cobrança usa gateway sandbox (simulação).
-            </p>
-            <p>
-              Clique em <strong>Pagar fatura</strong> para simular aprovação e reativar
-              contas suspensas.
-            </p>
-            <p className="text-xs text-slate-400">
-              Em produção, substitua o adapter por Asaas, Iugu, Stripe ou Pagar.me
-              (ver README-COMERCIAL.md).
-            </p>
+            {pagamentoSimulado ? (
+              <>
+                <p className="flex items-start gap-2">
+                  <CreditCard className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
+                  No ambiente atual, a cobrança usa gateway sandbox (simulação).
+                </p>
+                <p>
+                  Clique em <strong>Pagar fatura</strong> para simular aprovação e reativar
+                  contas suspensas.
+                </p>
+                <p className="text-xs text-slate-400">
+                  Em produção, substitua o adapter por Asaas, Iugu, Stripe ou Pagar.me
+                  (ver README-COMERCIAL.md).
+                </p>
+              </>
+            ) : (
+              <p className="flex items-start gap-2">
+                <CreditCard className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" />
+                A fatura é paga pelo checkout do gateway e fica confirmada assim que o pagamento é
+                aprovado.
+              </p>
+            )}
           </div>
         </Card>
       </div>
@@ -239,13 +257,15 @@ export default function AssinaturaContent() {
                     <td className="py-3">
                       {fatura.status !== "PAGA" && fatura.status !== "CANCELADA" && (
                         <div className="flex flex-col gap-1">
-                          <Button
-                            size="sm"
-                            onClick={() => pagarMutation.mutate(fatura.id)}
-                            loading={pagarMutation.isPending}
-                          >
-                            Pagar fatura
-                          </Button>
+                          {pagamentoSimulado && (
+                            <Button
+                              size="sm"
+                              onClick={() => pagarMutation.mutate(fatura.id)}
+                              loading={pagarMutation.isPending}
+                            >
+                              Pagar fatura
+                            </Button>
+                          )}
                           {fatura.checkoutUrl && (
                             <a
                               href={fatura.checkoutUrl}

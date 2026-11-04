@@ -1,6 +1,5 @@
-import { ApiClientError, buildQuery, apiClient } from "@/lib/api/client";
+import { ApiClientError, buildQuery, apiClient, cabecalhosDeSessao } from "@/lib/api/client";
 import { getLojaId, getTenantId, getUserId } from "@/lib/auth/tenant-context";
-import { getToken } from "@/lib/auth/session";
 import { API_BASE_URL } from "@/lib/constants";
 import type { RelatorioAbcItem, RelatorioMargemItem } from "@/types";
 
@@ -9,11 +8,7 @@ async function authHeaders(): Promise<Record<string, string>> {
     "X-Tenant-Id": getTenantId(),
     "X-User-Id": getUserId(),
   };
-  const token = getToken();
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
-  return headers;
+  return { ...headers, ...cabecalhosDeSessao() };
 }
 
 export async function downloadRelatorioCsv(

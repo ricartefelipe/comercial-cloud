@@ -5,8 +5,11 @@ import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.QuarkusTestProfile;
 import io.quarkus.test.junit.TestProfile;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.Map;
+import java.util.stream.Stream;
 
 import static io.restassured.RestAssured.given;
 
@@ -32,6 +35,27 @@ class IdentificacaoLocatarioJwtIT {
     @Test
     void semIdentificacaoResponde401() {
         given().when().get("/api/v1/produtos").then().statusCode(401);
+    }
+
+    static Stream<String> rotasDeDados() {
+        return RotasDaApi.leitura();
+    }
+
+    @ParameterizedTest
+    @MethodSource("rotasDeDados")
+    void nenhumaRotaDeDadosRespondeSemToken(String rota) {
+        given().when().get(rota).then().statusCode(401);
+        given().header("X-Tenant-Id", DemoConstants.TENANT_DEMO.toString())
+                .header("X-User-Id", DemoConstants.USER_ADMIN.toString())
+                .when().get(rota).then().statusCode(401);
+    }
+
+    @Test
+    void rotaDeSessaoDaDemonstracaoNaoExisteForaDaDemonstracao() {
+        given().contentType("application/json")
+                .body(Map.of("email", "admin@demo.com", "senha", "qualquer"))
+                .when().post("/api/v1/public/demo/sessao")
+                .then().statusCode(404);
     }
 
     @Test

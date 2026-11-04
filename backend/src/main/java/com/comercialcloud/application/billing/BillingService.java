@@ -26,11 +26,14 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
 @ApplicationScoped
 public class BillingService {
+
+    private static final String GATEWAY_SIMULACAO = "sandbox";
 
     private static final Logger LOG = Logger.getLogger(BillingService.class);
     private static final DateTimeFormatter COMPETENCIA = DateTimeFormatter.ofPattern("yyyy-MM");
@@ -178,8 +181,17 @@ public class BillingService {
                 .list();
     }
 
+    /**
+     * Pagamento manual existe só com o gateway de simulação, para demonstrar a reativação. Com gateway real, a fatura
+     * fica paga pela confirmação do gateway: o locatário marcar a própria fatura reativaria a conta sem pagamento.
+     */
     @Transactional
     public FaturaAssinaturaEntity marcarFaturaPaga(UUID faturaId) {
+        if (!GATEWAY_SIMULACAO.equalsIgnoreCase(gatewayNome)) {
+            throw new ConflictException(
+                    "PAGAMENTO_MANUAL_INDISPONIVEL",
+                    "A fatura é dada como paga pela confirmação do gateway de pagamento");
+        }
         UUID tenantId = tenantContext.getTenantId();
         FaturaAssinaturaEntity fatura =
                 FaturaAssinaturaEntity.<FaturaAssinaturaEntity>find(
@@ -193,25 +205,34 @@ public class BillingService {
     }
 
     // ---------------------------------------------------------------------
-    // Geração de faturas (scheduler) — proxy-safe
+    // Geração de faturas — proxy-safe. Todos os locatários: só o agendador interno.
     // ---------------------------------------------------------------------
 
+    /** Assinaturas vencidas de todos os locatários. Uso exclusivo do {@code BillingScheduler}. */
     @Transactional
     public List<UUID> idsAssinaturasParaFaturar() {
+        return assinaturasParaFaturar(null);
+    }
+
+    /** Assinaturas vencidas só do locatário informado: a execução manual pela API usa esta. */
+    @Transactional
+    public List<UUID> idsAssinaturasParaFaturarDoTenant(UUID tenantId) {
+        return assinaturasParaFaturar(Objects.requireNonNull(tenantId, "tenantId"));
+    }
+
+    private List<UUID> assinaturasParaFaturar(UUID tenantId) {
         if (!billingEnabled) {
             return List.of();
         }
+        List<String> status = List.of(
+                StatusAssinatura.TRIAL.name(), StatusAssinatura.ATIVA.name(), StatusAssinatura.INADIMPLENTE.name());
         LocalDate hoje = LocalDate.now();
-        return AssinaturaTenantEntity.<AssinaturaTenantEntity>find(
-                        "status in ?1 and proximaCobranca <= ?2",
-                        List.of(
-                                StatusAssinatura.TRIAL.name(),
-                                StatusAssinatura.ATIVA.name(),
-                                StatusAssinatura.INADIMPLENTE.name()),
-                        hoje)
-                .stream()
-                .map(a -> a.id)
-                .toList();
+        var consulta = tenantId == null
+                ? AssinaturaTenantEntity.<AssinaturaTenantEntity>find(
+                        "status in ?1 and proximaCobranca <= ?2", status, hoje)
+                : AssinaturaTenantEntity.<AssinaturaTenantEntity>find(
+                        "status in ?1 and proximaCobranca <= ?2 and tenantId = ?3", status, hoje, tenantId);
+        return consulta.stream().map(a -> a.id).toList();
     }
 
     @Transactional
@@ -264,23 +285,34 @@ public class BillingService {
     }
 
     // ---------------------------------------------------------------------
-    // Cobrança de faturas (scheduler) — proxy-safe
+    // Cobrança de faturas — proxy-safe. Todos os locatários: só o agendador interno.
     // ---------------------------------------------------------------------
 
+    /** Faturas vencidas de todos os locatários. Uso exclusivo do {@code BillingScheduler}. */
     @Transactional
     public List<UUID> idsFaturasParaCobrar() {
+        return faturasParaCobrar(null);
+    }
+
+    /** Faturas vencidas só do locatário informado: a execução manual pela API usa esta. */
+    @Transactional
+    public List<UUID> idsFaturasParaCobrarDoTenant(UUID tenantId) {
+        return faturasParaCobrar(Objects.requireNonNull(tenantId, "tenantId"));
+    }
+
+    private List<UUID> faturasParaCobrar(UUID tenantId) {
         if (!billingEnabled) {
             return List.of();
         }
         LocalDate hoje = LocalDate.now();
-        return FaturaAssinaturaEntity.<FaturaAssinaturaEntity>find(
-                        "status = ?1 and vencimento <= ?2 and tentativas < ?3",
-                        StatusFatura.ABERTA.name(),
-                        hoje,
-                        maxTentativas)
-                .stream()
-                .map(f -> f.id)
-                .toList();
+        String aberta = StatusFatura.ABERTA.name();
+        var consulta = tenantId == null
+                ? FaturaAssinaturaEntity.<FaturaAssinaturaEntity>find(
+                        "status = ?1 and vencimento <= ?2 and tentativas < ?3", aberta, hoje, maxTentativas)
+                : FaturaAssinaturaEntity.<FaturaAssinaturaEntity>find(
+                        "status = ?1 and vencimento <= ?2 and tentativas < ?3 and tenantId = ?4",
+                        aberta, hoje, maxTentativas, tenantId);
+        return consulta.stream().map(f -> f.id).toList();
     }
 
     @Transactional
