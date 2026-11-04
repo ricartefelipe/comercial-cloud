@@ -13,4 +13,5 @@ INSERT INTO plano_assinatura (id, codigo, nome, preco_mensal, ativo, max_lojas) 
 INSERT INTO plano_assinatura (id, codigo, nome, preco_mensal, ativo, max_lojas) VALUES ('a1000000-0000-0000-0000-000000000002', 'PRO', 'Pro', 199.00, TRUE, 3);
 INSERT INTO plano_assinatura (id, codigo, nome, preco_mensal, ativo, max_lojas) VALUES ('a1000000-0000-0000-0000-000000000003', 'PREMIUM', 'Premium', 349.00, TRUE, 10);
 INSERT INTO tenant (id, nome, ativo, created_at) VALUES ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'Tenant Billing', TRUE, CURRENT_TIMESTAMP);
+INSERT INTO usuario (id, tenant_id, nome, email, role, ativo, created_at) VALUES ('bbbbbbbb-0000-0000-0000-000000000001', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'Admin Billing', 'admin@billing.test', 'ADMIN', TRUE, CURRENT_TIMESTAMP);
 INSERT INTO tenant (id, nome, ativo, created_at) VALUES ('cccccccc-cccc-cccc-cccc-cccccccccccc', 'Tenant Suspenso', FALSE, CURRENT_TIMESTAMP);

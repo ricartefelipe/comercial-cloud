@@ -28,7 +28,10 @@ public class RoleAuthorizationFilter implements ContainerRequestFilter {
 
     @Override
     public void filter(ContainerRequestContext ctx) {
-        String path = ctx.getUriInfo().getPath();
+        // O caminho chega com a barra inicial ("/api/v1/..."): sem normalizar, nenhum prefixo casava e o perfil CAIXA
+        // passava por todas as restrições de administração.
+        String bruto = ctx.getUriInfo().getPath();
+        String path = bruto == null ? "" : bruto.startsWith("/") ? bruto.substring(1) : bruto;
 
         if (path.startsWith("api/v1/billing/faturar")
                 || path.startsWith("api/v1/billing/cobrar")
