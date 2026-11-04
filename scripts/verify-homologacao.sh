@@ -31,7 +31,7 @@ else
 fi
 
 if curl -sf --max-time 5 "http://localhost:8025" >/dev/null 2>&1; then
-  echo "OK  MailHog UI — http://localhost:8025"
+  echo "OK  Mailpit UI — http://localhost:8025"
 fi
 
 if [[ "$fail" -eq 0 ]]; then
