@@ -127,8 +127,22 @@ cd e2e && npm install && npx playwright install chromium && npm test
 | Valor | Uso | Origem |
 |-------|-----|--------|
 | `jwt` | Padrão, inclusive em produção | Claims `tenant_id` e `app_user_id` do token validado. Sem token, responde 401 |
-| `demo` | Demonstração pública | Locatário e usuário fictícios fixos no servidor, ignorando o que o cliente enviar |
+| `demo` | Demonstração pública | Sessão emitida pelo servidor à conta de demonstração, no cabeçalho `X-Sessao-Demo`. Sem ela, responde 401. Locatário sempre o fictício, ignorando o que o cliente enviar |
 | `header` | Só desenvolvimento e testes | Cabeçalhos abaixo, que qualquer cliente pode forjar |
+
+Em todos os modos, o perfil vem do usuário identificado: o `CAIXA` não cria usuários nem altera configurações, lojas, identidade visual, faturamento ou processamento fiscal.
+
+### Modo `demo`
+
+Sem Keycloak. A conta de demonstração (um usuário ativo do locatário fictício da carga inicial, como `admin@demo.com` ou `caixa@demo.com`) entra por `POST /api/v1/public/demo/sessao` com `{"email", "senha"}` e recebe um token assinado pelo servidor (HS256), com prazo de 8 h. O painel envia o token em `X-Sessao-Demo`, porque `Authorization` é do Keycloak e o mecanismo de JWT do Quarkus recusaria o token. Fora do modo `demo`, a rota responde 404.
+
+| Variável | Obrigatória | Descrição |
+|----------|-------------|-----------|
+| `COMERCIAL_CLOUD_DEMO_SESSION_SECRET` | sim | Segredo da assinatura, com pelo menos 32 caracteres, só no servidor. Sem ele, o backend não sobe |
+| `COMERCIAL_CLOUD_DEMO_SENHA` | sim | Senha da conta de demonstração. É publicada de propósito, como nas demais demonstrações |
+| `COMERCIAL_CLOUD_DEMO_SESSION_TTL` | não | Prazo da sessão, em ISO-8601 (`PT8H` por padrão) |
+
+O painel precisa ser construído com `NEXT_PUBLIC_AUTH_MODE=demo`, `NEXT_PUBLIC_DEMO_EMAIL` e `NEXT_PUBLIC_DEMO_SENHA`: a tela de login mostra a conta e o botão **Entrar com a conta de demonstração**. `NEXT_PUBLIC_AUTH_MODE=header` é só para desenvolvimento local, com o atalho **Entrar em modo demo**; o padrão `keycloak` não tem atalho.
 
 ## Headers no modo `header`
 

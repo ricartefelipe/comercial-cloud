@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { AUTH_MODE } from "@/lib/constants";
 
 const PUBLIC_PATHS = ["/login", "/cadastro", "/pdv", "/termos", "/privacidade", "/convite"];
 
@@ -17,7 +18,9 @@ export function middleware(request: NextRequest) {
   }
 
   const hasToken = request.cookies.has("cc_access_token");
-  const isDemo = request.cookies.get("cc_demo_mode")?.value === "true";
+  // O atalho sem token só existe no desenvolvimento por cabeçalho; na demonstração e em produção, só a sessão vale.
+  const isDemo =
+    AUTH_MODE === "header" && request.cookies.get("cc_demo_mode")?.value === "true";
 
   if (!hasToken && !isDemo) {
     const loginUrl = new URL("/login", request.url);

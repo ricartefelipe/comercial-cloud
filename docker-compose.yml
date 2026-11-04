@@ -58,6 +58,10 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8080
+        # Desenvolvimento local, sem Keycloak: o backend acima identifica por cabeçalho.
+        NEXT_PUBLIC_AUTH_MODE: header
     container_name: comercialcloud-frontend
     environment:
       NEXT_PUBLIC_API_URL: http://localhost:8080

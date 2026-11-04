@@ -27,6 +27,8 @@ class FiscalBillingIT {
     static final UUID PRODUTO_1 = UUID.fromString("55555555-5555-5555-5555-555555555551");
     static final UUID TENANT_BILLING = UUID.fromString("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
     static final UUID TENANT_SUSPENSO = UUID.fromString("cccccccc-cccc-cccc-cccc-cccccccccccc");
+    /** Faturar e cobrar são do ADMIN: o perfil vem do usuário, e sem usuário a rota responde 403. */
+    static final UUID ADMIN_BILLING = UUID.fromString("bbbbbbbb-0000-0000-0000-000000000001");
 
     // ------------------------------------------------------------------
     // Billing
@@ -127,6 +129,7 @@ class FiscalBillingIT {
     void faturarECobrarMarcaFaturaPaga() {
         given()
                 .header("X-Tenant-Id", TENANT_BILLING)
+                .header("X-User-Id", ADMIN_BILLING)
                 .when().post("/api/v1/billing/faturar")
                 .then()
                 .statusCode(200)
@@ -143,6 +146,7 @@ class FiscalBillingIT {
 
         given()
                 .header("X-Tenant-Id", TENANT_BILLING)
+                .header("X-User-Id", ADMIN_BILLING)
                 .when().post("/api/v1/billing/cobrar")
                 .then()
                 .statusCode(200)
