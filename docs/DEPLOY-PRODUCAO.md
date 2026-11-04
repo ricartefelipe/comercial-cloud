@@ -259,7 +259,7 @@ MAIL_PORT=587
 MAIL_STARTTLS=REQUIRED
 ```
 
-**Homologação com MailHog:**
+**Homologação com Mailpit:**
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.homolog.yml up -d
