@@ -93,7 +93,7 @@ Abrir no browser:
 
 ## Keycloak (igual Fluxe prod)
 
-- Imagem `quay.io/keycloak/keycloak:26.8.1`, fixada por digest
+- Keycloak 26.8.1 construído a partir de `infra/images/keycloak.Dockerfile`: a imagem oficial, fixada por digest, com a Guava 33.7.2 no lugar da 33.6.0 embutida (CVE-2026-102554), conferida pelo SHA-256
 - Postgres e Nginx construídos a partir de `infra/images/`: o Postgres sem o `gosu` da imagem oficial (compilado com Go antigo) e iniciando como `postgres`; o Nginx com as correções do Alpine aplicadas no build
 - Postgres dedicado (`keycloak` DB)
 - `KC_HTTP_RELATIVE_PATH=/auth` + Nginx reverse proxy
