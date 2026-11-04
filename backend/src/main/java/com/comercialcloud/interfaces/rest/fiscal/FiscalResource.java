@@ -7,6 +7,7 @@ import com.comercialcloud.domain.model.ModeloDocumentoFiscal;
 import com.comercialcloud.domain.model.RegimeTributario;
 import com.comercialcloud.infrastructure.persistence.entity.ConfiguracaoFiscalEntity;
 import com.comercialcloud.infrastructure.persistence.entity.DocumentoFiscalEntity;
+import com.comercialcloud.infrastructure.security.TenantContext;
 import jakarta.inject.Inject;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -36,6 +37,9 @@ public class FiscalResource {
 
     @Inject
     ConfiguracaoFiscalService configuracaoFiscalService;
+
+    @Inject
+    TenantContext tenantContext;
 
     @POST
     @Path("/configuracao")
@@ -106,10 +110,11 @@ public class FiscalResource {
         return documentoToMap(fiscalService.cancelar(id, body.justificativa()));
     }
 
+    /** Execução manual da emissão pendente, só do locatário de quem chama. Todos os locatários: só o agendador. */
     @POST
     @Path("/processar")
     public Map<String, Object> processarPendentes() {
-        List<UUID> ids = fiscalService.idsPendentes();
+        List<UUID> ids = fiscalService.idsPendentesDoTenant(tenantContext.getTenantId());
         int processados = 0;
         for (UUID id : ids) {
             fiscalService.processarDocumento(id);
