@@ -89,20 +89,22 @@ public class BillingResource {
         return faturaToMap(billingService.marcarFaturaPaga(id));
     }
 
+    /** Execução manual do faturamento, só do locatário de quem chama. Todos os locatários: só o agendador. */
     @POST
     @Path("/faturar")
     public Map<String, Object> executarFaturamento() {
-        List<UUID> ids = billingService.idsAssinaturasParaFaturar();
+        List<UUID> ids = billingService.idsAssinaturasParaFaturarDoTenant(tenantContext.getTenantId());
         for (UUID id : ids) {
             billingService.gerarFaturaAssinatura(id);
         }
         return Map.of("assinaturasProcessadas", ids.size());
     }
 
+    /** Execução manual da cobrança, só do locatário de quem chama. Todos os locatários: só o agendador. */
     @POST
     @Path("/cobrar")
     public Map<String, Object> executarCobranca() {
-        List<UUID> ids = billingService.idsFaturasParaCobrar();
+        List<UUID> ids = billingService.idsFaturasParaCobrarDoTenant(tenantContext.getTenantId());
         for (UUID id : ids) {
             billingService.cobrarFatura(id);
         }

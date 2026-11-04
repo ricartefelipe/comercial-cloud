@@ -26,6 +26,7 @@ import org.jboss.logging.Logger;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -108,23 +109,34 @@ public class FiscalService {
     // ---------------------------------------------------------------------
 
     /**
-     * IDs de documentos pendentes elegíveis a processamento. O loop transacional
+     * IDs de documentos pendentes elegíveis a processamento, de todos os locatários: uso exclusivo do
+     * {@code FiscalEmissaoScheduler}. O loop transacional
      * por documento fica a cargo do chamador (scheduler/resource), garantindo que
      * cada {@link #processarDocumento(UUID)} rode em sua própria transação via proxy
      * CDI e que falhas isoladas não contaminem o lote.
      */
     @Transactional
     public List<UUID> idsPendentes() {
+        return pendentes(null);
+    }
+
+    /** Pendentes só do locatário informado: a execução manual pela API usa esta; todos, só o agendador. */
+    @Transactional
+    public List<UUID> idsPendentesDoTenant(UUID tenantId) {
+        return pendentes(Objects.requireNonNull(tenantId, "tenantId"));
+    }
+
+    private List<UUID> pendentes(UUID tenantId) {
         if (!fiscalEnabled) {
             return List.of();
         }
-        return DocumentoFiscalEntity.<DocumentoFiscalEntity>find(
-                        "status = ?1 and tentativas < ?2",
-                        StatusDocumentoFiscal.PENDENTE.name(),
-                        maxTentativas)
-                .stream()
-                .map(d -> d.id)
-                .toList();
+        String pendente = StatusDocumentoFiscal.PENDENTE.name();
+        var consulta = tenantId == null
+                ? DocumentoFiscalEntity.<DocumentoFiscalEntity>find(
+                        "status = ?1 and tentativas < ?2", pendente, maxTentativas)
+                : DocumentoFiscalEntity.<DocumentoFiscalEntity>find(
+                        "status = ?1 and tentativas < ?2 and tenantId = ?3", pendente, maxTentativas, tenantId);
+        return consulta.stream().map(d -> d.id).toList();
     }
 
     @Transactional
