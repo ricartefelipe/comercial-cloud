@@ -33,7 +33,8 @@ services:
     ports:
       - "8180:8080"
     volumes:
-      - ./infra/keycloak:/opt/keycloak/data/import
+      # Só o realm de desenvolvimento: a pasta também tem o modelo de produção, com o mesmo realm, e importar os dois falha.
+      - ./infra/keycloak/realm-comercialcloud.json:/opt/keycloak/data/import/realm-comercialcloud.json:ro
     depends_on:
       postgres:
         condition: service_healthy
